@@ -89,6 +89,7 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_TIM1_Init();
+  MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
@@ -97,30 +98,50 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  uint16_t i = 0;
-  bool add = true;
   TIM1->ARR = 1000;
   //__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 5000);
   HAL_TIM_GenerateEvent(&htim1, TIM_EVENTSOURCE_UPDATE);
   HAL_TIM_Base_Start_IT(&htim1);
-  //HAL_TIM_PWM_Start_IT(&htim1, TIM_CHANNEL_1);
-  while(1) {} 
+  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
+
+  bool add = true;
+  bool add_rate = true;
+  int i = 1;
+  int i_rate = 5;
   while (1)
   {
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, i);
-    i += (add) ? 1 : -1;
+    HAL_Delay(10);
+    __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_1, i);
     if (i >= 1000)
     {
       add = false;
     }
-    if (i <= 1)
+    if (i <= 10)
     {
       add = true;
+      i_rate += (add_rate) ? 5 : -5;
     }
-    HAL_Delay(10);
+    
+    if (i_rate >= 500)
+    {
+      add_rate = false;
+    }
+    if (i_rate <= 0)
+    {
+      add_rate = true;
+    }
+
+    if (add)
+    {
+      i += (i_rate < 200) ? i_rate : 200;
+    } 
+    else
+    {
+      i += (i_rate < 200) ? -i_rate : -200;
+    }
   }
   /* USER CODE END 3 */
 }
