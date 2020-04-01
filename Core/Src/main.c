@@ -103,44 +103,52 @@ int main(void)
   HAL_TIM_GenerateEvent(&htim1, TIM_EVENTSOURCE_UPDATE);
   HAL_TIM_Base_Start_IT(&htim1);
   HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
+  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_2);
+  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_3);
 
-  bool add = true;
-  bool add_rate = true;
-  int i = 1;
-  int i_rate = 5;
+  bool add[3] = {true, true, true};
+  bool add_rate[3] = {true, true, true};
+  int i[3] = {400, 100, 800};
+  int i_rate[3] = {1, 5, 10};
+
   while (1)
   {
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
     HAL_Delay(10);
-    __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_1, i);
-    if (i >= 1000)
-    {
-      add = false;
-    }
-    if (i <= 10)
-    {
-      add = true;
-      i_rate += (add_rate) ? 5 : -5;
-    }
-    
-    if (i_rate >= 500)
-    {
-      add_rate = false;
-    }
-    if (i_rate <= 0)
-    {
-      add_rate = true;
-    }
+    __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_1, i[0]);
+    __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_2, i[1]);
+    __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_3, i[2]);
 
-    if (add)
-    {
-      i += (i_rate < 200) ? i_rate : 200;
-    } 
-    else
-    {
-      i += (i_rate < 200) ? -i_rate : -200;
+    for (int idx = 0; idx < 3; idx++){
+      if (i[idx] >= 1000)
+      {
+        add[idx] = false;
+      }
+      if (i[idx] <= 10)
+      {
+        add[idx] = true;
+        //i_rate[idx] += (add_rate[idx]) ? 5 : -5;
+      }
+      
+      if (i_rate[idx] >= 500)
+      {
+        add_rate[idx] = false;
+      }
+      if (i_rate[idx] <= 0)
+      {
+        add_rate[idx] = true;
+      }
+
+      if (add[idx])
+      {
+        i[idx] += (i_rate[idx] < 200) ? i_rate[idx] : 200;
+      } 
+      else
+      {
+        i[idx] += (i_rate[idx] < 200) ? -i_rate[idx] : -200;
+      }
     }
   }
   /* USER CODE END 3 */
