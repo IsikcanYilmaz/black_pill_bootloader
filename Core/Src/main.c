@@ -26,6 +26,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <stdbool.h>
+#include "led.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -88,68 +89,23 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_TIM1_Init();
-  MX_TIM2_Init();
+
   /* USER CODE BEGIN 2 */
 
+  LED_Init();
   /* USER CODE END 2 */
  
  
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  TIM1->ARR = 1000;
-  //__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 5000);
-  HAL_TIM_GenerateEvent(&htim1, TIM_EVENTSOURCE_UPDATE);
-  HAL_TIM_Base_Start_IT(&htim1);
-  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
-  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_2);
-  HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_3);
 
-  bool add[3] = {true, true, true};
-  bool add_rate[3] = {true, true, true};
-  int i[3] = {400, 100, 800};
-  int i_rate[3] = {1, 5, 10};
 
   while (1)
   {
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-    HAL_Delay(10);
-    __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_1, i[0]);
-    __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_2, i[1]);
-    __HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_3, i[2]);
-
-    for (int idx = 0; idx < 3; idx++){
-      if (i[idx] >= 1000)
-      {
-        add[idx] = false;
-      }
-      if (i[idx] <= 10)
-      {
-        add[idx] = true;
-        //i_rate[idx] += (add_rate[idx]) ? 5 : -5;
-      }
-      
-      if (i_rate[idx] >= 500)
-      {
-        add_rate[idx] = false;
-      }
-      if (i_rate[idx] <= 0)
-      {
-        add_rate[idx] = true;
-      }
-
-      if (add[idx])
-      {
-        i[idx] += (i_rate[idx] < 200) ? i_rate[idx] : 200;
-      } 
-      else
-      {
-        i[idx] += (i_rate[idx] < 200) ? -i_rate[idx] : -200;
-      }
-    }
   }
   /* USER CODE END 3 */
 }

@@ -56,7 +56,8 @@ Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_i2c_ex.c \
 Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_exti.c \
 Core/Src/system_stm32f3xx.c \
 Core/Src/gpio.c \
-Core/Src/tim.c
+Core/Src/tim.c \
+Core/Src/led.c
 
 # ASM sources
 ASM_SOURCES =  \
