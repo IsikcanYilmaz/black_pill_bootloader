@@ -6,7 +6,7 @@ typedef enum
   RED,
   GREEN,
   BLUE,
-  COLOR_MAX = BLUE
+  NUM_COLORS
 } LEDColorChannel;
 
 typedef struct 

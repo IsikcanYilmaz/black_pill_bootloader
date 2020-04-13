@@ -35,7 +35,7 @@ void LED_Start(LEDInstance *led)
   HAL_TIM_PWM_Start(led->pwmTimerHandle, led->timChannel[BLUE]);
 
   // Start update timer
-  led->updateTimerHandle->Instance->ARR = 1;
+  led->updateTimerHandle->Instance->ARR = 10; 
   HAL_TIM_GenerateEvent(led->updateTimerHandle, TIM_EVENTSOURCE_UPDATE);
   HAL_TIM_Base_Start_IT(led->updateTimerHandle);
 }
@@ -50,13 +50,14 @@ void LED_SetBrightness(LEDInstance *led, LEDColorChannel color, uint16_t brightn
 
 void LED_Update(void)
 {
-  static int i = 0;
+  static int i = 100;
   static bool add = true;
 
-  static LEDColorChannel onChannels[2] = {RED, BLUE};
+  static LEDColorChannel goingUp   = RED;
+  static LEDColorChannel goingDown = GREEN;
 
-  LED_SetBrightness(&led1, onChannels[0], i);
-  LED_SetBrightness(&led1, onChannels[1], 1000-i);
+  LED_SetBrightness(&led1, BLUE, i);
+  LED_SetBrightness(&led1, GREEN, i);
   
   i += (add) ? 1 : -1;
   
@@ -64,9 +65,12 @@ void LED_Update(void)
   {
     add = false;
   }
-  if (i < 1)
+  if (i < 100)
   {
     add = true;
+
+    // ROTATE COLORS
+    //goingUp   = (goingUp + 1) % (NUM_COLORS);
   }
 
   
