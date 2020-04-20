@@ -57,7 +57,8 @@ void LED_Update(void)
   static LEDColorChannel goingDown = GREEN;
 
   LED_SetBrightness(&led1, BLUE, i);
-  LED_SetBrightness(&led1, GREEN, i);
+  //LED_SetBrightness(&led1, GREEN, i);
+  LED_SetBrightness(&led1, RED, 999-i);
   
   i += (add) ? 1 : -1;
   
