@@ -103,19 +103,11 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 
-  char buf1[] = "TEST1\r\n";
-  char buf2[] = "TEST2\r\n";
   while (1)
   {
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-    /*
-    volatile uint8_t res = CDC_Transmit_FS(buf1, sizeof(buf1));
-    HAL_Delay(1000);
-    res = CDC_Transmit_FS(buf2, sizeof(buf2));
-    HAL_Delay(1000);
-    */
   }
   /* USER CODE END 3 */
 }

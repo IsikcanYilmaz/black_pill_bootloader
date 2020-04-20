@@ -214,5 +214,11 @@ install:
 lldb:
 	lldb build/blackpill_test.elf
 
+gdb:
+	gdb build/blackpill_test.elf
+
 nanocom:
 	nanocom /dev/ttyACM1 -p n -s 1 -d 7 -f n -e n -b 38400
+
+cu:
+	cu -l /dev/ttyACM1 -s 19200

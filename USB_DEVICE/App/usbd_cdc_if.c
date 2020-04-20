@@ -23,6 +23,7 @@
 #include "usbd_cdc_if.h"
 
 /* USER CODE BEGIN INCLUDE */
+#include "cmd_shell.h"
 
 /* USER CODE END INCLUDE */
 
@@ -267,7 +268,7 @@ static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
   uint8_t res = USBD_CDC_ReceivePacket(&hUsbDeviceFS);
   if (res == USBD_OK)
   {
-    CDC_Transmit_FS(Buf, *Len);
+    CmdShellReceive(Buf, Len);
   }
   return (USBD_OK);
   /* USER CODE END 6 */
