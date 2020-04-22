@@ -1,0 +1,16 @@
+FLASH_BEGIN = 0x08000000
+FLASH_END   = 0x08020000
+FLASH_SIZE  = 0x2000
+
+BL_SIZE     = 0x1000
+APP_SIZE    = 0xf000
+
+BOOTLOADER_BEGIN = $(FLASH_BEGIN)
+BOOTLOADER_END	 = $(shell printf "0x%08x" $$(($(BOOTLOADER_BEGIN) + $(BL_SIZE))))
+APP_BEGIN        = $(BOOTLOADER_END)
+APP_END					 = $(shell printf "0x%08x" $$(($(APP_BEGIN) + $(APP_SIZE))))
+
+printstructure:
+	@echo "BOOTLOADER $(BOOTLOADER_BEGIN) - $(BOOTLOADER_END)"
+	@echo "APP        $(APP_BEGIN) - $(APP_END)"
+
