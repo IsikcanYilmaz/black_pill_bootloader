@@ -10,6 +10,8 @@
 #   2015-07-22 - first version
 # ------------------------------------------------
 
+include memorymap.mk
+
 ######################################
 # target
 ######################################
@@ -186,15 +188,26 @@ $(BUILD_DIR)/%.o: %.s Makefile | $(BUILD_DIR)
 	$(AS) -c $(CFLAGS) $< -o $@
 
 $(BUILD_DIR)/$(TARGET).elf: $(OBJECTS) Makefile
+	@echo "~~~~~~~~~~ BUILDING APPLICATION ~~~~~~~~~~"
 	$(CC) $(OBJECTS) $(LDFLAGS) -o $@
 	$(SZ) $@
+	@echo "~~~~~~~~~~ BUILDING BOOTLOADER  ~~~~~~~~~~"
+	cd bootloader; \
+	make all; \
+	cd .. 
+	@echo "~~~~~~~~~~ BOOTLOADER BUILT ~~~~~~~~~~"
+
 
 $(BUILD_DIR)/%.hex: $(BUILD_DIR)/%.elf | $(BUILD_DIR)
 	$(HEX) $< $@
 	
 $(BUILD_DIR)/%.bin: $(BUILD_DIR)/%.elf | $(BUILD_DIR)
 	$(BIN) $< $@	
-	
+	@echo "~~~~~~~~~~ PRODUCING APP INFO     ~~~~~~~~~~"
+	dd if=/dev/zero of=$(BUILD_DIR)/app_info.bin bs=1 count=$(INFO_SIZE)
+	@echo "~~~~~~~~~~ PRODUCING FINAL BINARY ~~~~~~~~~~"
+	cat bootloader/build/blackpill_bootloader.bin $(BUILD_DIR)/app_info.bin $@ > $(BUILD_DIR)/blackpill_fullbinary.bin
+
 $(BUILD_DIR):
 	mkdir $@		
 
@@ -203,6 +216,7 @@ $(BUILD_DIR):
 #######################################
 clean:
 	-rm -fR $(BUILD_DIR)
+	-rm -fR bootloader/build/*
   
 #######################################
 # dependencies
@@ -214,8 +228,14 @@ clean:
 install:
 	st-flash write build/blackpill_test.bin 0x08000000
 
+install_full:
+	st-flash write build/blackpill_fullbinary.bin 0x08000000
+
 lldb:
 	lldb build/blackpill_test.elf
+
+lldb_bl:
+	lldb bootloader/build/blackpill_bootloader.elf
 
 gdb:
 	gdb build/blackpill_test.elf
