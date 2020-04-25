@@ -20,6 +20,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "dma.h"
 #include "tim.h"
 #include "usb_device.h"
 #include "gpio.h"
@@ -28,6 +29,7 @@
 /* USER CODE BEGIN Includes */
 #include <stdbool.h>
 #include "led.h"
+#include "addressable_led_driver.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -90,18 +92,37 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_TIM1_Init();
   MX_TIM2_Init();
   MX_USB_DEVICE_Init();
+  MX_TIM3_Init();
+  MX_TIM4_Init();
   /* USER CODE BEGIN 2 */
 
   LED_Init();
+  AddrLED_Init();
+  AddrLED_SendReset();
+  AddrLED_SendColor(0, 0, 0);
+  AddrLED_SendColor(0, 0, 0);
+  AddrLED_SendColor(0, 0, 0);
+  AddrLED_SendColor(0, 0, 0);
+  AddrLED_SendColor(0, 0, 0);
+  AddrLED_SendColor(0, 0, 0);
+  AddrLED_SendColor(0, 0, 0);
+  AddrLED_SendColor(0, 0, 0);
+  AddrLED_SendColor(0, 0, 0);
+  AddrLED_SendColor(0, 0, 0);
+  AddrLED_SendColor(0, 0, 0);
+  AddrLED_SendColor(0, 0, 0);
+  AddrLED_SendReset();
   /* USER CODE END 2 */
  
  
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  
 
   while (1)
   {
