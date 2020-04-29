@@ -93,29 +93,22 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   MX_DMA_Init();
-  MX_TIM1_Init();
-  MX_TIM2_Init();
+  //MX_TIM1_Init();
+  //MX_TIM2_Init();
   MX_USB_DEVICE_Init();
   MX_TIM3_Init();
   MX_TIM4_Init();
   /* USER CODE BEGIN 2 */
 
-  LED_Init();
+  //LED_Init();
   AddrLED_Init();
+  while(1){
+  for (int i = 0; i < 16; i++){
+    AddrLED_SendColor(i*10, 10, 55);
+  }
   AddrLED_SendReset();
-  AddrLED_SendColor(0, 0, 0);
-  AddrLED_SendColor(0, 0, 0);
-  AddrLED_SendColor(0, 0, 0);
-  AddrLED_SendColor(0, 0, 0);
-  AddrLED_SendColor(0, 0, 0);
-  AddrLED_SendColor(0, 0, 0);
-  AddrLED_SendColor(0, 0, 0);
-  AddrLED_SendColor(0, 0, 0);
-  AddrLED_SendColor(0, 0, 0);
-  AddrLED_SendColor(0, 0, 0);
-  AddrLED_SendColor(0, 0, 0);
-  AddrLED_SendColor(0, 0, 0);
-  AddrLED_SendReset();
+  HAL_Delay(1000);
+  }
   /* USER CODE END 2 */
  
  

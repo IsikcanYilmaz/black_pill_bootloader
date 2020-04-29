@@ -1,5 +1,6 @@
 
 #include "addressable_led_driver.h"
+#include "cmd_shell.h"
 
 // Driver for the WS2812B based cascading, addressable LEDs
 
@@ -23,15 +24,15 @@ Each WS2812B requires 24bits of data to reproduce a color. Each color is, in fac
 #define NAIVE_ADDR_LED_START_UPDATES() HAL_TIM_Base_Start_IT(&LED_PANEL_1_TIMER_HANDLE)
 #define NAIVE_ADDR_LED_STOP_UPDATES()  HAL_TIM_Base_Stop_IT(&LED_PANEL_1_TIMER_HANDLE)
 
-uint32_t NANOSECOND_PRESCALER, MICROSECOND_PRESCALER , MILLISECOND_PRESCALER;
+uint32_t POINT_ONE_TWO_MICROSECOND_PRESCALER , MICROSECOND_PRESCALER , MILLISECOND_PRESCALER;
 
-const uint16_t AddrLEDSymbolTimesNs[] = // In nanoseconds
+const uint16_t AddrLEDSymbolTimes[] = // x * 0.125 time units
 {
-  [ADDR_LED_SYMBOL_T0H]   = 400,
-  [ADDR_LED_SYMBOL_T0L]   = 800,
-  [ADDR_LED_SYMBOL_T1H]   = 450,
-  [ADDR_LED_SYMBOL_T1L]   = 850,
-  [ADDR_LED_SYMBOL_RESET] = 50000 // <- Will fire once
+  [ADDR_LED_SYMBOL_T0H]   = 400/125,
+  [ADDR_LED_SYMBOL_T0L]   = 850/125,
+  [ADDR_LED_SYMBOL_T1H]   = 800/125,
+  [ADDR_LED_SYMBOL_T1L]   = 450/125,
+  [ADDR_LED_SYMBOL_RESET] = 50000*0.125 // <- Will fire once
 };
 
 
@@ -67,12 +68,12 @@ static void AddrLED_NaiveSetUpdatePeriodUs(uint16_t ns)
 
 void AddrLED_Init(void)
 {
-  NANOSECOND_PRESCALER  = ((HAL_RCC_GetSysClockFreq() / 1000000000) - 1); // 1000000000 Hz
+  POINT_ONE_TWO_MICROSECOND_PRESCALER = ((HAL_RCC_GetSysClockFreq() / 8000000) - 1); // 8000000 Hz, update irq every 0.125 us
   MICROSECOND_PRESCALER = ((HAL_RCC_GetSysClockFreq() / 1000000) - 1);    // 1000000 Hz
   MILLISECOND_PRESCALER = ((HAL_RCC_GetSysClockFreq() / 1000) - 1);       // 1000 Hz
 
 #if NAIVE
-  LED_PANEL_1_TIMER->PSC = NANOSECOND_PRESCALER;
+  LED_PANEL_1_TIMER->PSC = POINT_ONE_TWO_MICROSECOND_PRESCALER;
   AddrLED_InitNaive();
 #else
   // TODO
@@ -100,6 +101,7 @@ void AddrLED_SendColor(uint8_t red, uint8_t green, uint8_t blue)
     {
       AddrLEDCode_e code;
       code = ((*colors[i] & (0x1 << b)) > 0) ? ADDR_LED_CODE_HIGH : ADDR_LED_CODE_LOW;
+      if (code == ADDR_LED_CODE_HIGH)
       AddrLED_SendCodeNaive(code, true);
     }
   }
@@ -150,7 +152,7 @@ void AddrLED_SendCodeNaive(AddrLEDCode_e code, bool blocking)
       return;
     }
   }
-  holdTime = AddrLEDSymbolTimesNs[naiveCurrentSymbol];
+  holdTime = AddrLEDSymbolTimes[naiveCurrentSymbol];
 
   // If code we're sending is a 1 or a 0, the first half of the code is
   // the serial line being pulled high. So, do that.
@@ -215,7 +217,7 @@ void AddrLED_NaiveISR(void)
     }
   }
 
-  holdTime = AddrLEDSymbolTimesNs[naiveCurrentSymbol];
+  holdTime = AddrLEDSymbolTimes[naiveCurrentSymbol];
   if (naiveCurrentCode != ADDR_LED_CODE_RESET)
   {   
     HAL_GPIO_WritePin(LED_PANEL_1_GPIO_PORT, LED_PANEL_1_GPIO_PIN, RESET);
