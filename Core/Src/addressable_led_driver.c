@@ -1,7 +1,6 @@
 
 #include "addressable_led_driver.h"
 #include "cmd_shell.h"
-
 // Driver for the WS2812B based cascading, addressable LEDs
 
 /*
@@ -26,13 +25,13 @@ Each WS2812B requires 24bits of data to reproduce a color. Each color is, in fac
 
 uint32_t POINT_ONE_TWO_MICROSECOND_PRESCALER , MICROSECOND_PRESCALER , MILLISECOND_PRESCALER;
 
-const uint16_t AddrLEDSymbolTimes[] = // x * 0.125 time units
+const uint16_t AddrLEDSymbolTimes[] = // 250ns time units
 {
-  [ADDR_LED_SYMBOL_T0H]   = 400/125,
-  [ADDR_LED_SYMBOL_T0L]   = 850/125,
-  [ADDR_LED_SYMBOL_T1H]   = 800/125,
-  [ADDR_LED_SYMBOL_T1L]   = 450/125,
-  [ADDR_LED_SYMBOL_RESET] = 50000*0.125 // <- Will fire once
+  [ADDR_LED_SYMBOL_T0H]   = 2, // ~250ns
+  [ADDR_LED_SYMBOL_T0L]   = 5, // ~625ns
+  [ADDR_LED_SYMBOL_T1H]   = 5, // ~625ns
+  [ADDR_LED_SYMBOL_T1L]   = 2, // ~250ns
+  [ADDR_LED_SYMBOL_RESET] = 2240 // ~280000ns
 };
 
 
@@ -68,12 +67,13 @@ static void AddrLED_NaiveSetUpdatePeriodUs(uint16_t ns)
 
 void AddrLED_Init(void)
 {
-  POINT_ONE_TWO_MICROSECOND_PRESCALER = ((HAL_RCC_GetSysClockFreq() / 8000000) - 1); // 8000000 Hz, update irq every 0.125 us
+  POINT_ONE_TWO_MICROSECOND_PRESCALER = ((HAL_RCC_GetSysClockFreq() / 8000000) - 1); // 4000000 Hz, update irq every 250 ns
   MICROSECOND_PRESCALER = ((HAL_RCC_GetSysClockFreq() / 1000000) - 1);    // 1000000 Hz
   MILLISECOND_PRESCALER = ((HAL_RCC_GetSysClockFreq() / 1000) - 1);       // 1000 Hz
 
 #if NAIVE
-  LED_PANEL_1_TIMER->PSC = POINT_ONE_TWO_MICROSECOND_PRESCALER;
+  //LED_PANEL_1_TIMER->PSC = POINT_ONE_TWO_MICROSECOND_PRESCALER;
+  LED_PANEL_1_TIMER->PSC = 0;
   AddrLED_InitNaive();
 #else
   // TODO
@@ -101,7 +101,6 @@ void AddrLED_SendColor(uint8_t red, uint8_t green, uint8_t blue)
     {
       AddrLEDCode_e code;
       code = ((*colors[i] & (0x1 << b)) > 0) ? ADDR_LED_CODE_HIGH : ADDR_LED_CODE_LOW;
-      if (code == ADDR_LED_CODE_HIGH)
       AddrLED_SendCodeNaive(code, true);
     }
   }
@@ -113,7 +112,9 @@ void AddrLED_SendColor(uint8_t red, uint8_t green, uint8_t blue)
 void AddrLED_SendReset(void)
 {
 #if NAIVE
+  HAL_GPIO_WritePin(DEBUG_PIN_GPIO_PORT, DEBUG_PIN_GPIO_PIN, SET);
   AddrLED_SendCodeNaive(ADDR_LED_CODE_RESET, true);
+  HAL_GPIO_WritePin(DEBUG_PIN_GPIO_PORT, DEBUG_PIN_GPIO_PIN, RESET);
 #else
 
 #endif
@@ -166,7 +167,7 @@ void AddrLED_SendCodeNaive(AddrLEDCode_e code, bool blocking)
   }
 
   // Set and start the IRQ timer. If $blocking, wait until all bits are sent
-  AddrLED_NaiveSetUpdatePeriodUs(holdTime);
+  AddrLED_NaiveSetUpdatePeriodUs(1);
   NAIVE_ADDR_LED_START_UPDATES();
   if (blocking)
   {
@@ -174,8 +175,11 @@ void AddrLED_SendCodeNaive(AddrLEDCode_e code, bool blocking)
   }
 }
 
+// HMM this doesnt work. need to dma pwm this data
 void AddrLED_NaiveISR(void)
 {
+  HAL_GPIO_TogglePin(DEBUG_PIN_GPIO_PORT, DEBUG_PIN_GPIO_PIN);
+  return;
   // If needed, begin sending the second half of the code
   naiveSendingInProgress = true;
   uint16_t holdTime;
