@@ -12,8 +12,11 @@
 #define LED_PANEL_1_TIMER_CHANNEL TIM_CHANNEL_4
 #define LED_PANEL_1_TIMER_HANDLE  htim4
 
+#define LED_PANEL_1_PWM_TIMER         TIM3
+#define LED_PANEL_1_PWM_TIMER_CHANNEL TIM_CHANNEL_4
+#define LED_PANEL_1_PWM_TIMER_HANDLE  htim3
 
-#define NAIVE 1
+#define NAIVE false
 
 // There are 5 kinds of symbols.
 // To send a '0' code (logic low) one needs to send T0H, then T0L

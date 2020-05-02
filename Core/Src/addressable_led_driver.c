@@ -13,15 +13,15 @@
 Each WS2812B requires 24bits of data to reproduce a color. Each color is, in fact, composed of 3 groups of 8bits each that represent its RGB coding. This data must be sent following this order.
 
   GREEN[7:0] RED[7:0] BLUE[7:0]
-*/
 
-/*
   NAIVE  MODE: Send symbols via regular gpio.
   NORMAL MODE: Send symbols via DMAd PWM
 */
 
 #define NAIVE_ADDR_LED_START_UPDATES() HAL_TIM_Base_Start_IT(&LED_PANEL_1_TIMER_HANDLE)
 #define NAIVE_ADDR_LED_STOP_UPDATES()  HAL_TIM_Base_Stop_IT(&LED_PANEL_1_TIMER_HANDLE)
+
+// PRIVATE VARIBLES -------------------------------------------------
 
 uint32_t POINT_ONE_TWO_MICROSECOND_PRESCALER , MICROSECOND_PRESCALER , MILLISECOND_PRESCALER;
 
@@ -34,10 +34,11 @@ const uint16_t AddrLEDSymbolTimes[] = // 250ns time units
   [ADDR_LED_SYMBOL_RESET] = 2240 // ~280000ns
 };
 
-
 volatile bool naiveSendingInProgress = false;
 volatile AddrLEDCode_e   naiveCurrentCode   = ADDR_LED_CODE_NONE;
 volatile AddrLEDSymbol_e naiveCurrentSymbol = ADDR_LED_SYMBOL_NONE;
+
+// PRIVATE FUNCTIONS ------------------------------------------------
 
 static void AddrLED_NaiveSetUpdatePeriodUs(uint16_t ns)
 {
@@ -65,6 +66,13 @@ static void AddrLED_NaiveSetUpdatePeriodUs(uint16_t ns)
   }
 }
 
+static void AddrLED_SetPWMPeriodUs(uint16_t ns)
+{
+  // TODO
+}
+
+// PUBLIC FUNCTIONS -------------------------------------------------
+
 void AddrLED_Init(void)
 {
   POINT_ONE_TWO_MICROSECOND_PRESCALER = ((HAL_RCC_GetSysClockFreq() / 8000000) - 1); // 4000000 Hz, update irq every 250 ns
@@ -76,7 +84,15 @@ void AddrLED_Init(void)
   LED_PANEL_1_TIMER->PSC = 0;
   AddrLED_InitNaive();
 #else
-  // TODO
+  // Initialize PWM Timer
+  
+  // Set the PWM Prescaler to allow for 8MHz overflows
+  LED_PANEL_1_PWM_TIMER->PSC = POINT_ONE_TWO_MICROSECOND_PRESCALER; 
+
+  // Set update event flag so PSC and ARR are loaded
+  LED_PANEL_1_PWM_TIMER->EGR = TIM_EGR_UG;
+
+
 #endif
 }
 
@@ -229,7 +245,5 @@ void AddrLED_NaiveISR(void)
   AddrLED_NaiveSetUpdatePeriodUs(holdTime);
 
 }
-
-
 
 

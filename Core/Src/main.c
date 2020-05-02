@@ -99,13 +99,8 @@ int main(void)
   MX_TIM4_Init();
   /* USER CODE BEGIN 2 */
 
-  //LED_Init();
+  LED_Init();
   AddrLED_Init();
-  while(1){
-  AddrLED_SendColor(0xff, 0xff, 0xff);
-  AddrLED_SendReset();
-  //HAL_Delay(1000);
-  }
   /* USER CODE END 2 */
 
   /* Infinite loop */

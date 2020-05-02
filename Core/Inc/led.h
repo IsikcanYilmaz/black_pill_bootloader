@@ -1,6 +1,9 @@
 
 #include "main.h"
 
+#define LED_UPDATE_TIMER TIM1
+#define LED_PWM_TIMER    TIM2
+
 typedef enum 
 {
   RED,
