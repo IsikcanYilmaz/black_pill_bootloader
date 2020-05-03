@@ -113,15 +113,19 @@ void AddrLED_Init(void)
   LED_PANEL_1_TIMER->PSC = 0;
   AddrLED_InitNaive();
 #else
-  // Initialize PWM Timer // 
-  /*
+  /* ~ Initialize PWM Timer ~
+   *
    * OKAY SO:
-   * PSC 0, ARR 22, DC 8 Gives me an update time of ~1270 nanoseconds, HIGH time of ~445 nanoseconds
-   *                DC 7                                               HIGH time of ~390 nanoseconds
+   * PSC 0, ARR 22, CCR 8  Gives me an update time of ~1270 nanoseconds, HIGH time of ~445 nanoseconds
+   *                CCR 7                                                HIGH time of ~390 nanoseconds
+   *                CCR 15                                               HIGH time of ~823 nanoseconds
    * 
+   * So seems like the Compare values i'll need are 7 and 15, for 0 CODE and 1 CODE respectively.
+   *
    * Lets go with this, why not
    *
    */
+
   // Set update event flag so PSC and ARR are loaded
   LED_PANEL_1_PWM_TIMER->PSC = 0;
   LED_PANEL_1_PWM_TIMER->ARR = 22;
@@ -130,7 +134,7 @@ void AddrLED_Init(void)
   // PWM Start TEST
   ADDR_LED_PWM_START();
 
-  ADDR_LED_PWM_SET_DUTY_CYCLE(7);
+  ADDR_LED_PWM_SET_DUTY_CYCLE(14);
 
   while(1) { }
 
