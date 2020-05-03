@@ -21,9 +21,14 @@ Each WS2812B requires 24bits of data to reproduce a color. Each color is, in fac
 #define NAIVE_ADDR_LED_START_UPDATES() HAL_TIM_Base_Start_IT(&LED_PANEL_1_TIMER_HANDLE)
 #define NAIVE_ADDR_LED_STOP_UPDATES()  HAL_TIM_Base_Stop_IT(&LED_PANEL_1_TIMER_HANDLE)
 
+#define ADDR_LED_PWM_START()           HAL_TIM_PWM_Start(&LED_PANEL_1_PWM_TIMER_HANDLE, LED_PANEL_1_PWM_TIMER_CHANNEL);
+#define ADDR_LED_PWM_STOP()            HAL_TIM_PWM_Stop(&LED_PANEL_1_PWM_TIMER_HANDLE, LED_PANEL_1_PWM_TIMER_CHANNEL);
+
+#define ADDR_LED_PWM_SET_DUTY_CYCLE(d) __HAL_TIM_SET_COMPARE(&LED_PANEL_1_PWM_TIMER_HANDLE, LED_PANEL_1_PWM_TIMER_CHANNEL, d);
+
 // PRIVATE VARIBLES -------------------------------------------------
 
-uint32_t POINT_ONE_TWO_MICROSECOND_PRESCALER , MICROSECOND_PRESCALER , MILLISECOND_PRESCALER;
+uint32_t MICROSECOND_PRESCALER , MILLISECOND_PRESCALER;
 
 const uint16_t AddrLEDSymbolTimes[] = // 250ns time units
 {
@@ -68,32 +73,78 @@ static void AddrLED_NaiveSetUpdatePeriodUs(uint16_t ns)
 
 static void AddrLED_SetPWMPeriodUs(uint16_t ns)
 {
-  // TODO
+  // Set/reset Symbol sending update timer to fire an interrupt
+  // Stop and restart timer if it was already running
+  bool tmrWasRunning = false;
+  if (LED_PANEL_1_PWM_TIMER->CR1 ^ TIM_CR1_CEN)
+  {
+    tmrWasRunning = true;
+    ADDR_LED_PWM_STOP();
+  }
+
+  // Update autoreload register
+  // Timer will generate an IRQ every $ns nanoseconds
+  LED_PANEL_1_PWM_TIMER->ARR = ns;
+
+  // Generate update event to load new ARR immediately
+  LED_PANEL_1_PWM_TIMER->EGR = TIM_EGR_UG;
+
+  // Reset counter if timer was running before
+  if (tmrWasRunning)
+  {
+    LED_PANEL_1_PWM_TIMER->CNT = 0x00;
+    ADDR_LED_PWM_START();
+  }
+}
+
+static void AddrLED_SetPWMDutyCycle(uint16_t ds)
+{
+  
 }
 
 // PUBLIC FUNCTIONS -------------------------------------------------
 
 void AddrLED_Init(void)
 {
-  POINT_ONE_TWO_MICROSECOND_PRESCALER = ((HAL_RCC_GetSysClockFreq() / 8000000) - 1); // 4000000 Hz, update irq every 250 ns
   MICROSECOND_PRESCALER = ((HAL_RCC_GetSysClockFreq() / 1000000) - 1);    // 1000000 Hz
   MILLISECOND_PRESCALER = ((HAL_RCC_GetSysClockFreq() / 1000) - 1);       // 1000 Hz
 
 #if NAIVE
-  //LED_PANEL_1_TIMER->PSC = POINT_ONE_TWO_MICROSECOND_PRESCALER;
   LED_PANEL_1_TIMER->PSC = 0;
   AddrLED_InitNaive();
 #else
-  // Initialize PWM Timer
-  
-  // Set the PWM Prescaler to allow for 8MHz overflows
-  LED_PANEL_1_PWM_TIMER->PSC = POINT_ONE_TWO_MICROSECOND_PRESCALER; 
-
+  // Initialize PWM Timer // 
+  /*
+   * OKAY SO:
+   * PSC 0, ARR 22, DC 8 Gives me an update time of ~1270 nanoseconds, HIGH time of ~445 nanoseconds
+   *                DC 7                                               HIGH time of ~390 nanoseconds
+   * 
+   * Lets go with this, why not
+   *
+   */
   // Set update event flag so PSC and ARR are loaded
+  LED_PANEL_1_PWM_TIMER->PSC = 0;
+  LED_PANEL_1_PWM_TIMER->ARR = 22;
   LED_PANEL_1_PWM_TIMER->EGR = TIM_EGR_UG;
 
+  // PWM Start TEST
+  ADDR_LED_PWM_START();
+
+  ADDR_LED_PWM_SET_DUTY_CYCLE(7);
+
+  while(1) { }
 
 #endif
+}
+
+void AddrLED_StartPWM(void)
+{
+  ADDR_LED_PWM_START();
+}
+
+void AddrLED_StopPWM(void)
+{
+  ADDR_LED_PWM_STOP();
 }
 
 void AddrLED_InitNaive(void)

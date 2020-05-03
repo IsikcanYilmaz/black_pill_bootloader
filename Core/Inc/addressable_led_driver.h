@@ -42,6 +42,8 @@ typedef enum {
 
 void AddrLED_Init(void);
 void AddrLED_InitNaive(void);
+void AddrLED_StartPWM(void);
+void AddrLED_StopPWM(void);
 void AddrLED_SendColor(uint8_t red, uint8_t green, uint8_t blue);
 void AddrLED_SendReset(void);
 void AddrLED_SendLowNaive(void);
