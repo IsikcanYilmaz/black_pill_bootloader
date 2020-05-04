@@ -128,7 +128,7 @@ void AddrLED_Init(void)
 
   // Set update event flag so PSC and ARR are loaded
   LED_PANEL_1_PWM_TIMER->PSC = 0;
-  LED_PANEL_1_PWM_TIMER->ARR = 22;
+  LED_PANEL_1_PWM_TIMER->ARR = 25;
   LED_PANEL_1_PWM_TIMER->EGR = TIM_EGR_UG;
   
   //#define PWM_BASE_TEST
@@ -140,7 +140,7 @@ void AddrLED_Init(void)
   #endif
   
   #ifdef PWM_DMA_TEST
-  const uint32_t dmaTestPayload[] = {1, 1, 22, 22};
+  const uint32_t dmaTestPayload[] = {15, 1, 1, 1};
   //HAL_TIM_PWM_Start_DMA(TIM_HandleTypeDef *htim, uint32_t Channel, uint32_t *pData, uint16_t Length)
   HAL_TIM_PWM_Start_DMA(&LED_PANEL_1_PWM_TIMER_HANDLE, LED_PANEL_1_PWM_TIMER_CHANNEL, &dmaTestPayload, 4);
   #endif
