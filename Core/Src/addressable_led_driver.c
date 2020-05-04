@@ -116,7 +116,7 @@ void AddrLED_Init(void)
   /* ~ Initialize PWM Timer ~
    *
    * OKAY SO:
-   * PSC 0, ARR 22, CCR 8  Gives me an update time of ~1270 nanoseconds, HIGH time of ~445 nanoseconds
+   * PSC 0, ARR 25, CCR 8  Gives me an update time of ~1440 nanoseconds, HIGH time of ~445 nanoseconds
    *                CCR 7                                                HIGH time of ~390 nanoseconds
    *                CCR 15                                               HIGH time of ~823 nanoseconds
    * 
