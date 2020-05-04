@@ -13,9 +13,6 @@
 Each WS2812B requires 24bits of data to reproduce a color. Each color is, in fact, composed of 3 groups of 8bits each that represent its RGB coding. This data must be sent following this order.
 
   GREEN[7:0] RED[7:0] BLUE[7:0]
-
-  NAIVE  MODE: Send symbols via regular gpio.
-  NORMAL MODE: Send symbols via DMAd PWM
 */
 
 #define NAIVE_ADDR_LED_START_UPDATES() HAL_TIM_Base_Start_IT(&LED_PANEL_1_TIMER_HANDLE)
@@ -26,10 +23,15 @@ Each WS2812B requires 24bits of data to reproduce a color. Each color is, in fac
 
 #define ADDR_LED_PWM_SET_DUTY_CYCLE(d) __HAL_TIM_SET_COMPARE(&LED_PANEL_1_PWM_TIMER_HANDLE, LED_PANEL_1_PWM_TIMER_CHANNEL, d);
 
+// PWM DUTY CYCLE VALUES
+#define ADDR_LED_CODE_HIGH_COMPARE_VAL 14
+#define ADDR_LED_CODE_LOW_COMPARE_VAL  7
+
 // PRIVATE VARIBLES -------------------------------------------------
 
 uint32_t MICROSECOND_PRESCALER , MILLISECOND_PRESCALER;
 
+// TODO // May be unnecessary. remove if so
 const uint16_t AddrLEDSymbolTimes[] = // 250ns time units
 {
   [ADDR_LED_SYMBOL_T0H]   = 2, // ~250ns
@@ -39,37 +41,7 @@ const uint16_t AddrLEDSymbolTimes[] = // 250ns time units
   [ADDR_LED_SYMBOL_RESET] = 2240 // ~280000ns
 };
 
-volatile bool naiveSendingInProgress = false;
-volatile AddrLEDCode_e   naiveCurrentCode   = ADDR_LED_CODE_NONE;
-volatile AddrLEDSymbol_e naiveCurrentSymbol = ADDR_LED_SYMBOL_NONE;
-
 // PRIVATE FUNCTIONS ------------------------------------------------
-
-static void AddrLED_NaiveSetUpdatePeriodUs(uint16_t ns)
-{
-  // Set/reset Symbol sending update timer to fire an interrupt
-  // Stop and restart timer if it was already running
-  bool tmrWasRunning = false;
-  if (LED_PANEL_1_TIMER->CR1 ^ TIM_CR1_CEN)
-  {
-    tmrWasRunning = true;
-    NAIVE_ADDR_LED_STOP_UPDATES();
-  }
-
-  // Update autoreload register
-  // Timer will generate an IRQ every $ns nanoseconds
-  LED_PANEL_1_TIMER->ARR = ns;
-
-  // Generate update event to load new ARR immediately
-  LED_PANEL_1_TIMER->EGR = TIM_EGR_UG;
-
-  // Reset counter if timer was running before
-  if (tmrWasRunning)
-  {
-    LED_PANEL_1_TIMER->CNT = 0x00;
-    NAIVE_ADDR_LED_START_UPDATES();
-  }
-}
 
 static void AddrLED_SetPWMPeriodUs(uint16_t ns)
 {
@@ -109,10 +81,6 @@ void AddrLED_Init(void)
   MICROSECOND_PRESCALER = ((HAL_RCC_GetSysClockFreq() / 1000000) - 1);    // 1000000 Hz
   MILLISECOND_PRESCALER = ((HAL_RCC_GetSysClockFreq() / 1000) - 1);       // 1000 Hz
 
-#if NAIVE
-  LED_PANEL_1_TIMER->PSC = 0;
-  AddrLED_InitNaive();
-#else
   /* ~ Initialize PWM Timer ~
    *
    * OKAY SO:
@@ -128,26 +96,73 @@ void AddrLED_Init(void)
 
   // Set update event flag so PSC and ARR are loaded
   LED_PANEL_1_PWM_TIMER->PSC = 0;
-  LED_PANEL_1_PWM_TIMER->ARR = 25;
+  LED_PANEL_1_PWM_TIMER->ARR = 23;
   LED_PANEL_1_PWM_TIMER->EGR = TIM_EGR_UG;
   
   //#define PWM_BASE_TEST
-  #define PWM_DMA_TEST
-
+  //#define PWM_DMA_TEST
   #ifdef PWM_BASE_TEST
   ADDR_LED_PWM_START();
   ADDR_LED_PWM_SET_DUTY_CYCLE(22);
+  while(1){}
   #endif
-  
   #ifdef PWM_DMA_TEST
-  const uint32_t dmaTestPayload[] = {15, 1, 1, 1};
+  const uint8_t dmaTestPayload[] = {ADDR_LED_CODE_HIGH_COMPARE_VAL, ADDR_LED_CODE_LOW_COMPARE_VAL, 1, 1, ADDR_LED_CODE_HIGH_COMPARE_VAL, ADDR_LED_CODE_LOW_COMPARE_VAL, 1, 0};
   //HAL_TIM_PWM_Start_DMA(TIM_HandleTypeDef *htim, uint32_t Channel, uint32_t *pData, uint16_t Length)
-  HAL_TIM_PWM_Start_DMA(&LED_PANEL_1_PWM_TIMER_HANDLE, LED_PANEL_1_PWM_TIMER_CHANNEL, &dmaTestPayload, 4);
+  HAL_TIM_PWM_Start_DMA(&LED_PANEL_1_PWM_TIMER_HANDLE, LED_PANEL_1_PWM_TIMER_CHANNEL, (uint32_t *) &dmaTestPayload, 8);
+  while(1){}
   #endif
 
-  while(1) { }
+  AddrLED_Test();
+  while(1){}
+}
 
-#endif
+void AddrLED_Test(void)
+{
+  // Initialize test Pixel array
+  const uint8_t testSize = 4 * 4;
+  Pixel_t test[testSize];
+  memset(&test, 0x0, sizeof(test));
+  for (int i = 0; i < testSize; i++)
+  {
+    if (i < 4)
+      test[i] = (Pixel_t) {0, 0, 0xff};
+    else if (i <= 8)
+      test[i] = (Pixel_t) {0, 0xff, 0};
+    else if (i <= 12)
+      test[i] = (Pixel_t) {0xff, 0, 0};
+    //test[i] = (Pixel_t) {0, 0xff, 0};
+  }
+  
+  // Initialize payload
+  uint8_t test1Payload[3 * 8 * testSize + 1];
+  uint8_t test1PayloadHead = 0;
+  memset(&test1Payload, 0x0, sizeof(test1Payload));
+  
+  #define BREAKEARLY true
+  // Go thru all Pixel_t objects
+  for (int i = 0; i < testSize; i++)
+  {
+    // Go thru all bytes 
+    for (int j = 0; j < sizeof(Pixel_t); j++)
+    {
+      uint8_t currSourceByte = *((uint8_t *) &test[i] + j);
+      // Go thru all bits
+      for (int b = 0; b < 8; b++)
+      {
+       *((uint8_t *) &test1Payload + test1PayloadHead) = ((currSourceByte) & 0x1 << b) > 0 ? ADDR_LED_CODE_HIGH_COMPARE_VAL : ADDR_LED_CODE_LOW_COMPARE_VAL;
+       test1PayloadHead++;
+      }
+    }
+    #if BREAKEARLY
+    if (i == 3)
+      break;
+    #endif
+  }
+  
+  HAL_TIM_PWM_Start_DMA(&LED_PANEL_1_PWM_TIMER_HANDLE, LED_PANEL_1_PWM_TIMER_CHANNEL, (uint32_t *) &test1Payload, sizeof(test1Payload));
+  bool block = true;
+  while (block) {}
 }
 
 void AddrLED_StartPWM(void)
@@ -162,152 +177,23 @@ void AddrLED_StopPWM(void)
 
 void AddrLED_InitNaive(void)
 {
-  HAL_GPIO_DeInit(LED_PANEL_1_GPIO_PORT, LED_PANEL_1_GPIO_PIN);
-  GPIO_InitTypeDef GPIO_InitStruct = {0};
-  GPIO_InitStruct.Pin = LED_PANEL_1_GPIO_PIN;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
-  HAL_GPIO_Init(LED_PANEL_1_GPIO_PORT, &GPIO_InitStruct);
+
 }
 
 void AddrLED_SendColor(uint8_t red, uint8_t green, uint8_t blue)
 {
-#if NAIVE
-  uint8_t *colors[] = {&red, &green, &blue};
-  for (int i = 0; i < 3; i++)
-  {
-    for (int b = 0; b < 8; b++)
-    {
-      AddrLEDCode_e code;
-      code = ((*colors[i] & (0x1 << b)) > 0) ? ADDR_LED_CODE_HIGH : ADDR_LED_CODE_LOW;
-      AddrLED_SendCodeNaive(code, true);
-    }
-  }
-#else
 
-#endif
 }
 
 void AddrLED_SendReset(void)
 {
-#if NAIVE
-  HAL_GPIO_WritePin(DEBUG_PIN_GPIO_PORT, DEBUG_PIN_GPIO_PIN, SET);
-  AddrLED_SendCodeNaive(ADDR_LED_CODE_RESET, true);
-  HAL_GPIO_WritePin(DEBUG_PIN_GPIO_PORT, DEBUG_PIN_GPIO_PIN, RESET);
-#else
 
-#endif
-}
-
-void AddrLED_SendCodeNaive(AddrLEDCode_e code, bool blocking)
-{
-  // Begin sending code. 
-  naiveSendingInProgress = true;
-  naiveCurrentCode = code;
-  uint16_t holdTime;
-
-  // All this function has to pretty much is to find how long to hold the first
-  // symbol of the code. 
-  // Unless the code is RESET, it is pulling the serial line high. 
-  switch(code)
-  {
-    case ADDR_LED_CODE_HIGH:
-    {
-      naiveCurrentSymbol = ADDR_LED_SYMBOL_T1H;
-      break;
-    }
-    case ADDR_LED_CODE_LOW:
-    {
-      naiveCurrentSymbol = ADDR_LED_SYMBOL_T0H;
-      break;
-    }
-    case ADDR_LED_CODE_RESET:
-    {
-      naiveCurrentSymbol = ADDR_LED_SYMBOL_RESET;
-      break;
-    }
-    default:
-    {
-      // This shouldnt happen really
-      return;
-    }
-  }
-  holdTime = AddrLEDSymbolTimes[naiveCurrentSymbol];
-
-  // If code we're sending is a 1 or a 0, the first half of the code is
-  // the serial line being pulled high. So, do that.
-  if (code < ADDR_LED_CODE_RESET)
-  {
-    HAL_GPIO_WritePin(LED_PANEL_1_GPIO_PORT, LED_PANEL_1_GPIO_PIN, SET);
-  }
-  else
-  {
-    HAL_GPIO_WritePin(LED_PANEL_1_GPIO_PORT, LED_PANEL_1_GPIO_PIN, RESET);
-  }
-
-  // Set and start the IRQ timer. If $blocking, wait until all bits are sent
-  AddrLED_NaiveSetUpdatePeriodUs(1);
-  NAIVE_ADDR_LED_START_UPDATES();
-  if (blocking)
-  {
-    while(naiveSendingInProgress) {}
-  }
 }
 
 // HMM this doesnt work. need to dma pwm this data
 void AddrLED_NaiveISR(void)
 {
   HAL_GPIO_TogglePin(DEBUG_PIN_GPIO_PORT, DEBUG_PIN_GPIO_PIN);
-  return;
-  // If needed, begin sending the second half of the code
-  naiveSendingInProgress = true;
-  uint16_t holdTime;
-
-  // If we were just playing the RESET code, this interrupt is the 
-  // end of this code. 
-  // If we were playing a T1H/T0H code, this interrupt needs to start playing 
-  // the second part of this code
-  // If we were playing a T1L/T0L code, this interrupt is the end of this
-  // code.
-
-  switch(naiveCurrentSymbol)
-  {
-    case ADDR_LED_SYMBOL_T1H:
-    {
-      naiveCurrentSymbol = ADDR_LED_SYMBOL_T1L;
-      break;
-    }
-    case ADDR_LED_SYMBOL_T0H:
-    {
-      naiveCurrentSymbol = ADDR_LED_SYMBOL_T0L;
-      break;
-    }
-    case ADDR_LED_SYMBOL_RESET:
-    case ADDR_LED_SYMBOL_T0L:
-    case ADDR_LED_SYMBOL_T1L:
-    {
-      // End of a sequence. stop the irq timer and return
-      naiveCurrentSymbol = ADDR_LED_SYMBOL_NONE;
-      naiveCurrentCode   = ADDR_LED_CODE_NONE;
-      NAIVE_ADDR_LED_STOP_UPDATES();
-      naiveSendingInProgress = false;
-      return;
-    }
-    default:
-    {
-      // This shouldnt happen
-      break;
-    }
-  }
-
-  holdTime = AddrLEDSymbolTimes[naiveCurrentSymbol];
-  if (naiveCurrentCode != ADDR_LED_CODE_RESET)
-  {   
-    HAL_GPIO_WritePin(LED_PANEL_1_GPIO_PORT, LED_PANEL_1_GPIO_PIN, RESET);
-  }
-  AddrLED_NaiveSetUpdatePeriodUs(holdTime);
-
 }
 
 

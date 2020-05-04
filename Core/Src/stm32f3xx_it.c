@@ -208,6 +208,21 @@ void SysTick_Handler(void)
 void DMA1_Channel3_IRQHandler(void)
 {
   /* USER CODE BEGIN DMA1_Channel3_IRQn 0 */
+  static volatile bool test[16];
+  static volatile uint8_t testidx = 0;
+  static volatile uint32_t testflags[16];
+  bool tc = false;
+  if (__HAL_DMA_GET_IT_SOURCE(&hdma_tim3_ch4_up, DMA_IT_TC))
+  {
+    tc = true;
+  }
+  if (testidx < 16)
+  {
+    test[testidx] = tc;
+    testflags[testidx] = hdma_tim3_ch4_up.Instance->CCR;
+    testidx++;
+  }
+
 
   /* USER CODE END DMA1_Channel3_IRQn 0 */
   HAL_DMA_IRQHandler(&hdma_tim3_ch4_up);
