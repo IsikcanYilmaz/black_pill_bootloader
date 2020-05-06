@@ -1,4 +1,4 @@
-ls#include "FastLED.h"
+#include "FastLED.h"
 #define NUM_LEDS (4 * 4)
 #define DATA_PIN 5
 #define TWO_HUNDRED_PI 628
@@ -13,13 +13,15 @@ void setup() {
   FastLED.addLeds<WS2812B, DATA_PIN, GRB>(leds, NUM_LEDS);
 }
 
-#define test 1
+#define test 0
+#define NEAT_BREATHE 1
 void loop() {
   #if test
     for(int i=0; i<NUM_LEDS; i++){
       leds[i] = CRGB(1, 0, 0);
     } 
     FastLED.show();
+    //delay(10);
   #endif
   
   #if NEAT_BREATHE
@@ -27,7 +29,7 @@ void loop() {
     static bool add = true;
     static uint8_t d = 2;
     for(int i=0; i<NUM_LEDS; i++){
-      leds[i] = CRGB(255-j, 0, j);
+      leds[i] = CRGB(j, j, j);
       /*
       FastLED.show();
       delay(10);
@@ -36,7 +38,7 @@ void loop() {
       */
     }
     FastLED.show();
-    if (j == 255)
+    if (j == 100)
     {
       add = false;
     }

@@ -24,7 +24,7 @@ Each WS2812B requires 24bits of data to reproduce a color. Each color is, in fac
 #define ADDR_LED_PWM_SET_DUTY_CYCLE(d) __HAL_TIM_SET_COMPARE(&LED_PANEL_1_PWM_TIMER_HANDLE, LED_PANEL_1_PWM_TIMER_CHANNEL, d);
 
 // PWM DUTY CYCLE VALUES
-#define ADDR_LED_CODE_HIGH_COMPARE_VAL 14
+#define ADDR_LED_CODE_HIGH_COMPARE_VAL 15
 #define ADDR_LED_CODE_LOW_COMPARE_VAL  7
 
 // PRIVATE VARIBLES -------------------------------------------------
@@ -100,24 +100,36 @@ void AddrLED_Init(void)
   LED_PANEL_1_PWM_TIMER->EGR = TIM_EGR_UG;
   
   //#define PWM_BASE_TEST
-  //#define PWM_DMA_TEST
+  #define PWM_DMA_TEST
   #ifdef PWM_BASE_TEST
   ADDR_LED_PWM_START();
   ADDR_LED_PWM_SET_DUTY_CYCLE(22);
   while(1){}
   #endif
   #ifdef PWM_DMA_TEST
-  const uint8_t dmaTestPayload[] = {ADDR_LED_CODE_HIGH_COMPARE_VAL, ADDR_LED_CODE_LOW_COMPARE_VAL, 1, 1, ADDR_LED_CODE_HIGH_COMPARE_VAL, ADDR_LED_CODE_LOW_COMPARE_VAL, 1, 0};
+  //const uint8_t dmaTestPayload[] = {ADDR_LED_CODE_HIGH_COMPARE_VAL, ADDR_LED_CODE_LOW_COMPARE_VAL, 1, 1};
+  //
+  uint8_t o = 13;
+  uint8_t z = 6;
+  const uint8_t dmaTestPayload[] = {z, z, z, z, z, z, z, z,\
+                                    o, o, o, o, o, o, o, o,\
+                                    z, z, z, z, z, z, z, z,\ 
+        
+                                    z, z, z, z, z, z, z, z,\
+                                    o, o, o, o, o, o, o, o,\
+                                    z, z, z, z, z, z, z, z,\
+        
+                                    0};
   //HAL_TIM_PWM_Start_DMA(TIM_HandleTypeDef *htim, uint32_t Channel, uint32_t *pData, uint16_t Length)
-  HAL_TIM_PWM_Start_DMA(&LED_PANEL_1_PWM_TIMER_HANDLE, LED_PANEL_1_PWM_TIMER_CHANNEL, (uint32_t *) &dmaTestPayload, 8);
+  HAL_TIM_PWM_Start_DMA(&LED_PANEL_1_PWM_TIMER_HANDLE, LED_PANEL_1_PWM_TIMER_CHANNEL, (uint32_t *) &dmaTestPayload, sizeof(dmaTestPayload));
   while(1){}
   #endif
 
-  AddrLED_Test();
+  AddrLED_SanityTest();
   while(1){}
 }
 
-void AddrLED_Test(void)
+void AddrLED_SanityTest(void)
 {
   // Initialize test Pixel array
   const uint8_t testSize = 4 * 4;
