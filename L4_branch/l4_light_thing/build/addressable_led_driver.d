@@ -30,7 +30,7 @@ build/addressable_led_driver.o: Src/addressable_led_driver.c \
  Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_tim_ex.h \
  Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_uart.h \
  Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_uart_ex.h Inc/tim.h \
- Inc/cmd_shell.h Inc/events.h
+ Inc/cmd_shell.h Inc/events.h Inc/main.h
 
 Inc/addressable_led_driver.h:
 
@@ -105,3 +105,5 @@ Inc/tim.h:
 Inc/cmd_shell.h:
 
 Inc/events.h:
+
+Inc/main.h:

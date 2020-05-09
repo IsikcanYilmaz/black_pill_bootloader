@@ -1,6 +1,7 @@
 
 #include "addressable_led_driver.h"
 #include "cmd_shell.h"
+#include "main.h"
 // Driver for the WS2812B based cascading, addressable LEDs
 
 /*
@@ -24,8 +25,8 @@ Each WS2812B requires 24bits of data to reproduce a color. Each color is, in fac
 #define ADDR_LED_PWM_SET_DUTY_CYCLE(d) __HAL_TIM_SET_COMPARE(&LED_PANEL_1_PWM_TIMER_HANDLE, LED_PANEL_1_PWM_TIMER_CHANNEL, d);
 
 // PWM DUTY CYCLE VALUES
-#define ADDR_LED_CODE_HIGH_COMPARE_VAL 15
-#define ADDR_LED_CODE_LOW_COMPARE_VAL  7
+#define ADDR_LED_CODE_HIGH_COMPARE_VAL 23
+#define ADDR_LED_CODE_LOW_COMPARE_VAL  8
 
 // PRIVATE VARIBLES -------------------------------------------------
 
@@ -96,7 +97,7 @@ void AddrLED_Init(void)
 
   // Set update event flag so PSC and ARR are loaded
   LED_PANEL_1_PWM_TIMER->PSC = 2;
-  LED_PANEL_1_PWM_TIMER->ARR = 31;
+  LED_PANEL_1_PWM_TIMER->ARR = 32;
   LED_PANEL_1_PWM_TIMER->EGR = TIM_EGR_UG;
   
   //#define PWM_BASE_TEST
@@ -110,29 +111,85 @@ void AddrLED_Init(void)
 
   #ifdef PWM_DMA_TEST
   //
-  uint8_t o = 22;
-  uint8_t z = 12;
+  uint8_t o = ADDR_LED_CODE_HIGH_COMPARE_VAL;
+  uint8_t z = ADDR_LED_CODE_LOW_COMPARE_VAL;
   
-#if 1
+  #if 1
   const uint8_t dmaTestPayload[] = {
+                                    z, z, z, z, z, z, z, o,\
                                     z, z, z, z, z, z, z, z,\
-                                    o, o, o, o, o, o, o, o,\
                                     z, z, z, z, z, z, z, z,\ 
-        
-                                    z, z, z, z, z, z, z, z,\
-                                    o, o, o, o, o, o, o, o,\
-                                    z, z, z, z, z, z, z, z,\
 
+                                    z, z, z, z, z, z, z, o,\
+                                    z, z, z, z, z, z, z, z,\
+                                    z, z, z, z, z, z, z, z,\ 
 
-        
+                                    z, z, z, z, z, z, z, o,\
+                                    z, z, z, z, z, z, z, z,\
+                                    z, z, z, z, z, z, z, z,\ 
+
+                                    z, z, z, z, z, z, z, o,\
+                                    z, z, z, z, z, z, z, z,\
+                                    z, z, z, z, z, z, z, z,\ 
+
+                                    z, z, z, z, z, z, z, o,\
+                                    z, z, z, z, z, z, z, z,\
+                                    z, z, z, z, z, z, z, z,\ 
+
+                                    z, z, z, z, z, z, z, o,\
+                                    z, z, z, z, z, z, z, z,\
+                                    z, z, z, z, z, z, z, z,\ 
+
+                                    z, z, z, z, z, z, z, o,\
+                                    z, z, z, z, z, z, z, z,\
+                                    z, z, z, z, z, z, z, z,\ 
+
+                                    z, z, z, z, z, z, z, o,\
+                                    z, z, z, z, z, z, z, z,\
+                                    z, z, z, z, z, z, z, z,\ 
+
+                                    z, z, z, z, z, z, z, o,\
+                                    z, z, z, z, z, z, z, z,\
+                                    z, z, z, z, z, z, z, z,\ 
+
+                                    z, z, z, z, z, z, z, o,\
+                                    z, z, z, z, z, z, z, z,\
+                                    z, z, z, z, z, z, z, z,\ 
+
+                                    z, z, z, z, z, z, z, o,\
+                                    z, z, z, z, z, z, z, z,\
+                                    z, z, z, z, z, z, z, z,\ 
+
+                                    z, z, z, z, z, z, z, o,\
+                                    z, z, z, z, z, z, z, z,\
+                                    z, z, z, z, z, z, z, z,\ 
+
+                                    z, z, z, z, z, z, z, o,\
+                                    z, z, z, z, z, z, z, z,\
+                                    z, z, z, z, z, z, z, z,\ 
+
+                                    z, z, z, z, z, z, z, o,\
+                                    z, z, z, z, z, z, z, z,\
+                                    z, z, z, z, z, z, z, z,\ 
+
+                                    z, z, z, z, z, z, z, o,\
+                                    z, z, z, z, z, z, z, z,\
+                                    z, z, z, z, z, z, z, z,\ 
+
+                                    z, z, z, z, z, z, z, o,\
+                                    z, z, z, z, z, z, z, z,\
+                                    z, z, z, z, z, z, z, z,\ 
+
                                     0};
-#else
+  #else
   const uint8_t dmaTestPayload[] = {o, z, 1, 1, 1, 1, 0};
-#endif
+  #endif
   //const uint8_t dmaTestPayload[] = {10, 1, 1, 1, 0};
   //HAL_TIM_PWM_Start_DMA(TIM_HandleTypeDef *htim, uint32_t Channel, uint32_t *pData, uint16_t Length)
-  HAL_TIM_PWM_Start_DMA(&LED_PANEL_1_PWM_TIMER_HANDLE, LED_PANEL_1_PWM_TIMER_CHANNEL, (uint32_t *) &dmaTestPayload, sizeof(dmaTestPayload));
-  while(1){}
+    HAL_TIM_PWM_Start_DMA(&LED_PANEL_1_PWM_TIMER_HANDLE, LED_PANEL_1_PWM_TIMER_CHANNEL, (uint32_t *) &dmaTestPayload, sizeof(dmaTestPayload));
+  HAL_GPIO_TogglePin(LD4_GPIO_Port, LD4_Pin);
+  while(1){
+  }
   #endif
 
   AddrLED_SanityTest();
@@ -153,7 +210,7 @@ void AddrLED_SanityTest(void)
       test[i] = (Pixel_t) {0, 0xff, 0};
     else if (i <= 12)
       test[i] = (Pixel_t) {0xff, 0, 0};
-    //test[i] = (Pixel_t) {0, 0xff, 0};
+    test[i] = (Pixel_t) {0, 0xff, 0};
   }
   
   // Initialize payload
@@ -161,7 +218,7 @@ void AddrLED_SanityTest(void)
   uint8_t test1PayloadHead = 0;
   memset(&test1Payload, 0x0, sizeof(test1Payload));
   
-  #define BREAKEARLY true
+  #define BREAKEARLY false
   // Go thru all Pixel_t objects
   for (int i = 0; i < testSize; i++)
   {
