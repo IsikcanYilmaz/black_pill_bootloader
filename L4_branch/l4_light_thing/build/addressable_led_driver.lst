@@ -1,4 +1,4 @@
-ARM GAS  /tmp/cc6kS5zv.s 			page 1
+ARM GAS  /tmp/cc2PL0da.s 			page 1
 
 
    1              		.cpu cortex-m4
@@ -25,1189 +25,1103 @@ ARM GAS  /tmp/cc6kS5zv.s 			page 1
   22              		.thumb_func
   23              		.fpu fpv4-sp-d16
   25              	AddrLED_Init:
-  26              	.LFB132:
+  26              	.LFB133:
   27              		.file 1 "Src/addressable_led_driver.c"
    1:Src/addressable_led_driver.c **** 
    2:Src/addressable_led_driver.c **** #include "addressable_led_driver.h"
    3:Src/addressable_led_driver.c **** #include "cmd_shell.h"
    4:Src/addressable_led_driver.c **** #include "main.h"
-   5:Src/addressable_led_driver.c **** // Driver for the WS2812B based cascading, addressable LEDs
-   6:Src/addressable_led_driver.c **** 
-   7:Src/addressable_led_driver.c **** /*
-   8:Src/addressable_led_driver.c ****  We have 5 different intervals, of which 4 must be followed accurately: T0H, T0L, T1H, T1L. Timings
-   9:Src/addressable_led_driver.c **** 
-  10:Src/addressable_led_driver.c ****  -Bit 0 1/3 of the period HIGH, 2/3 of the period LOW
-  11:Src/addressable_led_driver.c ****  -Bit 1 2/3 of the period HIGH, 1/3 of the period LOW
-  12:Src/addressable_led_driver.c ****  -Reset Stay LOW for at least 40 cycles (50us are about 40 periods of 1.25us)
-  13:Src/addressable_led_driver.c **** 
-  14:Src/addressable_led_driver.c **** Each WS2812B requires 24bits of data to reproduce a color. Each color is, in fact, composed of 3 gr
-  15:Src/addressable_led_driver.c **** 
-  16:Src/addressable_led_driver.c ****   GREEN[7:0] RED[7:0] BLUE[7:0]
-  17:Src/addressable_led_driver.c **** */
-  18:Src/addressable_led_driver.c **** 
-  19:Src/addressable_led_driver.c **** #define NAIVE_ADDR_LED_START_UPDATES() HAL_TIM_Base_Start_IT(&LED_PANEL_1_TIMER_HANDLE)
-  20:Src/addressable_led_driver.c **** #define NAIVE_ADDR_LED_STOP_UPDATES()  HAL_TIM_Base_Stop_IT(&LED_PANEL_1_TIMER_HANDLE)
-  21:Src/addressable_led_driver.c **** 
-  22:Src/addressable_led_driver.c **** #define ADDR_LED_PWM_START()           HAL_TIM_PWM_Start(&LED_PANEL_1_PWM_TIMER_HANDLE, LED_PANEL_1
-  23:Src/addressable_led_driver.c **** #define ADDR_LED_PWM_STOP()            HAL_TIM_PWM_Stop(&LED_PANEL_1_PWM_TIMER_HANDLE, LED_PANEL_1_
-  24:Src/addressable_led_driver.c **** 
-  25:Src/addressable_led_driver.c **** #define ADDR_LED_PWM_SET_DUTY_CYCLE(d) __HAL_TIM_SET_COMPARE(&LED_PANEL_1_PWM_TIMER_HANDLE, LED_PAN
-  26:Src/addressable_led_driver.c **** 
-  27:Src/addressable_led_driver.c **** // PWM DUTY CYCLE VALUES
-  28:Src/addressable_led_driver.c **** #define ADDR_LED_CODE_HIGH_COMPARE_VAL 23
-  29:Src/addressable_led_driver.c **** #define ADDR_LED_CODE_LOW_COMPARE_VAL  8
-  30:Src/addressable_led_driver.c **** 
-  31:Src/addressable_led_driver.c **** // PRIVATE VARIBLES -------------------------------------------------
-ARM GAS  /tmp/cc6kS5zv.s 			page 2
+   5:Src/addressable_led_driver.c **** #include <string.h>
+   6:Src/addressable_led_driver.c **** // Driver for the WS2812B based cascading, addressable LEDs
+   7:Src/addressable_led_driver.c **** 
+   8:Src/addressable_led_driver.c **** /*
+   9:Src/addressable_led_driver.c ****  We have 5 different intervals, of which 4 must be followed accurately: T0H, T0L, T1H, T1L. Timings
+  10:Src/addressable_led_driver.c **** 
+  11:Src/addressable_led_driver.c ****  -Bit 0 1/3 of the period HIGH, 2/3 of the period LOW
+  12:Src/addressable_led_driver.c ****  -Bit 1 2/3 of the period HIGH, 1/3 of the period LOW
+  13:Src/addressable_led_driver.c ****  -Reset Stay LOW for at least 40 cycles (50us are about 40 periods of 1.25us)
+  14:Src/addressable_led_driver.c **** 
+  15:Src/addressable_led_driver.c **** Each WS2812B requires 24bits of data to reproduce a color. Each color is, in fact, composed of 3 gr
+  16:Src/addressable_led_driver.c **** 
+  17:Src/addressable_led_driver.c ****   GREEN[7:0] RED[7:0] BLUE[7:0]
+  18:Src/addressable_led_driver.c **** */
+  19:Src/addressable_led_driver.c **** 
+  20:Src/addressable_led_driver.c **** #define NAIVE_ADDR_LED_START_UPDATES() HAL_TIM_Base_Start_IT(&LED_PANEL_1_TIMER_HANDLE)
+  21:Src/addressable_led_driver.c **** #define NAIVE_ADDR_LED_STOP_UPDATES()  HAL_TIM_Base_Stop_IT(&LED_PANEL_1_TIMER_HANDLE)
+  22:Src/addressable_led_driver.c **** 
+  23:Src/addressable_led_driver.c **** #define ADDR_LED_PWM_START()           HAL_TIM_PWM_Start(&LED_PANEL_1_PWM_TIMER_HANDLE, LED_PANEL_1
+  24:Src/addressable_led_driver.c **** #define ADDR_LED_PWM_STOP()            HAL_TIM_PWM_Stop(&LED_PANEL_1_PWM_TIMER_HANDLE, LED_PANEL_1_
+  25:Src/addressable_led_driver.c **** 
+  26:Src/addressable_led_driver.c **** #define ADDR_LED_PWM_SET_DUTY_CYCLE(d) __HAL_TIM_SET_COMPARE(&LED_PANEL_1_PWM_TIMER_HANDLE, LED_PAN
+  27:Src/addressable_led_driver.c **** 
+  28:Src/addressable_led_driver.c **** // PWM VALUES THAT MEET WS2812Bs SPECS
+  29:Src/addressable_led_driver.c **** #define ADDR_LED_PWM_PSC 2
+  30:Src/addressable_led_driver.c **** #define ADDR_LED_PWM_ARR 32
+  31:Src/addressable_led_driver.c **** 
+ARM GAS  /tmp/cc2PL0da.s 			page 2
 
 
-  32:Src/addressable_led_driver.c **** 
-  33:Src/addressable_led_driver.c **** uint32_t MICROSECOND_PRESCALER , MILLISECOND_PRESCALER;
-  34:Src/addressable_led_driver.c **** 
-  35:Src/addressable_led_driver.c **** // TODO // May be unnecessary. remove if so
-  36:Src/addressable_led_driver.c **** const uint16_t AddrLEDSymbolTimes[] = // 250ns time units
-  37:Src/addressable_led_driver.c **** {
-  38:Src/addressable_led_driver.c ****   [ADDR_LED_SYMBOL_T0H]   = 2, // ~250ns
-  39:Src/addressable_led_driver.c ****   [ADDR_LED_SYMBOL_T0L]   = 5, // ~625ns
-  40:Src/addressable_led_driver.c ****   [ADDR_LED_SYMBOL_T1H]   = 5, // ~625ns
-  41:Src/addressable_led_driver.c ****   [ADDR_LED_SYMBOL_T1L]   = 2, // ~250ns
-  42:Src/addressable_led_driver.c ****   [ADDR_LED_SYMBOL_RESET] = 2240 // ~280000ns
-  43:Src/addressable_led_driver.c **** };
-  44:Src/addressable_led_driver.c **** 
-  45:Src/addressable_led_driver.c **** // PRIVATE FUNCTIONS ------------------------------------------------
-  46:Src/addressable_led_driver.c **** 
-  47:Src/addressable_led_driver.c **** static void AddrLED_SetPWMPeriodUs(uint16_t ns)
-  48:Src/addressable_led_driver.c **** {
-  49:Src/addressable_led_driver.c ****   // Set/reset Symbol sending update timer to fire an interrupt
-  50:Src/addressable_led_driver.c ****   // Stop and restart timer if it was already running
-  51:Src/addressable_led_driver.c ****   bool tmrWasRunning = false;
-  52:Src/addressable_led_driver.c ****   if (LED_PANEL_1_PWM_TIMER->CR1 ^ TIM_CR1_CEN)
-  53:Src/addressable_led_driver.c ****   {
-  54:Src/addressable_led_driver.c ****     tmrWasRunning = true;
-  55:Src/addressable_led_driver.c ****     ADDR_LED_PWM_STOP();
-  56:Src/addressable_led_driver.c ****   }
-  57:Src/addressable_led_driver.c **** 
-  58:Src/addressable_led_driver.c ****   // Update autoreload register
-  59:Src/addressable_led_driver.c ****   // Timer will generate an IRQ every $ns nanoseconds
-  60:Src/addressable_led_driver.c ****   LED_PANEL_1_PWM_TIMER->ARR = ns;
-  61:Src/addressable_led_driver.c **** 
-  62:Src/addressable_led_driver.c ****   // Generate update event to load new ARR immediately
-  63:Src/addressable_led_driver.c ****   LED_PANEL_1_PWM_TIMER->EGR = TIM_EGR_UG;
-  64:Src/addressable_led_driver.c **** 
-  65:Src/addressable_led_driver.c ****   // Reset counter if timer was running before
-  66:Src/addressable_led_driver.c ****   if (tmrWasRunning)
-  67:Src/addressable_led_driver.c ****   {
-  68:Src/addressable_led_driver.c ****     LED_PANEL_1_PWM_TIMER->CNT = 0x00;
-  69:Src/addressable_led_driver.c ****     ADDR_LED_PWM_START();
-  70:Src/addressable_led_driver.c ****   }
-  71:Src/addressable_led_driver.c **** }
-  72:Src/addressable_led_driver.c **** 
-  73:Src/addressable_led_driver.c **** static void AddrLED_SetPWMDutyCycle(uint16_t ds)
-  74:Src/addressable_led_driver.c **** {
-  75:Src/addressable_led_driver.c ****   
-  76:Src/addressable_led_driver.c **** }
-  77:Src/addressable_led_driver.c **** 
-  78:Src/addressable_led_driver.c **** // PUBLIC FUNCTIONS -------------------------------------------------
+  32:Src/addressable_led_driver.c **** // PWM DUTY CYCLE VALUES FOR THE LOGIC HIGH AND LOW CODES
+  33:Src/addressable_led_driver.c **** #define ADDR_LED_CODE_HIGH_COMPARE_VAL 23 
+  34:Src/addressable_led_driver.c **** #define ADDR_LED_CODE_LOW_COMPARE_VAL  8
+  35:Src/addressable_led_driver.c **** 
+  36:Src/addressable_led_driver.c **** // PRIVATE VARIBLES -------------------------------------------------
+  37:Src/addressable_led_driver.c **** 
+  38:Src/addressable_led_driver.c **** uint32_t MICROSECOND_PRESCALER , MILLISECOND_PRESCALER;
+  39:Src/addressable_led_driver.c **** 
+  40:Src/addressable_led_driver.c **** // PRIVATE FUNCTIONS ------------------------------------------------
+  41:Src/addressable_led_driver.c **** 
+  42:Src/addressable_led_driver.c **** static void AddrLED_SetPWMPeriodUs(uint16_t ns)
+  43:Src/addressable_led_driver.c **** {
+  44:Src/addressable_led_driver.c ****   // Set/reset Symbol sending update timer to fire an interrupt
+  45:Src/addressable_led_driver.c ****   // Stop and restart timer if it was already running
+  46:Src/addressable_led_driver.c ****   bool tmrWasRunning = false;
+  47:Src/addressable_led_driver.c ****   if (LED_PANEL_1_PWM_TIMER->CR1 ^ TIM_CR1_CEN)
+  48:Src/addressable_led_driver.c ****   {
+  49:Src/addressable_led_driver.c ****     tmrWasRunning = true;
+  50:Src/addressable_led_driver.c ****     ADDR_LED_PWM_STOP();
+  51:Src/addressable_led_driver.c ****   }
+  52:Src/addressable_led_driver.c **** 
+  53:Src/addressable_led_driver.c ****   // Update autoreload register
+  54:Src/addressable_led_driver.c ****   // Timer will generate an IRQ every $ns nanoseconds
+  55:Src/addressable_led_driver.c ****   LED_PANEL_1_PWM_TIMER->ARR = ns;
+  56:Src/addressable_led_driver.c **** 
+  57:Src/addressable_led_driver.c ****   // Generate update event to load new ARR immediately
+  58:Src/addressable_led_driver.c ****   LED_PANEL_1_PWM_TIMER->EGR = TIM_EGR_UG;
+  59:Src/addressable_led_driver.c **** 
+  60:Src/addressable_led_driver.c ****   // Reset counter if timer was running before
+  61:Src/addressable_led_driver.c ****   if (tmrWasRunning)
+  62:Src/addressable_led_driver.c ****   {
+  63:Src/addressable_led_driver.c ****     LED_PANEL_1_PWM_TIMER->CNT = 0x00;
+  64:Src/addressable_led_driver.c ****     ADDR_LED_PWM_START();
+  65:Src/addressable_led_driver.c ****   }
+  66:Src/addressable_led_driver.c **** }
+  67:Src/addressable_led_driver.c **** 
+  68:Src/addressable_led_driver.c **** // WS2812B Related 
+  69:Src/addressable_led_driver.c **** 
+  70:Src/addressable_led_driver.c **** // Convert $byte into codes that WS2812B accepts, that we push out via PWM.
+  71:Src/addressable_led_driver.c **** // 1 Byte converts into 8 bytes, so make sure $*codes pointer points to a block of memory that has 
+  72:Src/addressable_led_driver.c **** static inline void ByteToCodes(uint8_t byte, uint8_t *codes)
+  73:Src/addressable_led_driver.c **** {
+  74:Src/addressable_led_driver.c ****   for (int b = 0; b < 8; b++)
+  75:Src/addressable_led_driver.c ****   {
+  76:Src/addressable_led_driver.c ****     *(codes + b) = ((byte & (0x1 << b)) > 0) ? ADDR_LED_CODE_HIGH_COMPARE_VAL : ADDR_LED_CODE_LOW_C
+  77:Src/addressable_led_driver.c ****   }
+  78:Src/addressable_led_driver.c **** }
   79:Src/addressable_led_driver.c **** 
-  80:Src/addressable_led_driver.c **** void AddrLED_Init(void)
-  81:Src/addressable_led_driver.c **** {
-  28              		.loc 1 81 0
+  80:Src/addressable_led_driver.c **** // Convert a Pixel_t object $p into codes that WS2812B accepts. 
+  81:Src/addressable_led_driver.c **** // 1 Byte converts into 8 bytes, a Pixel_t is 3 bytes so make sure $*packet points to a block of me
+  82:Src/addressable_led_driver.c **** static inline void PixelToPacket(Pixel_t *p, PixelPacket_t *packet)
+  83:Src/addressable_led_driver.c **** {
+  84:Src/addressable_led_driver.c ****   ByteToCodes(p->green, &(packet->greenRaw[0]));
+  85:Src/addressable_led_driver.c ****   ByteToCodes(p->red, &(packet->redRaw[0]));
+  86:Src/addressable_led_driver.c ****   ByteToCodes(p->blue, &(packet->blueRaw[0]));
+  87:Src/addressable_led_driver.c **** }
+  88:Src/addressable_led_driver.c **** 
+ARM GAS  /tmp/cc2PL0da.s 			page 3
+
+
+  89:Src/addressable_led_driver.c **** // PUBLIC FUNCTIONS -------------------------------------------------
+  90:Src/addressable_led_driver.c **** 
+  91:Src/addressable_led_driver.c **** void AddrLED_Init(void)
+  92:Src/addressable_led_driver.c **** {
+  28              		.loc 1 92 0
   29              		.cfi_startproc
-  30              		@ args = 0, pretend = 0, frame = 392
+  30              		@ args = 0, pretend = 0, frame = 400
   31              		@ frame_needed = 0, uses_anonymous_args = 0
-  32 0000 00B5     		push	{lr}
+  32 0000 30B5     		push	{r4, r5, lr}
   33              	.LCFI0:
-  34              		.cfi_def_cfa_offset 4
-ARM GAS  /tmp/cc6kS5zv.s 			page 3
+  34              		.cfi_def_cfa_offset 12
+  35              		.cfi_offset 4, -12
+  36              		.cfi_offset 5, -8
+  37              		.cfi_offset 14, -4
+  38 0002 E5B0     		sub	sp, sp, #404
+  39              	.LCFI1:
+  40              		.cfi_def_cfa_offset 416
+  93:Src/addressable_led_driver.c ****   MICROSECOND_PRESCALER = ((HAL_RCC_GetSysClockFreq() / 1000000) - 1);    // 1000000 Hz
+  41              		.loc 1 93 0
+  42 0004 FFF7FEFF 		bl	HAL_RCC_GetSysClockFreq
+  43              	.LVL0:
+  44 0008 4C4A     		ldr	r2, .L36
+  45 000a A2FB0023 		umull	r2, r3, r2, r0
+  46 000e 9B0C     		lsrs	r3, r3, #18
+  47 0010 013B     		subs	r3, r3, #1
+  48 0012 4B4A     		ldr	r2, .L36+4
+  49 0014 1360     		str	r3, [r2]
+  94:Src/addressable_led_driver.c ****   MILLISECOND_PRESCALER = ((HAL_RCC_GetSysClockFreq() / 1000) - 1);       // 1000 Hz
+  50              		.loc 1 94 0
+  51 0016 FFF7FEFF 		bl	HAL_RCC_GetSysClockFreq
+  52              	.LVL1:
+  53 001a 4A4A     		ldr	r2, .L36+8
+  54 001c A2FB0023 		umull	r2, r3, r2, r0
+  55 0020 9B09     		lsrs	r3, r3, #6
+  56 0022 013B     		subs	r3, r3, #1
+  57 0024 484A     		ldr	r2, .L36+12
+  58 0026 1360     		str	r3, [r2]
+  95:Src/addressable_led_driver.c **** 
+  96:Src/addressable_led_driver.c ****   /* ~ Initialize PWM Timer ~
+  97:Src/addressable_led_driver.c ****    *
+  98:Src/addressable_led_driver.c ****    * OKAY SO:
+  99:Src/addressable_led_driver.c ****    * PSC 0, ARR 25, CCR 8  Gives me an update time of ~1440 nanoseconds, HIGH time of ~445 nanoseco
+ 100:Src/addressable_led_driver.c ****    *                CCR 7                                                HIGH time of ~390 nanoseco
+ 101:Src/addressable_led_driver.c ****    *                CCR 15                                               HIGH time of ~823 nanoseco
+ 102:Src/addressable_led_driver.c ****    * 
+ 103:Src/addressable_led_driver.c ****    * So seems like the Compare values i'll need are 7 and 15, for 0 CODE and 1 CODE respectively.
+ 104:Src/addressable_led_driver.c ****    *
+ 105:Src/addressable_led_driver.c ****    * Lets go with this, why not
+ 106:Src/addressable_led_driver.c ****    *
+ 107:Src/addressable_led_driver.c ****    */
+ 108:Src/addressable_led_driver.c **** 
+ 109:Src/addressable_led_driver.c ****   // Set update event flag so PSC and ARR are loaded
+ 110:Src/addressable_led_driver.c ****   LED_PANEL_1_PWM_TIMER->PSC = ADDR_LED_PWM_PSC;
+  59              		.loc 1 110 0
+  60 0028 484B     		ldr	r3, .L36+16
+  61 002a 0222     		movs	r2, #2
+  62 002c 9A62     		str	r2, [r3, #40]
+ARM GAS  /tmp/cc2PL0da.s 			page 4
 
 
-  35              		.cfi_offset 14, -4
-  36 0002 E3B0     		sub	sp, sp, #396
-  37              	.LCFI1:
-  38              		.cfi_def_cfa_offset 400
-  82:Src/addressable_led_driver.c ****   MICROSECOND_PRESCALER = ((HAL_RCC_GetSysClockFreq() / 1000000) - 1);    // 1000000 Hz
-  39              		.loc 1 82 0
-  40 0004 FFF7FEFF 		bl	HAL_RCC_GetSysClockFreq
-  41              	.LVL0:
-  42 0008 F84A     		ldr	r2, .L4
-  43 000a A2FB0023 		umull	r2, r3, r2, r0
-  44 000e 9B0C     		lsrs	r3, r3, #18
-  45 0010 013B     		subs	r3, r3, #1
-  46 0012 F74A     		ldr	r2, .L4+4
-  47 0014 1360     		str	r3, [r2]
-  83:Src/addressable_led_driver.c ****   MILLISECOND_PRESCALER = ((HAL_RCC_GetSysClockFreq() / 1000) - 1);       // 1000 Hz
-  48              		.loc 1 83 0
-  49 0016 FFF7FEFF 		bl	HAL_RCC_GetSysClockFreq
-  50              	.LVL1:
-  51 001a F64A     		ldr	r2, .L4+8
-  52 001c A2FB0023 		umull	r2, r3, r2, r0
-  53 0020 9B09     		lsrs	r3, r3, #6
-  54 0022 013B     		subs	r3, r3, #1
-  55 0024 F44A     		ldr	r2, .L4+12
-  56 0026 1360     		str	r3, [r2]
-  84:Src/addressable_led_driver.c **** 
-  85:Src/addressable_led_driver.c ****   /* ~ Initialize PWM Timer ~
-  86:Src/addressable_led_driver.c ****    *
-  87:Src/addressable_led_driver.c ****    * OKAY SO:
-  88:Src/addressable_led_driver.c ****    * PSC 0, ARR 25, CCR 8  Gives me an update time of ~1440 nanoseconds, HIGH time of ~445 nanoseco
-  89:Src/addressable_led_driver.c ****    *                CCR 7                                                HIGH time of ~390 nanoseco
-  90:Src/addressable_led_driver.c ****    *                CCR 15                                               HIGH time of ~823 nanoseco
-  91:Src/addressable_led_driver.c ****    * 
-  92:Src/addressable_led_driver.c ****    * So seems like the Compare values i'll need are 7 and 15, for 0 CODE and 1 CODE respectively.
-  93:Src/addressable_led_driver.c ****    *
-  94:Src/addressable_led_driver.c ****    * Lets go with this, why not
-  95:Src/addressable_led_driver.c ****    *
-  96:Src/addressable_led_driver.c ****    */
-  97:Src/addressable_led_driver.c **** 
-  98:Src/addressable_led_driver.c ****   // Set update event flag so PSC and ARR are loaded
-  99:Src/addressable_led_driver.c ****   LED_PANEL_1_PWM_TIMER->PSC = 2;
-  57              		.loc 1 99 0
-  58 0028 F44B     		ldr	r3, .L4+16
-  59 002a 0222     		movs	r2, #2
-  60 002c 9A62     		str	r2, [r3, #40]
- 100:Src/addressable_led_driver.c ****   LED_PANEL_1_PWM_TIMER->ARR = 32;
-  61              		.loc 1 100 0
-  62 002e 2022     		movs	r2, #32
-  63 0030 DA62     		str	r2, [r3, #44]
- 101:Src/addressable_led_driver.c ****   LED_PANEL_1_PWM_TIMER->EGR = TIM_EGR_UG;
-  64              		.loc 1 101 0
-  65 0032 0122     		movs	r2, #1
-  66 0034 5A61     		str	r2, [r3, #20]
-  67              	.LVL2:
- 102:Src/addressable_led_driver.c ****   
- 103:Src/addressable_led_driver.c ****   //#define PWM_BASE_TEST
- 104:Src/addressable_led_driver.c ****   #define PWM_DMA_TEST
- 105:Src/addressable_led_driver.c **** 
-ARM GAS  /tmp/cc6kS5zv.s 			page 4
-
-
- 106:Src/addressable_led_driver.c ****   #ifdef PWM_BASE_TEST
- 107:Src/addressable_led_driver.c ****   ADDR_LED_PWM_START();
- 108:Src/addressable_led_driver.c ****   ADDR_LED_PWM_SET_DUTY_CYCLE(10);
- 109:Src/addressable_led_driver.c ****   while(1){}
- 110:Src/addressable_led_driver.c ****   #endif
- 111:Src/addressable_led_driver.c **** 
- 112:Src/addressable_led_driver.c ****   #ifdef PWM_DMA_TEST
- 113:Src/addressable_led_driver.c ****   //
- 114:Src/addressable_led_driver.c ****   uint8_t o = ADDR_LED_CODE_HIGH_COMPARE_VAL;
- 115:Src/addressable_led_driver.c ****   uint8_t z = ADDR_LED_CODE_LOW_COMPARE_VAL;
- 116:Src/addressable_led_driver.c ****   
- 117:Src/addressable_led_driver.c ****   #if 1
- 118:Src/addressable_led_driver.c ****   const uint8_t dmaTestPayload[] = {
-  68              		.loc 1 118 0
-  69 0036 0823     		movs	r3, #8
-  70 0038 8DF80430 		strb	r3, [sp, #4]
-  71 003c 8DF80530 		strb	r3, [sp, #5]
-  72 0040 8DF80630 		strb	r3, [sp, #6]
-  73 0044 8DF80730 		strb	r3, [sp, #7]
-  74 0048 8DF80830 		strb	r3, [sp, #8]
-  75 004c 8DF80930 		strb	r3, [sp, #9]
-  76 0050 8DF80A30 		strb	r3, [sp, #10]
-  77 0054 1722     		movs	r2, #23
-  78 0056 8DF80B20 		strb	r2, [sp, #11]
-  79 005a 8DF80C30 		strb	r3, [sp, #12]
-  80 005e 8DF80D30 		strb	r3, [sp, #13]
-  81 0062 8DF80E30 		strb	r3, [sp, #14]
-  82 0066 8DF80F30 		strb	r3, [sp, #15]
-  83 006a 8DF81030 		strb	r3, [sp, #16]
-  84 006e 8DF81130 		strb	r3, [sp, #17]
-  85 0072 8DF81230 		strb	r3, [sp, #18]
-  86 0076 8DF81330 		strb	r3, [sp, #19]
-  87 007a 8DF81430 		strb	r3, [sp, #20]
-  88 007e 8DF81530 		strb	r3, [sp, #21]
-  89 0082 8DF81630 		strb	r3, [sp, #22]
-  90 0086 8DF81730 		strb	r3, [sp, #23]
-  91 008a 8DF81830 		strb	r3, [sp, #24]
-  92 008e 8DF81930 		strb	r3, [sp, #25]
-  93 0092 8DF81A30 		strb	r3, [sp, #26]
-  94 0096 8DF81B30 		strb	r3, [sp, #27]
-  95 009a 8DF81C30 		strb	r3, [sp, #28]
-  96 009e 8DF81D30 		strb	r3, [sp, #29]
-  97 00a2 8DF81E30 		strb	r3, [sp, #30]
-  98 00a6 8DF81F30 		strb	r3, [sp, #31]
-  99 00aa 8DF82030 		strb	r3, [sp, #32]
- 100 00ae 8DF82130 		strb	r3, [sp, #33]
- 101 00b2 8DF82230 		strb	r3, [sp, #34]
- 102 00b6 8DF82320 		strb	r2, [sp, #35]
- 103 00ba 8DF82430 		strb	r3, [sp, #36]
- 104 00be 8DF82530 		strb	r3, [sp, #37]
- 105 00c2 8DF82630 		strb	r3, [sp, #38]
- 106 00c6 8DF82730 		strb	r3, [sp, #39]
- 107 00ca 8DF82830 		strb	r3, [sp, #40]
- 108 00ce 8DF82930 		strb	r3, [sp, #41]
- 109 00d2 8DF82A30 		strb	r3, [sp, #42]
- 110 00d6 8DF82B30 		strb	r3, [sp, #43]
- 111 00da 8DF82C30 		strb	r3, [sp, #44]
-ARM GAS  /tmp/cc6kS5zv.s 			page 5
-
-
- 112 00de 8DF82D30 		strb	r3, [sp, #45]
- 113 00e2 8DF82E30 		strb	r3, [sp, #46]
- 114 00e6 8DF82F30 		strb	r3, [sp, #47]
- 115 00ea 8DF83030 		strb	r3, [sp, #48]
- 116 00ee 8DF83130 		strb	r3, [sp, #49]
- 117 00f2 8DF83230 		strb	r3, [sp, #50]
- 118 00f6 8DF83330 		strb	r3, [sp, #51]
- 119 00fa 8DF83430 		strb	r3, [sp, #52]
- 120 00fe 8DF83530 		strb	r3, [sp, #53]
- 121 0102 8DF83630 		strb	r3, [sp, #54]
- 122 0106 8DF83730 		strb	r3, [sp, #55]
- 123 010a 8DF83830 		strb	r3, [sp, #56]
- 124 010e 8DF83930 		strb	r3, [sp, #57]
- 125 0112 8DF83A30 		strb	r3, [sp, #58]
- 126 0116 8DF83B20 		strb	r2, [sp, #59]
- 127 011a 8DF83C30 		strb	r3, [sp, #60]
- 128 011e 8DF83D30 		strb	r3, [sp, #61]
- 129 0122 8DF83E30 		strb	r3, [sp, #62]
- 130 0126 8DF83F30 		strb	r3, [sp, #63]
- 131 012a 8DF84030 		strb	r3, [sp, #64]
- 132 012e 8DF84130 		strb	r3, [sp, #65]
- 133 0132 8DF84230 		strb	r3, [sp, #66]
- 134 0136 8DF84330 		strb	r3, [sp, #67]
- 135 013a 8DF84430 		strb	r3, [sp, #68]
- 136 013e 8DF84530 		strb	r3, [sp, #69]
- 137 0142 8DF84630 		strb	r3, [sp, #70]
- 138 0146 8DF84730 		strb	r3, [sp, #71]
- 139 014a 8DF84830 		strb	r3, [sp, #72]
- 140 014e 8DF84930 		strb	r3, [sp, #73]
- 141 0152 8DF84A30 		strb	r3, [sp, #74]
- 142 0156 8DF84B30 		strb	r3, [sp, #75]
- 143 015a 8DF84C30 		strb	r3, [sp, #76]
- 144 015e 8DF84D30 		strb	r3, [sp, #77]
- 145 0162 8DF84E30 		strb	r3, [sp, #78]
- 146 0166 8DF84F30 		strb	r3, [sp, #79]
- 147 016a 8DF85030 		strb	r3, [sp, #80]
- 148 016e 8DF85130 		strb	r3, [sp, #81]
- 149 0172 8DF85230 		strb	r3, [sp, #82]
- 150 0176 8DF85320 		strb	r2, [sp, #83]
- 151 017a 8DF85430 		strb	r3, [sp, #84]
- 152 017e 8DF85530 		strb	r3, [sp, #85]
- 153 0182 8DF85630 		strb	r3, [sp, #86]
- 154 0186 8DF85730 		strb	r3, [sp, #87]
- 155 018a 8DF85830 		strb	r3, [sp, #88]
- 156 018e 8DF85930 		strb	r3, [sp, #89]
- 157 0192 8DF85A30 		strb	r3, [sp, #90]
- 158 0196 8DF85B30 		strb	r3, [sp, #91]
- 159 019a 8DF85C30 		strb	r3, [sp, #92]
- 160 019e 8DF85D30 		strb	r3, [sp, #93]
- 161 01a2 8DF85E30 		strb	r3, [sp, #94]
- 162 01a6 8DF85F30 		strb	r3, [sp, #95]
- 163 01aa 8DF86030 		strb	r3, [sp, #96]
- 164 01ae 8DF86130 		strb	r3, [sp, #97]
- 165 01b2 8DF86230 		strb	r3, [sp, #98]
- 166 01b6 8DF86330 		strb	r3, [sp, #99]
- 167 01ba 8DF86430 		strb	r3, [sp, #100]
- 168 01be 8DF86530 		strb	r3, [sp, #101]
-ARM GAS  /tmp/cc6kS5zv.s 			page 6
-
-
- 169 01c2 8DF86630 		strb	r3, [sp, #102]
- 170 01c6 8DF86730 		strb	r3, [sp, #103]
- 171 01ca 8DF86830 		strb	r3, [sp, #104]
- 172 01ce 8DF86930 		strb	r3, [sp, #105]
- 173 01d2 8DF86A30 		strb	r3, [sp, #106]
- 174 01d6 8DF86B20 		strb	r2, [sp, #107]
- 175 01da 8DF86C30 		strb	r3, [sp, #108]
- 176 01de 8DF86D30 		strb	r3, [sp, #109]
- 177 01e2 8DF86E30 		strb	r3, [sp, #110]
- 178 01e6 8DF86F30 		strb	r3, [sp, #111]
- 179 01ea 8DF87030 		strb	r3, [sp, #112]
- 180 01ee 8DF87130 		strb	r3, [sp, #113]
- 181 01f2 8DF87230 		strb	r3, [sp, #114]
- 182 01f6 8DF87330 		strb	r3, [sp, #115]
- 183 01fa 8DF87430 		strb	r3, [sp, #116]
- 184 01fe 8DF87530 		strb	r3, [sp, #117]
- 185 0202 8DF87630 		strb	r3, [sp, #118]
- 186 0206 8DF87730 		strb	r3, [sp, #119]
- 187 020a 8DF87830 		strb	r3, [sp, #120]
- 188 020e 8DF87930 		strb	r3, [sp, #121]
- 189 0212 8DF87A30 		strb	r3, [sp, #122]
- 190 0216 8DF87B30 		strb	r3, [sp, #123]
- 191 021a 8DF87C30 		strb	r3, [sp, #124]
- 192 021e 8DF87D30 		strb	r3, [sp, #125]
- 193 0222 8DF87E30 		strb	r3, [sp, #126]
- 194 0226 8DF87F30 		strb	r3, [sp, #127]
- 195 022a 8DF88030 		strb	r3, [sp, #128]
- 196 022e 8DF88130 		strb	r3, [sp, #129]
- 197 0232 8DF88230 		strb	r3, [sp, #130]
- 198 0236 8DF88320 		strb	r2, [sp, #131]
- 199 023a 8DF88430 		strb	r3, [sp, #132]
- 200 023e 8DF88530 		strb	r3, [sp, #133]
- 201 0242 8DF88630 		strb	r3, [sp, #134]
- 202 0246 8DF88730 		strb	r3, [sp, #135]
- 203 024a 8DF88830 		strb	r3, [sp, #136]
- 204 024e 8DF88930 		strb	r3, [sp, #137]
- 205 0252 8DF88A30 		strb	r3, [sp, #138]
- 206 0256 8DF88B30 		strb	r3, [sp, #139]
- 207 025a 8DF88C30 		strb	r3, [sp, #140]
- 208 025e 8DF88D30 		strb	r3, [sp, #141]
- 209 0262 8DF88E30 		strb	r3, [sp, #142]
- 210 0266 8DF88F30 		strb	r3, [sp, #143]
- 211 026a 8DF89030 		strb	r3, [sp, #144]
- 212 026e 8DF89130 		strb	r3, [sp, #145]
- 213 0272 8DF89230 		strb	r3, [sp, #146]
- 214 0276 8DF89330 		strb	r3, [sp, #147]
- 215 027a 8DF89430 		strb	r3, [sp, #148]
- 216 027e 8DF89530 		strb	r3, [sp, #149]
- 217 0282 8DF89630 		strb	r3, [sp, #150]
- 218 0286 8DF89730 		strb	r3, [sp, #151]
- 219 028a 8DF89830 		strb	r3, [sp, #152]
- 220 028e 8DF89930 		strb	r3, [sp, #153]
- 221 0292 8DF89A30 		strb	r3, [sp, #154]
- 222 0296 8DF89B20 		strb	r2, [sp, #155]
- 223 029a 8DF89C30 		strb	r3, [sp, #156]
- 224 029e 8DF89D30 		strb	r3, [sp, #157]
- 225 02a2 8DF89E30 		strb	r3, [sp, #158]
-ARM GAS  /tmp/cc6kS5zv.s 			page 7
-
-
- 226 02a6 8DF89F30 		strb	r3, [sp, #159]
- 227 02aa 8DF8A030 		strb	r3, [sp, #160]
- 228 02ae 8DF8A130 		strb	r3, [sp, #161]
- 229 02b2 8DF8A230 		strb	r3, [sp, #162]
- 230 02b6 8DF8A330 		strb	r3, [sp, #163]
- 231 02ba 8DF8A430 		strb	r3, [sp, #164]
- 232 02be 8DF8A530 		strb	r3, [sp, #165]
- 233 02c2 8DF8A630 		strb	r3, [sp, #166]
- 234 02c6 8DF8A730 		strb	r3, [sp, #167]
- 235 02ca 8DF8A830 		strb	r3, [sp, #168]
- 236 02ce 8DF8A930 		strb	r3, [sp, #169]
- 237 02d2 8DF8AA30 		strb	r3, [sp, #170]
- 238 02d6 8DF8AB30 		strb	r3, [sp, #171]
- 239 02da 8DF8AC30 		strb	r3, [sp, #172]
- 240 02de 8DF8AD30 		strb	r3, [sp, #173]
- 241 02e2 8DF8AE30 		strb	r3, [sp, #174]
- 242 02e6 8DF8AF30 		strb	r3, [sp, #175]
- 243 02ea 8DF8B030 		strb	r3, [sp, #176]
- 244 02ee 8DF8B130 		strb	r3, [sp, #177]
- 245 02f2 8DF8B230 		strb	r3, [sp, #178]
- 246 02f6 8DF8B320 		strb	r2, [sp, #179]
- 247 02fa 8DF8B430 		strb	r3, [sp, #180]
- 248 02fe 8DF8B530 		strb	r3, [sp, #181]
- 249 0302 8DF8B630 		strb	r3, [sp, #182]
- 250 0306 8DF8B730 		strb	r3, [sp, #183]
- 251 030a 8DF8B830 		strb	r3, [sp, #184]
- 252 030e 8DF8B930 		strb	r3, [sp, #185]
- 253 0312 8DF8BA30 		strb	r3, [sp, #186]
- 254 0316 8DF8BB30 		strb	r3, [sp, #187]
- 255 031a 8DF8BC30 		strb	r3, [sp, #188]
- 256 031e 8DF8BD30 		strb	r3, [sp, #189]
- 257 0322 8DF8BE30 		strb	r3, [sp, #190]
- 258 0326 8DF8BF30 		strb	r3, [sp, #191]
- 259 032a 8DF8C030 		strb	r3, [sp, #192]
- 260 032e 8DF8C130 		strb	r3, [sp, #193]
- 261 0332 8DF8C230 		strb	r3, [sp, #194]
- 262 0336 8DF8C330 		strb	r3, [sp, #195]
- 263 033a 8DF8C430 		strb	r3, [sp, #196]
- 264 033e 8DF8C530 		strb	r3, [sp, #197]
- 265 0342 8DF8C630 		strb	r3, [sp, #198]
- 266 0346 8DF8C730 		strb	r3, [sp, #199]
- 267 034a 8DF8C830 		strb	r3, [sp, #200]
- 268 034e 8DF8C930 		strb	r3, [sp, #201]
- 269 0352 8DF8CA30 		strb	r3, [sp, #202]
- 270 0356 8DF8CB20 		strb	r2, [sp, #203]
- 271 035a 8DF8CC30 		strb	r3, [sp, #204]
- 272 035e 8DF8CD30 		strb	r3, [sp, #205]
- 273 0362 8DF8CE30 		strb	r3, [sp, #206]
- 274 0366 8DF8CF30 		strb	r3, [sp, #207]
- 275 036a 8DF8D030 		strb	r3, [sp, #208]
- 276 036e 8DF8D130 		strb	r3, [sp, #209]
- 277 0372 8DF8D230 		strb	r3, [sp, #210]
- 278 0376 8DF8D330 		strb	r3, [sp, #211]
- 279 037a 8DF8D430 		strb	r3, [sp, #212]
- 280 037e 8DF8D530 		strb	r3, [sp, #213]
- 281 0382 8DF8D630 		strb	r3, [sp, #214]
- 282 0386 8DF8D730 		strb	r3, [sp, #215]
-ARM GAS  /tmp/cc6kS5zv.s 			page 8
-
-
- 283 038a 8DF8D830 		strb	r3, [sp, #216]
- 284 038e 8DF8D930 		strb	r3, [sp, #217]
- 285 0392 8DF8DA30 		strb	r3, [sp, #218]
- 286 0396 8DF8DB30 		strb	r3, [sp, #219]
- 287 039a 8DF8DC30 		strb	r3, [sp, #220]
- 288 039e 8DF8DD30 		strb	r3, [sp, #221]
- 289 03a2 8DF8DE30 		strb	r3, [sp, #222]
- 290 03a6 8DF8DF30 		strb	r3, [sp, #223]
- 291 03aa 8DF8E030 		strb	r3, [sp, #224]
- 292 03ae 8DF8E130 		strb	r3, [sp, #225]
- 293 03b2 8DF8E230 		strb	r3, [sp, #226]
- 294 03b6 8DF8E320 		strb	r2, [sp, #227]
- 295 03ba 8DF8E430 		strb	r3, [sp, #228]
- 296 03be 8DF8E530 		strb	r3, [sp, #229]
- 297 03c2 8DF8E630 		strb	r3, [sp, #230]
- 298 03c6 8DF8E730 		strb	r3, [sp, #231]
- 299 03ca 8DF8E830 		strb	r3, [sp, #232]
- 300 03ce 8DF8E930 		strb	r3, [sp, #233]
- 301 03d2 8DF8EA30 		strb	r3, [sp, #234]
- 302 03d6 8DF8EB30 		strb	r3, [sp, #235]
- 303 03da 8DF8EC30 		strb	r3, [sp, #236]
- 304 03de 8DF8ED30 		strb	r3, [sp, #237]
- 305 03e2 8DF8EE30 		strb	r3, [sp, #238]
- 306 03e6 8DF8EF30 		strb	r3, [sp, #239]
- 307 03ea 09E0     		b	.L5
- 308              	.L6:
- 309              		.align	2
- 310              	.L4:
- 311 03ec 83DE1B43 		.word	1125899907
- 312 03f0 00000000 		.word	MICROSECOND_PRESCALER
- 313 03f4 D34D6210 		.word	274877907
- 314 03f8 00000000 		.word	MILLISECOND_PRESCALER
- 315 03fc 00040040 		.word	1073742848
- 316              	.L5:
- 317 0400 8DF8F030 		strb	r3, [sp, #240]
- 318 0404 8DF8F130 		strb	r3, [sp, #241]
- 319 0408 8DF8F230 		strb	r3, [sp, #242]
- 320 040c 8DF8F330 		strb	r3, [sp, #243]
- 321 0410 8DF8F430 		strb	r3, [sp, #244]
- 322 0414 8DF8F530 		strb	r3, [sp, #245]
- 323 0418 8DF8F630 		strb	r3, [sp, #246]
- 324 041c 8DF8F730 		strb	r3, [sp, #247]
- 325 0420 8DF8F830 		strb	r3, [sp, #248]
- 326 0424 8DF8F930 		strb	r3, [sp, #249]
- 327 0428 8DF8FA30 		strb	r3, [sp, #250]
- 328 042c 8DF8FB20 		strb	r2, [sp, #251]
- 329 0430 8DF8FC30 		strb	r3, [sp, #252]
- 330 0434 8DF8FD30 		strb	r3, [sp, #253]
- 331 0438 8DF8FE30 		strb	r3, [sp, #254]
- 332 043c 8DF8FF30 		strb	r3, [sp, #255]
- 333 0440 8DF80031 		strb	r3, [sp, #256]
- 334 0444 8DF80131 		strb	r3, [sp, #257]
- 335 0448 8DF80231 		strb	r3, [sp, #258]
- 336 044c 8DF80331 		strb	r3, [sp, #259]
- 337 0450 8DF80431 		strb	r3, [sp, #260]
- 338 0454 8DF80531 		strb	r3, [sp, #261]
- 339 0458 8DF80631 		strb	r3, [sp, #262]
-ARM GAS  /tmp/cc6kS5zv.s 			page 9
-
-
- 340 045c 8DF80731 		strb	r3, [sp, #263]
- 341 0460 8DF80831 		strb	r3, [sp, #264]
- 342 0464 8DF80931 		strb	r3, [sp, #265]
- 343 0468 8DF80A31 		strb	r3, [sp, #266]
- 344 046c 8DF80B31 		strb	r3, [sp, #267]
- 345 0470 8DF80C31 		strb	r3, [sp, #268]
- 346 0474 8DF80D31 		strb	r3, [sp, #269]
- 347 0478 8DF80E31 		strb	r3, [sp, #270]
- 348 047c 8DF80F31 		strb	r3, [sp, #271]
- 349 0480 8DF81031 		strb	r3, [sp, #272]
- 350 0484 8DF81131 		strb	r3, [sp, #273]
- 351 0488 8DF81231 		strb	r3, [sp, #274]
- 352 048c 8DF81321 		strb	r2, [sp, #275]
- 353 0490 8DF81431 		strb	r3, [sp, #276]
- 354 0494 8DF81531 		strb	r3, [sp, #277]
- 355 0498 8DF81631 		strb	r3, [sp, #278]
- 356 049c 8DF81731 		strb	r3, [sp, #279]
- 357 04a0 8DF81831 		strb	r3, [sp, #280]
- 358 04a4 8DF81931 		strb	r3, [sp, #281]
- 359 04a8 8DF81A31 		strb	r3, [sp, #282]
- 360 04ac 8DF81B31 		strb	r3, [sp, #283]
- 361 04b0 8DF81C31 		strb	r3, [sp, #284]
- 362 04b4 8DF81D31 		strb	r3, [sp, #285]
- 363 04b8 8DF81E31 		strb	r3, [sp, #286]
- 364 04bc 8DF81F31 		strb	r3, [sp, #287]
- 365 04c0 8DF82031 		strb	r3, [sp, #288]
- 366 04c4 8DF82131 		strb	r3, [sp, #289]
- 367 04c8 8DF82231 		strb	r3, [sp, #290]
- 368 04cc 8DF82331 		strb	r3, [sp, #291]
- 369 04d0 8DF82431 		strb	r3, [sp, #292]
- 370 04d4 8DF82531 		strb	r3, [sp, #293]
- 371 04d8 8DF82631 		strb	r3, [sp, #294]
- 372 04dc 8DF82731 		strb	r3, [sp, #295]
- 373 04e0 8DF82831 		strb	r3, [sp, #296]
- 374 04e4 8DF82931 		strb	r3, [sp, #297]
- 375 04e8 8DF82A31 		strb	r3, [sp, #298]
- 376 04ec 8DF82B21 		strb	r2, [sp, #299]
- 377 04f0 8DF82C31 		strb	r3, [sp, #300]
- 378 04f4 8DF82D31 		strb	r3, [sp, #301]
- 379 04f8 8DF82E31 		strb	r3, [sp, #302]
- 380 04fc 8DF82F31 		strb	r3, [sp, #303]
- 381 0500 8DF83031 		strb	r3, [sp, #304]
- 382 0504 8DF83131 		strb	r3, [sp, #305]
- 383 0508 8DF83231 		strb	r3, [sp, #306]
- 384 050c 8DF83331 		strb	r3, [sp, #307]
- 385 0510 8DF83431 		strb	r3, [sp, #308]
- 386 0514 8DF83531 		strb	r3, [sp, #309]
- 387 0518 8DF83631 		strb	r3, [sp, #310]
- 388 051c 8DF83731 		strb	r3, [sp, #311]
- 389 0520 8DF83831 		strb	r3, [sp, #312]
- 390 0524 8DF83931 		strb	r3, [sp, #313]
- 391 0528 8DF83A31 		strb	r3, [sp, #314]
- 392 052c 8DF83B31 		strb	r3, [sp, #315]
- 393 0530 8DF83C31 		strb	r3, [sp, #316]
- 394 0534 8DF83D31 		strb	r3, [sp, #317]
- 395 0538 8DF83E31 		strb	r3, [sp, #318]
- 396 053c 8DF83F31 		strb	r3, [sp, #319]
-ARM GAS  /tmp/cc6kS5zv.s 			page 10
-
-
- 397 0540 8DF84031 		strb	r3, [sp, #320]
- 398 0544 8DF84131 		strb	r3, [sp, #321]
- 399 0548 8DF84231 		strb	r3, [sp, #322]
- 400 054c 8DF84321 		strb	r2, [sp, #323]
- 401 0550 8DF84431 		strb	r3, [sp, #324]
- 402 0554 8DF84531 		strb	r3, [sp, #325]
- 403 0558 8DF84631 		strb	r3, [sp, #326]
- 404 055c 8DF84731 		strb	r3, [sp, #327]
- 405 0560 8DF84831 		strb	r3, [sp, #328]
- 406 0564 8DF84931 		strb	r3, [sp, #329]
- 407 0568 8DF84A31 		strb	r3, [sp, #330]
- 408 056c 8DF84B31 		strb	r3, [sp, #331]
- 409 0570 8DF84C31 		strb	r3, [sp, #332]
- 410 0574 8DF84D31 		strb	r3, [sp, #333]
- 411 0578 8DF84E31 		strb	r3, [sp, #334]
- 412 057c 8DF84F31 		strb	r3, [sp, #335]
- 413 0580 8DF85031 		strb	r3, [sp, #336]
- 414 0584 8DF85131 		strb	r3, [sp, #337]
- 415 0588 8DF85231 		strb	r3, [sp, #338]
- 416 058c 8DF85331 		strb	r3, [sp, #339]
- 417 0590 8DF85431 		strb	r3, [sp, #340]
- 418 0594 8DF85531 		strb	r3, [sp, #341]
- 419 0598 8DF85631 		strb	r3, [sp, #342]
- 420 059c 8DF85731 		strb	r3, [sp, #343]
- 421 05a0 8DF85831 		strb	r3, [sp, #344]
- 422 05a4 8DF85931 		strb	r3, [sp, #345]
- 423 05a8 8DF85A31 		strb	r3, [sp, #346]
- 424 05ac 8DF85B21 		strb	r2, [sp, #347]
- 425 05b0 8DF85C31 		strb	r3, [sp, #348]
- 426 05b4 8DF85D31 		strb	r3, [sp, #349]
- 427 05b8 8DF85E31 		strb	r3, [sp, #350]
- 428 05bc 8DF85F31 		strb	r3, [sp, #351]
- 429 05c0 8DF86031 		strb	r3, [sp, #352]
- 430 05c4 8DF86131 		strb	r3, [sp, #353]
- 431 05c8 8DF86231 		strb	r3, [sp, #354]
- 432 05cc 8DF86331 		strb	r3, [sp, #355]
- 433 05d0 8DF86431 		strb	r3, [sp, #356]
- 434 05d4 8DF86531 		strb	r3, [sp, #357]
- 435 05d8 8DF86631 		strb	r3, [sp, #358]
- 436 05dc 8DF86731 		strb	r3, [sp, #359]
- 437 05e0 8DF86831 		strb	r3, [sp, #360]
- 438 05e4 8DF86931 		strb	r3, [sp, #361]
- 439 05e8 8DF86A31 		strb	r3, [sp, #362]
- 440 05ec 8DF86B31 		strb	r3, [sp, #363]
- 441 05f0 8DF86C31 		strb	r3, [sp, #364]
- 442 05f4 8DF86D31 		strb	r3, [sp, #365]
- 443 05f8 8DF86E31 		strb	r3, [sp, #366]
- 444 05fc 8DF86F31 		strb	r3, [sp, #367]
- 445 0600 8DF87031 		strb	r3, [sp, #368]
- 446 0604 8DF87131 		strb	r3, [sp, #369]
- 447 0608 8DF87231 		strb	r3, [sp, #370]
- 448 060c 8DF87321 		strb	r2, [sp, #371]
- 449 0610 8DF87431 		strb	r3, [sp, #372]
- 450 0614 8DF87531 		strb	r3, [sp, #373]
- 451 0618 8DF87631 		strb	r3, [sp, #374]
- 452 061c 8DF87731 		strb	r3, [sp, #375]
- 453 0620 8DF87831 		strb	r3, [sp, #376]
-ARM GAS  /tmp/cc6kS5zv.s 			page 11
-
-
- 454 0624 8DF87931 		strb	r3, [sp, #377]
- 455 0628 8DF87A31 		strb	r3, [sp, #378]
- 456 062c 8DF87B31 		strb	r3, [sp, #379]
- 457 0630 8DF87C31 		strb	r3, [sp, #380]
- 458 0634 8DF87D31 		strb	r3, [sp, #381]
- 459 0638 8DF87E31 		strb	r3, [sp, #382]
- 460 063c 8DF87F31 		strb	r3, [sp, #383]
- 461 0640 8DF88031 		strb	r3, [sp, #384]
- 462 0644 8DF88131 		strb	r3, [sp, #385]
- 463 0648 8DF88231 		strb	r3, [sp, #386]
- 464 064c 8DF88331 		strb	r3, [sp, #387]
- 465 0650 0023     		movs	r3, #0
- 466 0652 8DF88431 		strb	r3, [sp, #388]
- 119:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, o,\
- 120:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, z,\
- 121:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, z,\ 
+ 111:Src/addressable_led_driver.c ****   LED_PANEL_1_PWM_TIMER->ARR = ADDR_LED_PWM_ARR;
+  63              		.loc 1 111 0
+  64 002e 2022     		movs	r2, #32
+  65 0030 DA62     		str	r2, [r3, #44]
+ 112:Src/addressable_led_driver.c ****   LED_PANEL_1_PWM_TIMER->EGR = TIM_EGR_UG;
+  66              		.loc 1 112 0
+  67 0032 0124     		movs	r4, #1
+  68 0034 5C61     		str	r4, [r3, #20]
+  69              	.LVL2:
+ 113:Src/addressable_led_driver.c ****   
+ 114:Src/addressable_led_driver.c ****   //#define PWM_BASE_TEST
+ 115:Src/addressable_led_driver.c ****   #define PWM_DMA_TEST
+ 116:Src/addressable_led_driver.c **** 
+ 117:Src/addressable_led_driver.c ****   #ifdef PWM_BASE_TEST
+ 118:Src/addressable_led_driver.c ****   ADDR_LED_PWM_START();
+ 119:Src/addressable_led_driver.c ****   ADDR_LED_PWM_SET_DUTY_CYCLE(10);
+ 120:Src/addressable_led_driver.c ****   while(1){}
+ 121:Src/addressable_led_driver.c ****   #endif
  122:Src/addressable_led_driver.c **** 
- 123:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, o,\
- 124:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, z,\
- 125:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, z,\ 
- 126:Src/addressable_led_driver.c **** 
- 127:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, o,\
- 128:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, z,\
- 129:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, z,\ 
- 130:Src/addressable_led_driver.c **** 
- 131:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, o,\
- 132:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, z,\
- 133:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, z,\ 
- 134:Src/addressable_led_driver.c **** 
- 135:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, o,\
- 136:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, z,\
- 137:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, z,\ 
- 138:Src/addressable_led_driver.c **** 
- 139:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, o,\
- 140:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, z,\
- 141:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, z,\ 
- 142:Src/addressable_led_driver.c **** 
- 143:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, o,\
- 144:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, z,\
- 145:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, z,\ 
- 146:Src/addressable_led_driver.c **** 
- 147:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, o,\
- 148:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, z,\
- 149:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, z,\ 
- 150:Src/addressable_led_driver.c **** 
- 151:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, o,\
- 152:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, z,\
- 153:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, z,\ 
- 154:Src/addressable_led_driver.c **** 
- 155:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, o,\
- 156:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, z,\
- 157:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, z,\ 
- 158:Src/addressable_led_driver.c **** 
- 159:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, o,\
- 160:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, z,\
- 161:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, z,\ 
- 162:Src/addressable_led_driver.c **** 
-ARM GAS  /tmp/cc6kS5zv.s 			page 12
+ 123:Src/addressable_led_driver.c ****   #ifdef PWM_DMA_TEST
+ 124:Src/addressable_led_driver.c ****   //
+ 125:Src/addressable_led_driver.c ****   uint8_t o = ADDR_LED_CODE_HIGH_COMPARE_VAL;
+ 126:Src/addressable_led_driver.c ****   uint8_t z = ADDR_LED_CODE_LOW_COMPARE_VAL;
+ 127:Src/addressable_led_driver.c ****   
+ 128:Src/addressable_led_driver.c ****   #if 1
+ 129:Src/addressable_led_driver.c ****   const uint8_t dmaTestPayload[] = {
+ 130:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, o,
+ 131:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, z,
+ 132:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, o, z,  
+ 133:Src/addressable_led_driver.c **** 
+ 134:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, o,
+ 135:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, z,
+ 136:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, z, 
+ 137:Src/addressable_led_driver.c **** 
+ 138:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, o,
+ 139:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, z,
+ 140:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, o, z, 
+ 141:Src/addressable_led_driver.c **** 
+ 142:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, o,
+ 143:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, z,
+ 144:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, z, 
+ 145:Src/addressable_led_driver.c **** 
+ 146:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, o,
+ 147:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, z,
+ 148:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, o, z, 
+ 149:Src/addressable_led_driver.c **** 
+ 150:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, o,
+ 151:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, z,
+ 152:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, z, 
+ 153:Src/addressable_led_driver.c **** 
+ 154:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, o,
+ 155:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, z,
+ 156:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, o, z, 
+ 157:Src/addressable_led_driver.c **** 
+ 158:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, o,
+ 159:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, z,
+ 160:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, z, 
+ARM GAS  /tmp/cc2PL0da.s 			page 5
 
 
- 163:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, o,\
- 164:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, z,\
- 165:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, z,\ 
- 166:Src/addressable_led_driver.c **** 
- 167:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, o,\
- 168:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, z,\
- 169:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, z,\ 
- 170:Src/addressable_led_driver.c **** 
- 171:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, o,\
- 172:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, z,\
- 173:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, z,\ 
- 174:Src/addressable_led_driver.c **** 
- 175:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, o,\
- 176:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, z,\
- 177:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, z,\ 
- 178:Src/addressable_led_driver.c **** 
- 179:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, o,\
- 180:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, z,\
- 181:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, z,\ 
- 182:Src/addressable_led_driver.c **** 
- 183:Src/addressable_led_driver.c ****                                     0};
- 184:Src/addressable_led_driver.c ****   #else
- 185:Src/addressable_led_driver.c ****   const uint8_t dmaTestPayload[] = {o, z, 1, 1, 1, 1, 0};
- 186:Src/addressable_led_driver.c ****   #endif
- 187:Src/addressable_led_driver.c ****   //const uint8_t dmaTestPayload[] = {10, 1, 1, 1, 0};
- 188:Src/addressable_led_driver.c ****   //HAL_TIM_PWM_Start_DMA(TIM_HandleTypeDef *htim, uint32_t Channel, uint32_t *pData, uint16_t Leng
- 189:Src/addressable_led_driver.c ****     HAL_TIM_PWM_Start_DMA(&LED_PANEL_1_PWM_TIMER_HANDLE, LED_PANEL_1_PWM_TIMER_CHANNEL, (uint32_t *
- 467              		.loc 1 189 0
- 468 0656 40F28113 		movw	r3, #385
- 469 065a 01AA     		add	r2, sp, #4
- 470 065c 0C21     		movs	r1, #12
- 471 065e 0448     		ldr	r0, .L7
- 472 0660 FFF7FEFF 		bl	HAL_TIM_PWM_Start_DMA
- 473              	.LVL3:
- 190:Src/addressable_led_driver.c ****   HAL_GPIO_TogglePin(LD4_GPIO_Port, LD4_Pin);
- 474              		.loc 1 190 0
- 475 0664 2021     		movs	r1, #32
- 476 0666 4FF09040 		mov	r0, #1207959552
- 477 066a FFF7FEFF 		bl	HAL_GPIO_TogglePin
- 478              	.LVL4:
- 479              	.L2:
- 480 066e FEE7     		b	.L2
- 481              	.L8:
- 482              		.align	2
- 483              	.L7:
- 484 0670 00000000 		.word	htim3
- 485              		.cfi_endproc
- 486              	.LFE132:
- 488              		.section	.text.AddrLED_SanityTest,"ax",%progbits
- 489              		.align	1
- 490              		.global	AddrLED_SanityTest
- 491              		.syntax unified
- 492              		.thumb
- 493              		.thumb_func
- 494              		.fpu fpv4-sp-d16
- 496              	AddrLED_SanityTest:
- 497              	.LFB133:
-ARM GAS  /tmp/cc6kS5zv.s 			page 13
+ 161:Src/addressable_led_driver.c **** 
+ 162:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, o,
+ 163:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, z,
+ 164:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, o, z, 
+ 165:Src/addressable_led_driver.c **** 
+ 166:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, o,
+ 167:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, z,
+ 168:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, z, 
+ 169:Src/addressable_led_driver.c **** 
+ 170:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, o,
+ 171:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, z,
+ 172:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, o, z, 
+ 173:Src/addressable_led_driver.c **** 
+ 174:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, o,
+ 175:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, z,
+ 176:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, z, 
+ 177:Src/addressable_led_driver.c **** 
+ 178:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, o,
+ 179:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, z,
+ 180:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, o, z, 
+ 181:Src/addressable_led_driver.c **** 
+ 182:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, o,
+ 183:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, z,
+ 184:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, z, 
+ 185:Src/addressable_led_driver.c **** 
+ 186:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, o,
+ 187:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, z,
+ 188:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, o, z, 
+ 189:Src/addressable_led_driver.c **** 
+ 190:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, o,
+ 191:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, z,
+ 192:Src/addressable_led_driver.c ****                                     z, z, z, z, z, z, z, z, 
+ 193:Src/addressable_led_driver.c **** 
+ 194:Src/addressable_led_driver.c ****                                     0};
+ 195:Src/addressable_led_driver.c **** 
+ 196:Src/addressable_led_driver.c ****   // 16 LEDS, 3 colors, 8 bytes per color, null character at the end
+ 197:Src/addressable_led_driver.c ****   // 16 * 3 * 8 + 1 = 385
+ 198:Src/addressable_led_driver.c ****   uint8_t payloadDupeTest[16 * 3 * 8 + 1];
+ 199:Src/addressable_led_driver.c ****   PixelPacket_t *payloadDupePP = (PixelPacket_t *) &payloadDupeTest;
+ 200:Src/addressable_led_driver.c **** 
+ 201:Src/addressable_led_driver.c ****   memset(&payloadDupeTest, 0x0, 16 * 3 * 8 + 1);
+  70              		.loc 1 201 0
+  71 0036 40F28112 		movw	r2, #385
+  72 003a 0021     		movs	r1, #0
+  73 003c 03A8     		add	r0, sp, #12
+  74              	.LVL3:
+  75 003e FFF7FEFF 		bl	memset
+  76              	.LVL4:
+ 202:Src/addressable_led_driver.c ****   Pixel_t color1 = {.red = 0x0, .green = 0x1, .blue = 0x2};
+  77              		.loc 1 202 0
+  78 0042 434B     		ldr	r3, .L36+20
+  79 0044 1B68     		ldr	r3, [r3]
+  80 0046 ADF80830 		strh	r3, [sp, #8]	@ movhi
+  81 004a 1B0C     		lsrs	r3, r3, #16
+  82 004c 8DF80A30 		strb	r3, [sp, #10]
+ 203:Src/addressable_led_driver.c ****   Pixel_t color2 = {.red = 0x0, .green = 0x1, .blue = 0x0};
+  83              		.loc 1 203 0
+ARM GAS  /tmp/cc2PL0da.s 			page 6
 
 
- 191:Src/addressable_led_driver.c ****   while(1){
- 192:Src/addressable_led_driver.c ****   }
- 193:Src/addressable_led_driver.c ****   #endif
- 194:Src/addressable_led_driver.c **** 
- 195:Src/addressable_led_driver.c ****   AddrLED_SanityTest();
- 196:Src/addressable_led_driver.c ****   while(1){}
- 197:Src/addressable_led_driver.c **** }
- 198:Src/addressable_led_driver.c **** 
- 199:Src/addressable_led_driver.c **** void AddrLED_SanityTest(void)
- 200:Src/addressable_led_driver.c **** {
- 498              		.loc 1 200 0
- 499              		.cfi_startproc
- 500              		@ args = 0, pretend = 0, frame = 48
- 501              		@ frame_needed = 1, uses_anonymous_args = 0
- 502 0000 F0B5     		push	{r4, r5, r6, r7, lr}
- 503              	.LCFI2:
- 504              		.cfi_def_cfa_offset 20
- 505              		.cfi_offset 4, -20
- 506              		.cfi_offset 5, -16
- 507              		.cfi_offset 6, -12
- 508              		.cfi_offset 7, -8
- 509              		.cfi_offset 14, -4
- 510 0002 8DB0     		sub	sp, sp, #52
- 511              	.LCFI3:
- 512              		.cfi_def_cfa_offset 72
- 513 0004 00AF     		add	r7, sp, #0
- 514              	.LCFI4:
- 515              		.cfi_def_cfa_register 7
- 516              	.LVL5:
- 201:Src/addressable_led_driver.c ****   // Initialize test Pixel array
- 202:Src/addressable_led_driver.c ****   const uint8_t testSize = 4 * 4;
- 203:Src/addressable_led_driver.c ****   Pixel_t test[testSize];
- 204:Src/addressable_led_driver.c ****   memset(&test, 0x0, sizeof(test));
- 517              		.loc 1 204 0
- 518 0006 3022     		movs	r2, #48
- 519 0008 0021     		movs	r1, #0
- 520 000a 3846     		mov	r0, r7
- 521              	.LVL6:
- 522 000c FFF7FEFF 		bl	memset
- 523              	.LVL7:
- 524              	.LBB2:
- 205:Src/addressable_led_driver.c ****   for (int i = 0; i < testSize; i++)
- 525              		.loc 1 205 0
- 526 0010 0023     		movs	r3, #0
- 527 0012 0DE0     		b	.L10
- 528              	.LVL8:
- 529              	.L11:
+  84 0050 8DF80440 		strb	r4, [sp, #4]
+  85 0054 0021     		movs	r1, #0
+  86 0056 8DF80510 		strb	r1, [sp, #5]
+  87 005a 8DF80610 		strb	r1, [sp, #6]
+  88              	.LVL5:
+  89              	.LBB29:
+ 204:Src/addressable_led_driver.c ****  
+ 205:Src/addressable_led_driver.c ****   for (int i = 0; i < (16 * 3 * 8) / sizeof(PixelPacket_t); i++)
+  90              		.loc 1 205 0
+  91 005e 5DE0     		b	.L2
+  92              	.LVL6:
+  93              	.L25:
+  94              	.LBB30:
+  95              	.LBB31:
+  96              	.LBB32:
+  97              	.LBB33:
+  98              	.LBB34:
+  76:Src/addressable_led_driver.c ****   }
+  99              		.loc 1 76 0
+ 100 0060 0822     		movs	r2, #8
+ 101              	.L5:
+ 102 0062 E254     		strb	r2, [r4, r3]
+  74:Src/addressable_led_driver.c ****   {
+ 103              		.loc 1 74 0
+ 104 0064 0133     		adds	r3, r3, #1
+ 105              	.LVL7:
+ 106              	.L4:
+ 107 0066 072B     		cmp	r3, #7
+ 108 0068 05DC     		bgt	.L32
+  76:Src/addressable_led_driver.c ****   }
+ 109              		.loc 1 76 0
+ 110 006a 0122     		movs	r2, #1
+ 111 006c 9A40     		lsls	r2, r2, r3
+ 112 006e 1542     		tst	r5, r2
+ 113 0070 F6D0     		beq	.L25
+ 114 0072 1722     		movs	r2, #23
+ 115 0074 F5E7     		b	.L5
+ 116              	.L32:
+ 117              	.LVL8:
+ 118              	.LBE34:
+ 119              	.LBE33:
+  85:Src/addressable_led_driver.c ****   ByteToCodes(p->blue, &(packet->blueRaw[0]));
+ 120              		.loc 1 85 0
+ 121 0076 9DF80950 		ldrb	r5, [sp, #9]	@ zero_extendqisi2
+ 122 007a 00F10804 		add	r4, r0, #8
+ 123              	.LVL9:
+ 124              	.LBB36:
+ 125              	.LBB37:
+  74:Src/addressable_led_driver.c ****   {
+ 126              		.loc 1 74 0
+ 127 007e 0023     		movs	r3, #0
+ 128 0080 02E0     		b	.L7
+ 129              	.LVL10:
+ 130              	.L26:
+  76:Src/addressable_led_driver.c ****   }
+ 131              		.loc 1 76 0
+ 132 0082 0822     		movs	r2, #8
+ARM GAS  /tmp/cc2PL0da.s 			page 7
+
+
+ 133              	.L8:
+ 134 0084 E254     		strb	r2, [r4, r3]
+  74:Src/addressable_led_driver.c ****   {
+ 135              		.loc 1 74 0
+ 136 0086 0133     		adds	r3, r3, #1
+ 137              	.LVL11:
+ 138              	.L7:
+ 139 0088 072B     		cmp	r3, #7
+ 140 008a 05DC     		bgt	.L33
+  76:Src/addressable_led_driver.c ****   }
+ 141              		.loc 1 76 0
+ 142 008c 0122     		movs	r2, #1
+ 143 008e 9A40     		lsls	r2, r2, r3
+ 144 0090 1542     		tst	r5, r2
+ 145 0092 F6D0     		beq	.L26
+ 146 0094 1722     		movs	r2, #23
+ 147 0096 F5E7     		b	.L8
+ 148              	.L33:
+ 149              	.LVL12:
+ 150              	.LBE37:
+ 151              	.LBE36:
+  86:Src/addressable_led_driver.c **** }
+ 152              		.loc 1 86 0
+ 153 0098 9DF80A40 		ldrb	r4, [sp, #10]	@ zero_extendqisi2
+ 154 009c 1030     		adds	r0, r0, #16
+ 155              	.LVL13:
+ 156              	.LBB38:
+ 157              	.LBB39:
+  74:Src/addressable_led_driver.c ****   {
+ 158              		.loc 1 74 0
+ 159 009e 0023     		movs	r3, #0
+ 160 00a0 02E0     		b	.L10
+ 161              	.LVL14:
+ 162              	.L27:
+  76:Src/addressable_led_driver.c ****   }
+ 163              		.loc 1 76 0
+ 164 00a2 0822     		movs	r2, #8
+ 165              	.L11:
+ 166 00a4 C254     		strb	r2, [r0, r3]
+  74:Src/addressable_led_driver.c ****   {
+ 167              		.loc 1 74 0
+ 168 00a6 0133     		adds	r3, r3, #1
+ 169              	.LVL15:
+ 170              	.L10:
+ 171 00a8 072B     		cmp	r3, #7
+ 172 00aa 36DC     		bgt	.L13
+  76:Src/addressable_led_driver.c ****   }
+ 173              		.loc 1 76 0
+ 174 00ac 0122     		movs	r2, #1
+ 175 00ae 9A40     		lsls	r2, r2, r3
+ 176 00b0 1442     		tst	r4, r2
+ 177 00b2 F6D0     		beq	.L27
+ 178 00b4 1722     		movs	r2, #23
+ 179 00b6 F5E7     		b	.L11
+ 180              	.LVL16:
+ 181              	.L3:
+ 182              	.LBE39:
+ARM GAS  /tmp/cc2PL0da.s 			page 8
+
+
+ 183              	.LBE38:
+ 184              	.LBE32:
+ 185              	.LBE31:
+ 186              	.LBB42:
+ 187              	.LBB43:
+  84:Src/addressable_led_driver.c ****   ByteToCodes(p->red, &(packet->redRaw[0]));
+ 188              		.loc 1 84 0
+ 189 00b8 9DF80450 		ldrb	r5, [sp, #4]	@ zero_extendqisi2
+ 190 00bc 0446     		mov	r4, r0
+ 191              	.LVL17:
+ 192              	.LBB44:
+ 193              	.LBB45:
+  74:Src/addressable_led_driver.c ****   {
+ 194              		.loc 1 74 0
+ 195 00be 0023     		movs	r3, #0
+ 196              	.LVL18:
+ 197 00c0 02E0     		b	.L14
+ 198              	.LVL19:
+ 199              	.L28:
+  76:Src/addressable_led_driver.c ****   }
+ 200              		.loc 1 76 0
+ 201 00c2 0822     		movs	r2, #8
+ 202              	.L15:
+ 203 00c4 E254     		strb	r2, [r4, r3]
+  74:Src/addressable_led_driver.c ****   {
+ 204              		.loc 1 74 0
+ 205 00c6 0133     		adds	r3, r3, #1
+ 206              	.LVL20:
+ 207              	.L14:
+ 208 00c8 072B     		cmp	r3, #7
+ 209 00ca 05DC     		bgt	.L34
+  76:Src/addressable_led_driver.c ****   }
+ 210              		.loc 1 76 0
+ 211 00cc 0122     		movs	r2, #1
+ 212 00ce 9A40     		lsls	r2, r2, r3
+ 213 00d0 1542     		tst	r5, r2
+ 214 00d2 F6D0     		beq	.L28
+ 215 00d4 1722     		movs	r2, #23
+ 216 00d6 F5E7     		b	.L15
+ 217              	.L34:
+ 218              	.LVL21:
+ 219              	.LBE45:
+ 220              	.LBE44:
+  85:Src/addressable_led_driver.c ****   ByteToCodes(p->blue, &(packet->blueRaw[0]));
+ 221              		.loc 1 85 0
+ 222 00d8 9DF80550 		ldrb	r5, [sp, #5]	@ zero_extendqisi2
+ 223 00dc 00F10804 		add	r4, r0, #8
+ 224              	.LVL22:
+ 225              	.LBB46:
+ 226              	.LBB47:
+  74:Src/addressable_led_driver.c ****   {
+ 227              		.loc 1 74 0
+ 228 00e0 0023     		movs	r3, #0
+ 229 00e2 02E0     		b	.L17
+ 230              	.LVL23:
+ 231              	.L29:
+  76:Src/addressable_led_driver.c ****   }
+ARM GAS  /tmp/cc2PL0da.s 			page 9
+
+
+ 232              		.loc 1 76 0
+ 233 00e4 0822     		movs	r2, #8
+ 234              	.L18:
+ 235 00e6 E254     		strb	r2, [r4, r3]
+  74:Src/addressable_led_driver.c ****   {
+ 236              		.loc 1 74 0
+ 237 00e8 0133     		adds	r3, r3, #1
+ 238              	.LVL24:
+ 239              	.L17:
+ 240 00ea 072B     		cmp	r3, #7
+ 241 00ec 05DC     		bgt	.L35
+  76:Src/addressable_led_driver.c ****   }
+ 242              		.loc 1 76 0
+ 243 00ee 0122     		movs	r2, #1
+ 244 00f0 9A40     		lsls	r2, r2, r3
+ 245 00f2 1542     		tst	r5, r2
+ 246 00f4 F6D0     		beq	.L29
+ 247 00f6 1722     		movs	r2, #23
+ 248 00f8 F5E7     		b	.L18
+ 249              	.L35:
+ 250              	.LVL25:
+ 251              	.LBE47:
+ 252              	.LBE46:
+  86:Src/addressable_led_driver.c **** }
+ 253              		.loc 1 86 0
+ 254 00fa 9DF80640 		ldrb	r4, [sp, #6]	@ zero_extendqisi2
+ 255 00fe 1030     		adds	r0, r0, #16
+ 256              	.LVL26:
+ 257              	.LBB48:
+ 258              	.LBB49:
+  74:Src/addressable_led_driver.c ****   {
+ 259              		.loc 1 74 0
+ 260 0100 0023     		movs	r3, #0
+ 261 0102 02E0     		b	.L20
+ 262              	.LVL27:
+ 263              	.L30:
+  76:Src/addressable_led_driver.c ****   }
+ 264              		.loc 1 76 0
+ 265 0104 0822     		movs	r2, #8
+ 266              	.L21:
+ 267 0106 C254     		strb	r2, [r0, r3]
+  74:Src/addressable_led_driver.c ****   {
+ 268              		.loc 1 74 0
+ 269 0108 0133     		adds	r3, r3, #1
+ 270              	.LVL28:
+ 271              	.L20:
+ 272 010a 072B     		cmp	r3, #7
+ 273 010c 05DC     		bgt	.L13
+  76:Src/addressable_led_driver.c ****   }
+ 274              		.loc 1 76 0
+ 275 010e 0122     		movs	r2, #1
+ 276 0110 9A40     		lsls	r2, r2, r3
+ 277 0112 1442     		tst	r4, r2
+ 278 0114 F6D0     		beq	.L30
+ 279 0116 1722     		movs	r2, #23
+ 280 0118 F5E7     		b	.L21
+ 281              	.LVL29:
+ARM GAS  /tmp/cc2PL0da.s 			page 10
+
+
+ 282              	.L13:
+ 283              	.LBE49:
+ 284              	.LBE48:
+ 285              	.LBE43:
+ 286              	.LBE42:
+ 287              	.LBE30:
+ 288              		.loc 1 205 0 discriminator 2
+ 289 011a 0131     		adds	r1, r1, #1
+ 290              	.LVL30:
+ 291              	.L2:
+ 292              		.loc 1 205 0 is_stmt 0 discriminator 1
+ 293 011c 0F29     		cmp	r1, #15
+ 294 011e 0CD8     		bhi	.L24
+ 295              	.LBB51:
  206:Src/addressable_led_driver.c ****   {
- 207:Src/addressable_led_driver.c ****     if (i < 4)
- 208:Src/addressable_led_driver.c ****       test[i] = (Pixel_t) {0, 0, 0xff};
- 209:Src/addressable_led_driver.c ****     else if (i <= 8)
- 210:Src/addressable_led_driver.c ****       test[i] = (Pixel_t) {0, 0xff, 0};
- 211:Src/addressable_led_driver.c ****     else if (i <= 12)
- 212:Src/addressable_led_driver.c ****       test[i] = (Pixel_t) {0xff, 0, 0};
- 213:Src/addressable_led_driver.c ****     test[i] = (Pixel_t) {0, 0xff, 0};
- 530              		.loc 1 213 0 discriminator 2
- 531 0014 03EB4302 		add	r2, r3, r3, lsl #1
-ARM GAS  /tmp/cc6kS5zv.s 			page 14
+ 207:Src/addressable_led_driver.c ****     PixelPacket_t *currPixel = payloadDupePP + i;
+ 296              		.loc 1 207 0 is_stmt 1
+ 297 0120 01EB4103 		add	r3, r1, r1, lsl #1
+ 298 0124 D800     		lsls	r0, r3, #3
+ 299 0126 03AB     		add	r3, sp, #12
+ 300              	.LVL31:
+ 301 0128 1844     		add	r0, r0, r3
+ 302              	.LVL32:
+ 208:Src/addressable_led_driver.c ****     if (i % 2)
+ 303              		.loc 1 208 0
+ 304 012a 11F0010F 		tst	r1, #1
+ 305 012e C3D0     		beq	.L3
+ 306              	.LVL33:
+ 307              	.LBB50:
+ 308              	.LBB41:
+  84:Src/addressable_led_driver.c ****   ByteToCodes(p->red, &(packet->redRaw[0]));
+ 309              		.loc 1 84 0
+ 310 0130 9DF80850 		ldrb	r5, [sp, #8]	@ zero_extendqisi2
+ 311 0134 0446     		mov	r4, r0
+ 312              	.LVL34:
+ 313              	.LBB40:
+ 314              	.LBB35:
+  74:Src/addressable_led_driver.c ****   {
+ 315              		.loc 1 74 0
+ 316 0136 0023     		movs	r3, #0
+ 317              	.LVL35:
+ 318 0138 95E7     		b	.L4
+ 319              	.LVL36:
+ 320              	.L24:
+ 321 013a FEE7     		b	.L24
+ 322              	.L37:
+ 323              		.align	2
+ 324              	.L36:
+ 325 013c 83DE1B43 		.word	1125899907
+ 326 0140 00000000 		.word	MICROSECOND_PRESCALER
+ 327 0144 D34D6210 		.word	274877907
+ 328 0148 00000000 		.word	MILLISECOND_PRESCALER
+ 329 014c 00040040 		.word	1073742848
+ 330 0150 00000000 		.word	.LANCHOR0
+ 331              	.LBE35:
+ 332              	.LBE40:
+ 333              	.LBE41:
+ARM GAS  /tmp/cc2PL0da.s 			page 11
 
 
- 532 0018 07F13001 		add	r1, r7, #48
- 533 001c 0A44     		add	r2, r2, r1
- 534 001e 0021     		movs	r1, #0
- 535 0020 02F8301C 		strb	r1, [r2, #-48]
- 536 0024 FF20     		movs	r0, #255
- 537 0026 02F82F0C 		strb	r0, [r2, #-47]
- 538 002a 02F82E1C 		strb	r1, [r2, #-46]
- 205:Src/addressable_led_driver.c ****   for (int i = 0; i < testSize; i++)
- 539              		.loc 1 205 0 discriminator 2
- 540 002e 0133     		adds	r3, r3, #1
- 541              	.LVL9:
- 542              	.L10:
- 205:Src/addressable_led_driver.c ****   for (int i = 0; i < testSize; i++)
- 543              		.loc 1 205 0 is_stmt 0 discriminator 1
- 544 0030 0F2B     		cmp	r3, #15
- 545 0032 EFDD     		ble	.L11
- 546              	.LBE2:
- 214:Src/addressable_led_driver.c ****   }
- 215:Src/addressable_led_driver.c ****   
- 216:Src/addressable_led_driver.c ****   // Initialize payload
- 217:Src/addressable_led_driver.c ****   uint8_t test1Payload[3 * 8 * testSize + 1];
- 547              		.loc 1 217 0 is_stmt 1
- 548 0034 E2B0     		sub	sp, sp, #392
- 549              	.LVL10:
- 550 0036 6C46     		mov	r4, sp
- 551              	.LVL11:
- 218:Src/addressable_led_driver.c ****   uint8_t test1PayloadHead = 0;
- 219:Src/addressable_led_driver.c ****   memset(&test1Payload, 0x0, sizeof(test1Payload));
- 552              		.loc 1 219 0
- 553 0038 40F28112 		movw	r2, #385
- 554 003c 0021     		movs	r1, #0
- 555 003e 6846     		mov	r0, sp
- 556 0040 FFF7FEFF 		bl	memset
- 557              	.LVL12:
- 558              	.LBB3:
- 220:Src/addressable_led_driver.c ****   
- 221:Src/addressable_led_driver.c ****   #define BREAKEARLY false
- 222:Src/addressable_led_driver.c ****   // Go thru all Pixel_t objects
- 223:Src/addressable_led_driver.c ****   for (int i = 0; i < testSize; i++)
- 559              		.loc 1 223 0
- 560 0044 0026     		movs	r6, #0
- 561              	.LBE3:
- 218:Src/addressable_led_driver.c ****   uint8_t test1PayloadHead = 0;
- 562              		.loc 1 218 0
- 563 0046 3346     		mov	r3, r6
- 564              	.LBB10:
- 565              		.loc 1 223 0
- 566 0048 16E0     		b	.L12
- 567              	.LVL13:
- 568              	.L19:
- 569              	.LBB4:
- 570              	.LBB5:
- 571              	.LBB6:
- 224:Src/addressable_led_driver.c ****   {
- 225:Src/addressable_led_driver.c ****     // Go thru all bytes 
- 226:Src/addressable_led_driver.c ****     for (int j = 0; j < sizeof(Pixel_t); j++)
- 227:Src/addressable_led_driver.c ****     {
-ARM GAS  /tmp/cc6kS5zv.s 			page 15
+ 334              	.LBE50:
+ 335              	.LBE51:
+ 336              	.LBE29:
+ 337              		.cfi_endproc
+ 338              	.LFE133:
+ 340              		.section	.text.AddrLED_SanityTest,"ax",%progbits
+ 341              		.align	1
+ 342              		.global	AddrLED_SanityTest
+ 343              		.syntax unified
+ 344              		.thumb
+ 345              		.thumb_func
+ 346              		.fpu fpv4-sp-d16
+ 348              	AddrLED_SanityTest:
+ 349              	.LFB134:
+ 209:Src/addressable_led_driver.c ****     {
+ 210:Src/addressable_led_driver.c ****       PixelToPacket(&color1, currPixel);
+ 211:Src/addressable_led_driver.c ****     }
+ 212:Src/addressable_led_driver.c ****     else
+ 213:Src/addressable_led_driver.c ****     {
+ 214:Src/addressable_led_driver.c ****       PixelToPacket(&color2, currPixel);
+ 215:Src/addressable_led_driver.c ****     }
+ 216:Src/addressable_led_driver.c ****   }
+ 217:Src/addressable_led_driver.c **** 
+ 218:Src/addressable_led_driver.c ****   while(1){}
+ 219:Src/addressable_led_driver.c **** 
+ 220:Src/addressable_led_driver.c ****   #else
+ 221:Src/addressable_led_driver.c ****   const uint8_t dmaTestPayload[] = {o, z, 1, 1, 1, 1, 0};
+ 222:Src/addressable_led_driver.c ****   #endif
+ 223:Src/addressable_led_driver.c ****   //const uint8_t dmaTestPayload[] = {10, 1, 1, 1, 0};
+ 224:Src/addressable_led_driver.c ****   //HAL_TIM_PWM_Start_DMA(TIM_HandleTypeDef *htim, uint32_t Channel, uint32_t *pData, uint16_t Leng
+ 225:Src/addressable_led_driver.c ****     HAL_TIM_PWM_Start_DMA(&LED_PANEL_1_PWM_TIMER_HANDLE, LED_PANEL_1_PWM_TIMER_CHANNEL, (uint32_t *
+ 226:Src/addressable_led_driver.c ****   HAL_GPIO_TogglePin(LD4_GPIO_Port, LD4_Pin);
+ 227:Src/addressable_led_driver.c ****   while(1){
+ 228:Src/addressable_led_driver.c ****   }
+ 229:Src/addressable_led_driver.c ****   #endif
+ 230:Src/addressable_led_driver.c **** 
+ 231:Src/addressable_led_driver.c ****   AddrLED_SanityTest();
+ 232:Src/addressable_led_driver.c ****   while(1){}
+ 233:Src/addressable_led_driver.c **** }
+ 234:Src/addressable_led_driver.c **** 
+ 235:Src/addressable_led_driver.c **** void AddrLED_SanityTest(void)
+ 236:Src/addressable_led_driver.c **** {
+ 350              		.loc 1 236 0
+ 351              		.cfi_startproc
+ 352              		@ args = 0, pretend = 0, frame = 48
+ 353              		@ frame_needed = 1, uses_anonymous_args = 0
+ 354 0000 F0B5     		push	{r4, r5, r6, r7, lr}
+ 355              	.LCFI2:
+ 356              		.cfi_def_cfa_offset 20
+ 357              		.cfi_offset 4, -20
+ 358              		.cfi_offset 5, -16
+ 359              		.cfi_offset 6, -12
+ 360              		.cfi_offset 7, -8
+ 361              		.cfi_offset 14, -4
+ 362 0002 8DB0     		sub	sp, sp, #52
+ 363              	.LCFI3:
+ 364              		.cfi_def_cfa_offset 72
+ARM GAS  /tmp/cc2PL0da.s 			page 12
 
 
- 228:Src/addressable_led_driver.c ****       uint8_t currSourceByte = *((uint8_t *) &test[i] + j);
- 229:Src/addressable_led_driver.c ****       // Go thru all bits
- 230:Src/addressable_led_driver.c ****       for (int b = 0; b < 8; b++)
- 231:Src/addressable_led_driver.c ****       {
- 232:Src/addressable_led_driver.c ****        *((uint8_t *) &test1Payload + test1PayloadHead) = ((currSourceByte) & 0x1 << b) > 0 ? ADDR_L
- 572              		.loc 1 232 0
- 573 004a 0821     		movs	r1, #8
- 574              	.L14:
- 575              		.loc 1 232 0 is_stmt 0 discriminator 4
- 576 004c E154     		strb	r1, [r4, r3]
- 233:Src/addressable_led_driver.c ****        test1PayloadHead++;
- 577              		.loc 1 233 0 is_stmt 1 discriminator 4
- 578 004e 0133     		adds	r3, r3, #1
- 579              	.LVL14:
- 580 0050 DBB2     		uxtb	r3, r3
- 581              	.LVL15:
- 230:Src/addressable_led_driver.c ****       {
- 582              		.loc 1 230 0 discriminator 4
- 583 0052 0132     		adds	r2, r2, #1
- 584              	.LVL16:
- 585              	.L13:
- 230:Src/addressable_led_driver.c ****       {
- 586              		.loc 1 230 0 is_stmt 0 discriminator 2
- 587 0054 072A     		cmp	r2, #7
- 588 0056 05DC     		bgt	.L22
- 232:Src/addressable_led_driver.c ****        test1PayloadHead++;
- 589              		.loc 1 232 0 is_stmt 1
- 590 0058 0121     		movs	r1, #1
- 591 005a 9140     		lsls	r1, r1, r2
- 592 005c 0842     		tst	r0, r1
- 593 005e F4D0     		beq	.L19
- 594 0060 1721     		movs	r1, #23
- 595 0062 F3E7     		b	.L14
- 596              	.L22:
- 597              	.LBE6:
- 598              	.LBE5:
- 226:Src/addressable_led_driver.c ****     {
- 599              		.loc 1 226 0 discriminator 2
- 600 0064 0135     		adds	r5, r5, #1
- 601              	.LVL17:
- 602              	.L17:
- 226:Src/addressable_led_driver.c ****     {
- 603              		.loc 1 226 0 is_stmt 0 discriminator 1
- 604 0066 022D     		cmp	r5, #2
- 605 0068 05D8     		bhi	.L23
- 606              	.LBB8:
- 228:Src/addressable_led_driver.c ****       // Go thru all bits
- 607              		.loc 1 228 0 is_stmt 1
- 608 006a 06EB4602 		add	r2, r6, r6, lsl #1
- 609 006e 3A44     		add	r2, r2, r7
- 610 0070 505D     		ldrb	r0, [r2, r5]	@ zero_extendqisi2
- 611              	.LVL18:
- 612              	.LBB7:
- 230:Src/addressable_led_driver.c ****       {
- 613              		.loc 1 230 0
- 614 0072 0022     		movs	r2, #0
- 615 0074 EEE7     		b	.L13
-ARM GAS  /tmp/cc6kS5zv.s 			page 16
+ 365 0004 00AF     		add	r7, sp, #0
+ 366              	.LCFI4:
+ 367              		.cfi_def_cfa_register 7
+ 368              	.LVL37:
+ 237:Src/addressable_led_driver.c ****   // Initialize test Pixel array
+ 238:Src/addressable_led_driver.c ****   const uint8_t testSize = 4 * 4;
+ 239:Src/addressable_led_driver.c ****   Pixel_t test[testSize];
+ 240:Src/addressable_led_driver.c ****   memset(&test, 0x0, sizeof(test));
+ 369              		.loc 1 240 0
+ 370 0006 3022     		movs	r2, #48
+ 371 0008 0021     		movs	r1, #0
+ 372 000a 3846     		mov	r0, r7
+ 373              	.LVL38:
+ 374 000c FFF7FEFF 		bl	memset
+ 375              	.LVL39:
+ 376              	.LBB52:
+ 241:Src/addressable_led_driver.c ****   for (int i = 0; i < testSize; i++)
+ 377              		.loc 1 241 0
+ 378 0010 0023     		movs	r3, #0
+ 379 0012 0DE0     		b	.L39
+ 380              	.LVL40:
+ 381              	.L40:
+ 242:Src/addressable_led_driver.c ****   {
+ 243:Src/addressable_led_driver.c ****     if (i < 4)
+ 244:Src/addressable_led_driver.c ****       test[i] = (Pixel_t) {0, 0, 0xff};
+ 245:Src/addressable_led_driver.c ****     else if (i <= 8)
+ 246:Src/addressable_led_driver.c ****       test[i] = (Pixel_t) {0, 0xff, 0};
+ 247:Src/addressable_led_driver.c ****     else if (i <= 12)
+ 248:Src/addressable_led_driver.c ****       test[i] = (Pixel_t) {0xff, 0, 0};
+ 249:Src/addressable_led_driver.c ****     test[i] = (Pixel_t) {0, 0xff, 0};
+ 382              		.loc 1 249 0 discriminator 2
+ 383 0014 03EB4302 		add	r2, r3, r3, lsl #1
+ 384 0018 07F13001 		add	r1, r7, #48
+ 385 001c 0A44     		add	r2, r2, r1
+ 386 001e 0021     		movs	r1, #0
+ 387 0020 02F8301C 		strb	r1, [r2, #-48]
+ 388 0024 FF20     		movs	r0, #255
+ 389 0026 02F82F0C 		strb	r0, [r2, #-47]
+ 390 002a 02F82E1C 		strb	r1, [r2, #-46]
+ 241:Src/addressable_led_driver.c ****   for (int i = 0; i < testSize; i++)
+ 391              		.loc 1 241 0 discriminator 2
+ 392 002e 0133     		adds	r3, r3, #1
+ 393              	.LVL41:
+ 394              	.L39:
+ 241:Src/addressable_led_driver.c ****   for (int i = 0; i < testSize; i++)
+ 395              		.loc 1 241 0 is_stmt 0 discriminator 1
+ 396 0030 0F2B     		cmp	r3, #15
+ 397 0032 EFDD     		ble	.L40
+ 398              	.LBE52:
+ 250:Src/addressable_led_driver.c ****   }
+ 251:Src/addressable_led_driver.c ****   
+ 252:Src/addressable_led_driver.c ****   // Initialize payload
+ 253:Src/addressable_led_driver.c ****   uint8_t test1Payload[3 * 8 * testSize + 1];
+ 399              		.loc 1 253 0 is_stmt 1
+ 400 0034 E2B0     		sub	sp, sp, #392
+ 401              	.LVL42:
+ 402 0036 6C46     		mov	r4, sp
+ARM GAS  /tmp/cc2PL0da.s 			page 13
 
 
- 616              	.LVL19:
- 617              	.L23:
- 618              	.LBE7:
- 619              	.LBE8:
- 620              	.LBE4:
- 223:Src/addressable_led_driver.c ****   {
- 621              		.loc 1 223 0 discriminator 2
- 622 0076 0136     		adds	r6, r6, #1
- 623              	.LVL20:
- 624              	.L12:
- 223:Src/addressable_led_driver.c ****   {
- 625              		.loc 1 223 0 is_stmt 0 discriminator 1
- 626 0078 0F2E     		cmp	r6, #15
- 627 007a 01DC     		bgt	.L24
- 628              	.LBB9:
- 226:Src/addressable_led_driver.c ****     {
- 629              		.loc 1 226 0 is_stmt 1
- 630 007c 0025     		movs	r5, #0
- 631 007e F2E7     		b	.L17
- 632              	.L24:
- 633              	.LBE9:
- 634              	.LBE10:
- 234:Src/addressable_led_driver.c ****       }
- 235:Src/addressable_led_driver.c ****     }
- 236:Src/addressable_led_driver.c ****     #if BREAKEARLY
- 237:Src/addressable_led_driver.c ****     if (i == 3)
- 238:Src/addressable_led_driver.c ****       break;
- 239:Src/addressable_led_driver.c ****     #endif
- 240:Src/addressable_led_driver.c ****   }
- 241:Src/addressable_led_driver.c ****   
- 242:Src/addressable_led_driver.c ****   HAL_TIM_PWM_Start_DMA(&LED_PANEL_1_PWM_TIMER_HANDLE, LED_PANEL_1_PWM_TIMER_CHANNEL, (uint32_t *) 
- 635              		.loc 1 242 0
- 636 0080 40F28113 		movw	r3, #385
- 637              	.LVL21:
- 638 0084 2246     		mov	r2, r4
- 639 0086 0C21     		movs	r1, #12
- 640 0088 0148     		ldr	r0, .L25
- 641 008a FFF7FEFF 		bl	HAL_TIM_PWM_Start_DMA
- 642              	.LVL22:
- 643              	.L18:
- 644 008e FEE7     		b	.L18
- 645              	.L26:
- 646              		.align	2
- 647              	.L25:
- 648 0090 00000000 		.word	htim3
- 649              		.cfi_endproc
- 650              	.LFE133:
- 652              		.section	.text.AddrLED_StartPWM,"ax",%progbits
- 653              		.align	1
- 654              		.global	AddrLED_StartPWM
- 655              		.syntax unified
- 656              		.thumb
- 657              		.thumb_func
- 658              		.fpu fpv4-sp-d16
- 660              	AddrLED_StartPWM:
- 661              	.LFB134:
- 243:Src/addressable_led_driver.c ****   bool block = true;
-ARM GAS  /tmp/cc6kS5zv.s 			page 17
+ 403              	.LVL43:
+ 254:Src/addressable_led_driver.c ****   uint8_t test1PayloadHead = 0;
+ 255:Src/addressable_led_driver.c ****   memset(&test1Payload, 0x0, sizeof(test1Payload));
+ 404              		.loc 1 255 0
+ 405 0038 40F28112 		movw	r2, #385
+ 406 003c 0021     		movs	r1, #0
+ 407 003e 6846     		mov	r0, sp
+ 408 0040 FFF7FEFF 		bl	memset
+ 409              	.LVL44:
+ 410              	.LBB53:
+ 256:Src/addressable_led_driver.c ****   
+ 257:Src/addressable_led_driver.c ****   #define BREAKEARLY false
+ 258:Src/addressable_led_driver.c ****   // Go thru all Pixel_t objects
+ 259:Src/addressable_led_driver.c ****   for (int i = 0; i < testSize; i++)
+ 411              		.loc 1 259 0
+ 412 0044 0026     		movs	r6, #0
+ 413              	.LBE53:
+ 254:Src/addressable_led_driver.c ****   uint8_t test1PayloadHead = 0;
+ 414              		.loc 1 254 0
+ 415 0046 3346     		mov	r3, r6
+ 416              	.LBB60:
+ 417              		.loc 1 259 0
+ 418 0048 16E0     		b	.L41
+ 419              	.LVL45:
+ 420              	.L48:
+ 421              	.LBB54:
+ 422              	.LBB55:
+ 423              	.LBB56:
+ 260:Src/addressable_led_driver.c ****   {
+ 261:Src/addressable_led_driver.c ****     // Go thru all bytes 
+ 262:Src/addressable_led_driver.c ****     for (int j = 0; j < sizeof(Pixel_t); j++)
+ 263:Src/addressable_led_driver.c ****     {
+ 264:Src/addressable_led_driver.c ****       uint8_t currSourceByte = *((uint8_t *) &test[i] + j);
+ 265:Src/addressable_led_driver.c ****       // Go thru all bits
+ 266:Src/addressable_led_driver.c ****       for (int b = 0; b < 8; b++)
+ 267:Src/addressable_led_driver.c ****       {
+ 268:Src/addressable_led_driver.c ****        *((uint8_t *) &test1Payload + test1PayloadHead) = ((currSourceByte) & 0x1 << b) > 0 ? ADDR_L
+ 424              		.loc 1 268 0
+ 425 004a 0821     		movs	r1, #8
+ 426              	.L43:
+ 427              		.loc 1 268 0 is_stmt 0 discriminator 4
+ 428 004c E154     		strb	r1, [r4, r3]
+ 269:Src/addressable_led_driver.c ****        test1PayloadHead++;
+ 429              		.loc 1 269 0 is_stmt 1 discriminator 4
+ 430 004e 0133     		adds	r3, r3, #1
+ 431              	.LVL46:
+ 432 0050 DBB2     		uxtb	r3, r3
+ 433              	.LVL47:
+ 266:Src/addressable_led_driver.c ****       {
+ 434              		.loc 1 266 0 discriminator 4
+ 435 0052 0132     		adds	r2, r2, #1
+ 436              	.LVL48:
+ 437              	.L42:
+ 266:Src/addressable_led_driver.c ****       {
+ 438              		.loc 1 266 0 is_stmt 0 discriminator 2
+ 439 0054 072A     		cmp	r2, #7
+ 440 0056 05DC     		bgt	.L51
+ARM GAS  /tmp/cc2PL0da.s 			page 14
 
 
- 244:Src/addressable_led_driver.c ****   while (block) {}
- 245:Src/addressable_led_driver.c **** }
- 246:Src/addressable_led_driver.c **** 
- 247:Src/addressable_led_driver.c **** void AddrLED_StartPWM(void)
- 248:Src/addressable_led_driver.c **** {
- 662              		.loc 1 248 0
- 663              		.cfi_startproc
- 664              		@ args = 0, pretend = 0, frame = 0
- 665              		@ frame_needed = 0, uses_anonymous_args = 0
- 666 0000 08B5     		push	{r3, lr}
- 667              	.LCFI5:
- 668              		.cfi_def_cfa_offset 8
- 669              		.cfi_offset 3, -8
- 670              		.cfi_offset 14, -4
- 249:Src/addressable_led_driver.c ****   ADDR_LED_PWM_START();
- 671              		.loc 1 249 0
- 672 0002 0C21     		movs	r1, #12
- 673 0004 0148     		ldr	r0, .L29
- 674 0006 FFF7FEFF 		bl	HAL_TIM_PWM_Start
- 675              	.LVL23:
- 250:Src/addressable_led_driver.c **** }
- 676              		.loc 1 250 0
- 677 000a 08BD     		pop	{r3, pc}
- 678              	.L30:
- 679              		.align	2
- 680              	.L29:
- 681 000c 00000000 		.word	htim3
- 682              		.cfi_endproc
- 683              	.LFE134:
- 685              		.section	.text.AddrLED_StopPWM,"ax",%progbits
- 686              		.align	1
- 687              		.global	AddrLED_StopPWM
- 688              		.syntax unified
- 689              		.thumb
- 690              		.thumb_func
- 691              		.fpu fpv4-sp-d16
- 693              	AddrLED_StopPWM:
- 694              	.LFB135:
- 251:Src/addressable_led_driver.c **** 
- 252:Src/addressable_led_driver.c **** void AddrLED_StopPWM(void)
- 253:Src/addressable_led_driver.c **** {
- 695              		.loc 1 253 0
- 696              		.cfi_startproc
- 697              		@ args = 0, pretend = 0, frame = 0
- 698              		@ frame_needed = 0, uses_anonymous_args = 0
- 699 0000 08B5     		push	{r3, lr}
- 700              	.LCFI6:
- 701              		.cfi_def_cfa_offset 8
- 702              		.cfi_offset 3, -8
- 703              		.cfi_offset 14, -4
- 254:Src/addressable_led_driver.c ****   ADDR_LED_PWM_STOP();
- 704              		.loc 1 254 0
- 705 0002 0C21     		movs	r1, #12
- 706 0004 0148     		ldr	r0, .L33
- 707 0006 FFF7FEFF 		bl	HAL_TIM_PWM_Stop
- 708              	.LVL24:
- 255:Src/addressable_led_driver.c **** }
-ARM GAS  /tmp/cc6kS5zv.s 			page 18
+ 268:Src/addressable_led_driver.c ****        test1PayloadHead++;
+ 441              		.loc 1 268 0 is_stmt 1
+ 442 0058 0121     		movs	r1, #1
+ 443 005a 9140     		lsls	r1, r1, r2
+ 444 005c 0842     		tst	r0, r1
+ 445 005e F4D0     		beq	.L48
+ 446 0060 1721     		movs	r1, #23
+ 447 0062 F3E7     		b	.L43
+ 448              	.L51:
+ 449              	.LBE56:
+ 450              	.LBE55:
+ 262:Src/addressable_led_driver.c ****     {
+ 451              		.loc 1 262 0 discriminator 2
+ 452 0064 0135     		adds	r5, r5, #1
+ 453              	.LVL49:
+ 454              	.L46:
+ 262:Src/addressable_led_driver.c ****     {
+ 455              		.loc 1 262 0 is_stmt 0 discriminator 1
+ 456 0066 022D     		cmp	r5, #2
+ 457 0068 05D8     		bhi	.L52
+ 458              	.LBB58:
+ 264:Src/addressable_led_driver.c ****       // Go thru all bits
+ 459              		.loc 1 264 0 is_stmt 1
+ 460 006a 06EB4602 		add	r2, r6, r6, lsl #1
+ 461 006e 3A44     		add	r2, r2, r7
+ 462 0070 505D     		ldrb	r0, [r2, r5]	@ zero_extendqisi2
+ 463              	.LVL50:
+ 464              	.LBB57:
+ 266:Src/addressable_led_driver.c ****       {
+ 465              		.loc 1 266 0
+ 466 0072 0022     		movs	r2, #0
+ 467 0074 EEE7     		b	.L42
+ 468              	.LVL51:
+ 469              	.L52:
+ 470              	.LBE57:
+ 471              	.LBE58:
+ 472              	.LBE54:
+ 259:Src/addressable_led_driver.c ****   {
+ 473              		.loc 1 259 0 discriminator 2
+ 474 0076 0136     		adds	r6, r6, #1
+ 475              	.LVL52:
+ 476              	.L41:
+ 259:Src/addressable_led_driver.c ****   {
+ 477              		.loc 1 259 0 is_stmt 0 discriminator 1
+ 478 0078 0F2E     		cmp	r6, #15
+ 479 007a 01DC     		bgt	.L53
+ 480              	.LBB59:
+ 262:Src/addressable_led_driver.c ****     {
+ 481              		.loc 1 262 0 is_stmt 1
+ 482 007c 0025     		movs	r5, #0
+ 483 007e F2E7     		b	.L46
+ 484              	.L53:
+ 485              	.LBE59:
+ 486              	.LBE60:
+ 270:Src/addressable_led_driver.c ****       }
+ 271:Src/addressable_led_driver.c ****     }
+ 272:Src/addressable_led_driver.c ****     #if BREAKEARLY
+ARM GAS  /tmp/cc2PL0da.s 			page 15
 
 
- 709              		.loc 1 255 0
- 710 000a 08BD     		pop	{r3, pc}
- 711              	.L34:
- 712              		.align	2
- 713              	.L33:
- 714 000c 00000000 		.word	htim3
- 715              		.cfi_endproc
- 716              	.LFE135:
- 718              		.section	.text.AddrLED_InitNaive,"ax",%progbits
- 719              		.align	1
- 720              		.global	AddrLED_InitNaive
- 721              		.syntax unified
- 722              		.thumb
- 723              		.thumb_func
- 724              		.fpu fpv4-sp-d16
- 726              	AddrLED_InitNaive:
- 727              	.LFB136:
- 256:Src/addressable_led_driver.c **** 
- 257:Src/addressable_led_driver.c **** void AddrLED_InitNaive(void)
- 258:Src/addressable_led_driver.c **** {
- 728              		.loc 1 258 0
- 729              		.cfi_startproc
- 730              		@ args = 0, pretend = 0, frame = 0
- 731              		@ frame_needed = 0, uses_anonymous_args = 0
- 732              		@ link register save eliminated.
- 259:Src/addressable_led_driver.c **** 
- 260:Src/addressable_led_driver.c **** }
- 733              		.loc 1 260 0
- 734 0000 7047     		bx	lr
- 735              		.cfi_endproc
- 736              	.LFE136:
- 738              		.section	.text.AddrLED_SendColor,"ax",%progbits
- 739              		.align	1
- 740              		.global	AddrLED_SendColor
- 741              		.syntax unified
- 742              		.thumb
- 743              		.thumb_func
- 744              		.fpu fpv4-sp-d16
- 746              	AddrLED_SendColor:
- 747              	.LFB137:
- 261:Src/addressable_led_driver.c **** 
- 262:Src/addressable_led_driver.c **** void AddrLED_SendColor(uint8_t red, uint8_t green, uint8_t blue)
- 263:Src/addressable_led_driver.c **** {
- 748              		.loc 1 263 0
- 749              		.cfi_startproc
- 750              		@ args = 0, pretend = 0, frame = 0
- 751              		@ frame_needed = 0, uses_anonymous_args = 0
- 752              		@ link register save eliminated.
- 753              	.LVL25:
- 264:Src/addressable_led_driver.c **** 
- 265:Src/addressable_led_driver.c **** }
- 754              		.loc 1 265 0
- 755 0000 7047     		bx	lr
- 756              		.cfi_endproc
- 757              	.LFE137:
- 759              		.section	.text.AddrLED_SendReset,"ax",%progbits
- 760              		.align	1
-ARM GAS  /tmp/cc6kS5zv.s 			page 19
+ 273:Src/addressable_led_driver.c ****     if (i == 3)
+ 274:Src/addressable_led_driver.c ****       break;
+ 275:Src/addressable_led_driver.c ****     #endif
+ 276:Src/addressable_led_driver.c ****   }
+ 277:Src/addressable_led_driver.c ****   
+ 278:Src/addressable_led_driver.c ****   HAL_TIM_PWM_Start_DMA(&LED_PANEL_1_PWM_TIMER_HANDLE, LED_PANEL_1_PWM_TIMER_CHANNEL, (uint32_t *) 
+ 487              		.loc 1 278 0
+ 488 0080 40F28113 		movw	r3, #385
+ 489              	.LVL53:
+ 490 0084 2246     		mov	r2, r4
+ 491 0086 0C21     		movs	r1, #12
+ 492 0088 0148     		ldr	r0, .L54
+ 493 008a FFF7FEFF 		bl	HAL_TIM_PWM_Start_DMA
+ 494              	.LVL54:
+ 495              	.L47:
+ 496 008e FEE7     		b	.L47
+ 497              	.L55:
+ 498              		.align	2
+ 499              	.L54:
+ 500 0090 00000000 		.word	htim3
+ 501              		.cfi_endproc
+ 502              	.LFE134:
+ 504              		.section	.text.AddrLED_StartPWM,"ax",%progbits
+ 505              		.align	1
+ 506              		.global	AddrLED_StartPWM
+ 507              		.syntax unified
+ 508              		.thumb
+ 509              		.thumb_func
+ 510              		.fpu fpv4-sp-d16
+ 512              	AddrLED_StartPWM:
+ 513              	.LFB135:
+ 279:Src/addressable_led_driver.c ****   bool block = true;
+ 280:Src/addressable_led_driver.c ****   while (block) {}
+ 281:Src/addressable_led_driver.c **** }
+ 282:Src/addressable_led_driver.c **** 
+ 283:Src/addressable_led_driver.c **** void AddrLED_StartPWM(void)
+ 284:Src/addressable_led_driver.c **** {
+ 514              		.loc 1 284 0
+ 515              		.cfi_startproc
+ 516              		@ args = 0, pretend = 0, frame = 0
+ 517              		@ frame_needed = 0, uses_anonymous_args = 0
+ 518 0000 08B5     		push	{r3, lr}
+ 519              	.LCFI5:
+ 520              		.cfi_def_cfa_offset 8
+ 521              		.cfi_offset 3, -8
+ 522              		.cfi_offset 14, -4
+ 285:Src/addressable_led_driver.c ****   ADDR_LED_PWM_START();
+ 523              		.loc 1 285 0
+ 524 0002 0C21     		movs	r1, #12
+ 525 0004 0148     		ldr	r0, .L58
+ 526 0006 FFF7FEFF 		bl	HAL_TIM_PWM_Start
+ 527              	.LVL55:
+ 286:Src/addressable_led_driver.c **** }
+ 528              		.loc 1 286 0
+ 529 000a 08BD     		pop	{r3, pc}
+ 530              	.L59:
+ 531              		.align	2
+ARM GAS  /tmp/cc2PL0da.s 			page 16
 
 
- 761              		.global	AddrLED_SendReset
- 762              		.syntax unified
- 763              		.thumb
- 764              		.thumb_func
- 765              		.fpu fpv4-sp-d16
- 767              	AddrLED_SendReset:
- 768              	.LFB138:
- 266:Src/addressable_led_driver.c **** 
- 267:Src/addressable_led_driver.c **** void AddrLED_SendReset(void)
- 268:Src/addressable_led_driver.c **** {
- 769              		.loc 1 268 0
- 770              		.cfi_startproc
- 771              		@ args = 0, pretend = 0, frame = 0
- 772              		@ frame_needed = 0, uses_anonymous_args = 0
- 773              		@ link register save eliminated.
- 269:Src/addressable_led_driver.c **** 
- 270:Src/addressable_led_driver.c **** }
- 774              		.loc 1 270 0
- 775 0000 7047     		bx	lr
- 776              		.cfi_endproc
- 777              	.LFE138:
- 779              		.section	.text.AddrLED_NaiveISR,"ax",%progbits
- 780              		.align	1
- 781              		.global	AddrLED_NaiveISR
- 782              		.syntax unified
- 783              		.thumb
- 784              		.thumb_func
- 785              		.fpu fpv4-sp-d16
- 787              	AddrLED_NaiveISR:
- 788              	.LFB139:
- 271:Src/addressable_led_driver.c **** 
- 272:Src/addressable_led_driver.c **** // HMM this doesnt work. need to dma pwm this data
- 273:Src/addressable_led_driver.c **** void AddrLED_NaiveISR(void)
- 274:Src/addressable_led_driver.c **** {
- 789              		.loc 1 274 0
- 790              		.cfi_startproc
- 791              		@ args = 0, pretend = 0, frame = 0
- 792              		@ frame_needed = 0, uses_anonymous_args = 0
- 793 0000 08B5     		push	{r3, lr}
- 794              	.LCFI7:
- 795              		.cfi_def_cfa_offset 8
- 796              		.cfi_offset 3, -8
- 797              		.cfi_offset 14, -4
- 275:Src/addressable_led_driver.c ****   HAL_GPIO_TogglePin(DEBUG_PIN_GPIO_PORT, DEBUG_PIN_GPIO_PIN);
- 798              		.loc 1 275 0
- 799 0002 0121     		movs	r1, #1
- 800 0004 0148     		ldr	r0, .L40
- 801 0006 FFF7FEFF 		bl	HAL_GPIO_TogglePin
- 802              	.LVL26:
- 276:Src/addressable_led_driver.c **** }
- 803              		.loc 1 276 0
- 804 000a 08BD     		pop	{r3, pc}
- 805              	.L41:
- 806              		.align	2
- 807              	.L40:
- 808 000c 00040048 		.word	1207960576
- 809              		.cfi_endproc
-ARM GAS  /tmp/cc6kS5zv.s 			page 20
+ 532              	.L58:
+ 533 000c 00000000 		.word	htim3
+ 534              		.cfi_endproc
+ 535              	.LFE135:
+ 537              		.section	.text.AddrLED_StopPWM,"ax",%progbits
+ 538              		.align	1
+ 539              		.global	AddrLED_StopPWM
+ 540              		.syntax unified
+ 541              		.thumb
+ 542              		.thumb_func
+ 543              		.fpu fpv4-sp-d16
+ 545              	AddrLED_StopPWM:
+ 546              	.LFB136:
+ 287:Src/addressable_led_driver.c **** 
+ 288:Src/addressable_led_driver.c **** void AddrLED_StopPWM(void)
+ 289:Src/addressable_led_driver.c **** {
+ 547              		.loc 1 289 0
+ 548              		.cfi_startproc
+ 549              		@ args = 0, pretend = 0, frame = 0
+ 550              		@ frame_needed = 0, uses_anonymous_args = 0
+ 551 0000 08B5     		push	{r3, lr}
+ 552              	.LCFI6:
+ 553              		.cfi_def_cfa_offset 8
+ 554              		.cfi_offset 3, -8
+ 555              		.cfi_offset 14, -4
+ 290:Src/addressable_led_driver.c ****   ADDR_LED_PWM_STOP();
+ 556              		.loc 1 290 0
+ 557 0002 0C21     		movs	r1, #12
+ 558 0004 0148     		ldr	r0, .L62
+ 559 0006 FFF7FEFF 		bl	HAL_TIM_PWM_Stop
+ 560              	.LVL56:
+ 291:Src/addressable_led_driver.c **** }
+ 561              		.loc 1 291 0
+ 562 000a 08BD     		pop	{r3, pc}
+ 563              	.L63:
+ 564              		.align	2
+ 565              	.L62:
+ 566 000c 00000000 		.word	htim3
+ 567              		.cfi_endproc
+ 568              	.LFE136:
+ 570              		.section	.text.AddrLED_InitNaive,"ax",%progbits
+ 571              		.align	1
+ 572              		.global	AddrLED_InitNaive
+ 573              		.syntax unified
+ 574              		.thumb
+ 575              		.thumb_func
+ 576              		.fpu fpv4-sp-d16
+ 578              	AddrLED_InitNaive:
+ 579              	.LFB137:
+ 292:Src/addressable_led_driver.c **** 
+ 293:Src/addressable_led_driver.c **** void AddrLED_InitNaive(void)
+ 294:Src/addressable_led_driver.c **** {
+ 580              		.loc 1 294 0
+ 581              		.cfi_startproc
+ 582              		@ args = 0, pretend = 0, frame = 0
+ 583              		@ frame_needed = 0, uses_anonymous_args = 0
+ 584              		@ link register save eliminated.
+ARM GAS  /tmp/cc2PL0da.s 			page 17
 
 
- 810              	.LFE139:
- 812              		.global	AddrLEDSymbolTimes
- 813              		.comm	MILLISECOND_PRESCALER,4,4
- 814              		.comm	MICROSECOND_PRESCALER,4,4
- 815              		.section	.rodata.AddrLEDSymbolTimes,"a",%progbits
- 816              		.align	2
- 819              	AddrLEDSymbolTimes:
- 820 0000 0200     		.short	2
- 821 0002 0500     		.short	5
- 822 0004 0500     		.short	5
- 823 0006 0200     		.short	2
- 824 0008 C008     		.short	2240
- 825              		.text
- 826              	.Letext0:
- 827              		.file 2 "/home/jon/KODMOD/EMBEDDED_TOOLCHAINS/gcc-arm-none-eabi-7-2018-q2-update/arm-none-eabi/inc
- 828              		.file 3 "/home/jon/KODMOD/EMBEDDED_TOOLCHAINS/gcc-arm-none-eabi-7-2018-q2-update/arm-none-eabi/inc
- 829              		.file 4 "Drivers/CMSIS/Include/core_cm4.h"
- 830              		.file 5 "Drivers/CMSIS/Device/ST/STM32L4xx/Include/system_stm32l4xx.h"
- 831              		.file 6 "Drivers/CMSIS/Device/ST/STM32L4xx/Include/stm32l452xx.h"
- 832              		.file 7 "Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_def.h"
- 833              		.file 8 "Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_dma.h"
- 834              		.file 9 "Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_flash.h"
- 835              		.file 10 "Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_tim.h"
- 836              		.file 11 "Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal.h"
- 837              		.file 12 "Inc/tim.h"
- 838              		.file 13 "Inc/addressable_led_driver.h"
- 839              		.file 14 "Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_gpio.h"
- 840              		.file 15 "Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_rcc.h"
- 841              		.file 16 "<built-in>"
-ARM GAS  /tmp/cc6kS5zv.s 			page 21
+ 295:Src/addressable_led_driver.c **** 
+ 296:Src/addressable_led_driver.c **** }
+ 585              		.loc 1 296 0
+ 586 0000 7047     		bx	lr
+ 587              		.cfi_endproc
+ 588              	.LFE137:
+ 590              		.section	.text.AddrLED_SendColor,"ax",%progbits
+ 591              		.align	1
+ 592              		.global	AddrLED_SendColor
+ 593              		.syntax unified
+ 594              		.thumb
+ 595              		.thumb_func
+ 596              		.fpu fpv4-sp-d16
+ 598              	AddrLED_SendColor:
+ 599              	.LFB138:
+ 297:Src/addressable_led_driver.c **** 
+ 298:Src/addressable_led_driver.c **** void AddrLED_SendColor(uint8_t red, uint8_t green, uint8_t blue)
+ 299:Src/addressable_led_driver.c **** {
+ 600              		.loc 1 299 0
+ 601              		.cfi_startproc
+ 602              		@ args = 0, pretend = 0, frame = 0
+ 603              		@ frame_needed = 0, uses_anonymous_args = 0
+ 604              		@ link register save eliminated.
+ 605              	.LVL57:
+ 300:Src/addressable_led_driver.c **** 
+ 301:Src/addressable_led_driver.c **** }
+ 606              		.loc 1 301 0
+ 607 0000 7047     		bx	lr
+ 608              		.cfi_endproc
+ 609              	.LFE138:
+ 611              		.section	.text.AddrLED_SendReset,"ax",%progbits
+ 612              		.align	1
+ 613              		.global	AddrLED_SendReset
+ 614              		.syntax unified
+ 615              		.thumb
+ 616              		.thumb_func
+ 617              		.fpu fpv4-sp-d16
+ 619              	AddrLED_SendReset:
+ 620              	.LFB139:
+ 302:Src/addressable_led_driver.c **** 
+ 303:Src/addressable_led_driver.c **** void AddrLED_SendReset(void)
+ 304:Src/addressable_led_driver.c **** {
+ 621              		.loc 1 304 0
+ 622              		.cfi_startproc
+ 623              		@ args = 0, pretend = 0, frame = 0
+ 624              		@ frame_needed = 0, uses_anonymous_args = 0
+ 625              		@ link register save eliminated.
+ 305:Src/addressable_led_driver.c **** 
+ 306:Src/addressable_led_driver.c **** }
+ 626              		.loc 1 306 0
+ 627 0000 7047     		bx	lr
+ 628              		.cfi_endproc
+ 629              	.LFE139:
+ 631              		.section	.text.AddrLED_NaiveISR,"ax",%progbits
+ 632              		.align	1
+ 633              		.global	AddrLED_NaiveISR
+ 634              		.syntax unified
+ARM GAS  /tmp/cc2PL0da.s 			page 18
+
+
+ 635              		.thumb
+ 636              		.thumb_func
+ 637              		.fpu fpv4-sp-d16
+ 639              	AddrLED_NaiveISR:
+ 640              	.LFB140:
+ 307:Src/addressable_led_driver.c **** 
+ 308:Src/addressable_led_driver.c **** // HMM this doesnt work. need to dma pwm this data
+ 309:Src/addressable_led_driver.c **** void AddrLED_NaiveISR(void)
+ 310:Src/addressable_led_driver.c **** {
+ 641              		.loc 1 310 0
+ 642              		.cfi_startproc
+ 643              		@ args = 0, pretend = 0, frame = 0
+ 644              		@ frame_needed = 0, uses_anonymous_args = 0
+ 645 0000 08B5     		push	{r3, lr}
+ 646              	.LCFI7:
+ 647              		.cfi_def_cfa_offset 8
+ 648              		.cfi_offset 3, -8
+ 649              		.cfi_offset 14, -4
+ 311:Src/addressable_led_driver.c ****   HAL_GPIO_TogglePin(DEBUG_PIN_GPIO_PORT, DEBUG_PIN_GPIO_PIN);
+ 650              		.loc 1 311 0
+ 651 0002 0121     		movs	r1, #1
+ 652 0004 0148     		ldr	r0, .L69
+ 653 0006 FFF7FEFF 		bl	HAL_GPIO_TogglePin
+ 654              	.LVL58:
+ 312:Src/addressable_led_driver.c **** }
+ 655              		.loc 1 312 0
+ 656 000a 08BD     		pop	{r3, pc}
+ 657              	.L70:
+ 658              		.align	2
+ 659              	.L69:
+ 660 000c 00040048 		.word	1207960576
+ 661              		.cfi_endproc
+ 662              	.LFE140:
+ 664              		.comm	MILLISECOND_PRESCALER,4,4
+ 665              		.comm	MICROSECOND_PRESCALER,4,4
+ 666              		.section	.rodata
+ 667              		.align	2
+ 668              		.set	.LANCHOR0,. + 0
+ 669              	.LC0:
+ 670 0000 01       		.byte	1
+ 671 0001 00       		.byte	0
+ 672 0002 02       		.byte	2
+ 673              		.text
+ 674              	.Letext0:
+ 675              		.file 2 "/home/jon/KODMOD/EMBEDDED_TOOLCHAINS/gcc-arm-none-eabi-7-2018-q2-update/arm-none-eabi/inc
+ 676              		.file 3 "/home/jon/KODMOD/EMBEDDED_TOOLCHAINS/gcc-arm-none-eabi-7-2018-q2-update/arm-none-eabi/inc
+ 677              		.file 4 "Drivers/CMSIS/Include/core_cm4.h"
+ 678              		.file 5 "Drivers/CMSIS/Device/ST/STM32L4xx/Include/system_stm32l4xx.h"
+ 679              		.file 6 "Drivers/CMSIS/Device/ST/STM32L4xx/Include/stm32l452xx.h"
+ 680              		.file 7 "Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_def.h"
+ 681              		.file 8 "Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_dma.h"
+ 682              		.file 9 "Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_flash.h"
+ 683              		.file 10 "Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_tim.h"
+ 684              		.file 11 "Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal.h"
+ 685              		.file 12 "Inc/tim.h"
+ 686              		.file 13 "Inc/addressable_led_driver.h"
+ 687              		.file 14 "/home/jon/KODMOD/EMBEDDED_TOOLCHAINS/gcc-arm-none-eabi-7-2018-q2-update/arm-none-eabi/in
+ARM GAS  /tmp/cc2PL0da.s 			page 19
+
+
+ 688              		.file 15 "/home/jon/KODMOD/EMBEDDED_TOOLCHAINS/gcc-arm-none-eabi-7-2018-q2-update/arm-none-eabi/in
+ 689              		.file 16 "/home/jon/KODMOD/EMBEDDED_TOOLCHAINS/gcc-arm-none-eabi-7-2018-q2-update/lib/gcc/arm-none
+ 690              		.file 17 "/home/jon/KODMOD/EMBEDDED_TOOLCHAINS/gcc-arm-none-eabi-7-2018-q2-update/arm-none-eabi/in
+ 691              		.file 18 "Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_gpio.h"
+ 692              		.file 19 "Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_rcc.h"
+ 693              		.file 20 "<built-in>"
+ARM GAS  /tmp/cc2PL0da.s 			page 20
 
 
 DEFINED SYMBOLS
                             *ABS*:0000000000000000 addressable_led_driver.c
-     /tmp/cc6kS5zv.s:18     .text.AddrLED_Init:0000000000000000 $t
-     /tmp/cc6kS5zv.s:25     .text.AddrLED_Init:0000000000000000 AddrLED_Init
-     /tmp/cc6kS5zv.s:311    .text.AddrLED_Init:00000000000003ec $d
+     /tmp/cc2PL0da.s:18     .text.AddrLED_Init:0000000000000000 $t
+     /tmp/cc2PL0da.s:25     .text.AddrLED_Init:0000000000000000 AddrLED_Init
+     /tmp/cc2PL0da.s:325    .text.AddrLED_Init:000000000000013c $d
                             *COM*:0000000000000004 MICROSECOND_PRESCALER
                             *COM*:0000000000000004 MILLISECOND_PRESCALER
-     /tmp/cc6kS5zv.s:317    .text.AddrLED_Init:0000000000000400 $t
-     /tmp/cc6kS5zv.s:484    .text.AddrLED_Init:0000000000000670 $d
-     /tmp/cc6kS5zv.s:489    .text.AddrLED_SanityTest:0000000000000000 $t
-     /tmp/cc6kS5zv.s:496    .text.AddrLED_SanityTest:0000000000000000 AddrLED_SanityTest
-     /tmp/cc6kS5zv.s:648    .text.AddrLED_SanityTest:0000000000000090 $d
-     /tmp/cc6kS5zv.s:653    .text.AddrLED_StartPWM:0000000000000000 $t
-     /tmp/cc6kS5zv.s:660    .text.AddrLED_StartPWM:0000000000000000 AddrLED_StartPWM
-     /tmp/cc6kS5zv.s:681    .text.AddrLED_StartPWM:000000000000000c $d
-     /tmp/cc6kS5zv.s:686    .text.AddrLED_StopPWM:0000000000000000 $t
-     /tmp/cc6kS5zv.s:693    .text.AddrLED_StopPWM:0000000000000000 AddrLED_StopPWM
-     /tmp/cc6kS5zv.s:714    .text.AddrLED_StopPWM:000000000000000c $d
-     /tmp/cc6kS5zv.s:719    .text.AddrLED_InitNaive:0000000000000000 $t
-     /tmp/cc6kS5zv.s:726    .text.AddrLED_InitNaive:0000000000000000 AddrLED_InitNaive
-     /tmp/cc6kS5zv.s:739    .text.AddrLED_SendColor:0000000000000000 $t
-     /tmp/cc6kS5zv.s:746    .text.AddrLED_SendColor:0000000000000000 AddrLED_SendColor
-     /tmp/cc6kS5zv.s:760    .text.AddrLED_SendReset:0000000000000000 $t
-     /tmp/cc6kS5zv.s:767    .text.AddrLED_SendReset:0000000000000000 AddrLED_SendReset
-     /tmp/cc6kS5zv.s:780    .text.AddrLED_NaiveISR:0000000000000000 $t
-     /tmp/cc6kS5zv.s:787    .text.AddrLED_NaiveISR:0000000000000000 AddrLED_NaiveISR
-     /tmp/cc6kS5zv.s:808    .text.AddrLED_NaiveISR:000000000000000c $d
-     /tmp/cc6kS5zv.s:819    .rodata.AddrLEDSymbolTimes:0000000000000000 AddrLEDSymbolTimes
-     /tmp/cc6kS5zv.s:816    .rodata.AddrLEDSymbolTimes:0000000000000000 $d
+     /tmp/cc2PL0da.s:341    .text.AddrLED_SanityTest:0000000000000000 $t
+     /tmp/cc2PL0da.s:348    .text.AddrLED_SanityTest:0000000000000000 AddrLED_SanityTest
+     /tmp/cc2PL0da.s:500    .text.AddrLED_SanityTest:0000000000000090 $d
+     /tmp/cc2PL0da.s:505    .text.AddrLED_StartPWM:0000000000000000 $t
+     /tmp/cc2PL0da.s:512    .text.AddrLED_StartPWM:0000000000000000 AddrLED_StartPWM
+     /tmp/cc2PL0da.s:533    .text.AddrLED_StartPWM:000000000000000c $d
+     /tmp/cc2PL0da.s:538    .text.AddrLED_StopPWM:0000000000000000 $t
+     /tmp/cc2PL0da.s:545    .text.AddrLED_StopPWM:0000000000000000 AddrLED_StopPWM
+     /tmp/cc2PL0da.s:566    .text.AddrLED_StopPWM:000000000000000c $d
+     /tmp/cc2PL0da.s:571    .text.AddrLED_InitNaive:0000000000000000 $t
+     /tmp/cc2PL0da.s:578    .text.AddrLED_InitNaive:0000000000000000 AddrLED_InitNaive
+     /tmp/cc2PL0da.s:591    .text.AddrLED_SendColor:0000000000000000 $t
+     /tmp/cc2PL0da.s:598    .text.AddrLED_SendColor:0000000000000000 AddrLED_SendColor
+     /tmp/cc2PL0da.s:612    .text.AddrLED_SendReset:0000000000000000 $t
+     /tmp/cc2PL0da.s:619    .text.AddrLED_SendReset:0000000000000000 AddrLED_SendReset
+     /tmp/cc2PL0da.s:632    .text.AddrLED_NaiveISR:0000000000000000 $t
+     /tmp/cc2PL0da.s:639    .text.AddrLED_NaiveISR:0000000000000000 AddrLED_NaiveISR
+     /tmp/cc2PL0da.s:660    .text.AddrLED_NaiveISR:000000000000000c $d
+     /tmp/cc2PL0da.s:667    .rodata:0000000000000000 $d
 
 UNDEFINED SYMBOLS
 HAL_RCC_GetSysClockFreq
-HAL_TIM_PWM_Start_DMA
-HAL_GPIO_TogglePin
-htim3
 memset
+HAL_TIM_PWM_Start_DMA
+htim3
 HAL_TIM_PWM_Start
 HAL_TIM_PWM_Stop
+HAL_GPIO_TogglePin

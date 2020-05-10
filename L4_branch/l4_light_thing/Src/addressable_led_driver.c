@@ -2,6 +2,7 @@
 #include "addressable_led_driver.h"
 #include "cmd_shell.h"
 #include "main.h"
+#include <string.h>
 // Driver for the WS2812B based cascading, addressable LEDs
 
 /*
@@ -24,23 +25,17 @@ Each WS2812B requires 24bits of data to reproduce a color. Each color is, in fac
 
 #define ADDR_LED_PWM_SET_DUTY_CYCLE(d) __HAL_TIM_SET_COMPARE(&LED_PANEL_1_PWM_TIMER_HANDLE, LED_PANEL_1_PWM_TIMER_CHANNEL, d);
 
-// PWM DUTY CYCLE VALUES
-#define ADDR_LED_CODE_HIGH_COMPARE_VAL 23
+// PWM VALUES THAT MEET WS2812Bs SPECS
+#define ADDR_LED_PWM_PSC 2
+#define ADDR_LED_PWM_ARR 32
+
+// PWM DUTY CYCLE VALUES FOR THE LOGIC HIGH AND LOW CODES
+#define ADDR_LED_CODE_HIGH_COMPARE_VAL 23 
 #define ADDR_LED_CODE_LOW_COMPARE_VAL  8
 
 // PRIVATE VARIBLES -------------------------------------------------
 
 uint32_t MICROSECOND_PRESCALER , MILLISECOND_PRESCALER;
-
-// TODO // May be unnecessary. remove if so
-const uint16_t AddrLEDSymbolTimes[] = // 250ns time units
-{
-  [ADDR_LED_SYMBOL_T0H]   = 2, // ~250ns
-  [ADDR_LED_SYMBOL_T0L]   = 5, // ~625ns
-  [ADDR_LED_SYMBOL_T1H]   = 5, // ~625ns
-  [ADDR_LED_SYMBOL_T1L]   = 2, // ~250ns
-  [ADDR_LED_SYMBOL_RESET] = 2240 // ~280000ns
-};
 
 // PRIVATE FUNCTIONS ------------------------------------------------
 
@@ -70,9 +65,25 @@ static void AddrLED_SetPWMPeriodUs(uint16_t ns)
   }
 }
 
-static void AddrLED_SetPWMDutyCycle(uint16_t ds)
+// WS2812B Related 
+
+// Convert $byte into codes that WS2812B accepts, that we push out via PWM.
+// 1 Byte converts into 8 bytes, so make sure $*codes pointer points to a block of memory that has 8 bytes allocated
+static inline void ByteToCodes(uint8_t byte, uint8_t *codes)
 {
-  
+  for (int b = 0; b < 8; b++)
+  {
+    *(codes + b) = ((byte & (0x1 << b)) > 0) ? ADDR_LED_CODE_HIGH_COMPARE_VAL : ADDR_LED_CODE_LOW_COMPARE_VAL;
+  }
+}
+
+// Convert a Pixel_t object $p into codes that WS2812B accepts. 
+// 1 Byte converts into 8 bytes, a Pixel_t is 3 bytes so make sure $*packet points to a block of memory that has 24 bytes allocated
+static inline void PixelToPacket(Pixel_t *p, PixelPacket_t *packet)
+{
+  ByteToCodes(p->green, &(packet->greenRaw[0]));
+  ByteToCodes(p->red, &(packet->redRaw[0]));
+  ByteToCodes(p->blue, &(packet->blueRaw[0]));
 }
 
 // PUBLIC FUNCTIONS -------------------------------------------------
@@ -96,8 +107,8 @@ void AddrLED_Init(void)
    */
 
   // Set update event flag so PSC and ARR are loaded
-  LED_PANEL_1_PWM_TIMER->PSC = 2;
-  LED_PANEL_1_PWM_TIMER->ARR = 32;
+  LED_PANEL_1_PWM_TIMER->PSC = ADDR_LED_PWM_PSC;
+  LED_PANEL_1_PWM_TIMER->ARR = ADDR_LED_PWM_ARR;
   LED_PANEL_1_PWM_TIMER->EGR = TIM_EGR_UG;
   
   //#define PWM_BASE_TEST
@@ -116,71 +127,96 @@ void AddrLED_Init(void)
   
   #if 1
   const uint8_t dmaTestPayload[] = {
-                                    z, z, z, z, z, z, z, o,\
-                                    z, z, z, z, z, z, z, z,\
-                                    z, z, z, z, z, z, z, z,\ 
+                                    z, z, z, z, z, z, z, o,
+                                    z, z, z, z, z, z, z, z,
+                                    z, z, z, z, z, z, o, z,  
 
-                                    z, z, z, z, z, z, z, o,\
-                                    z, z, z, z, z, z, z, z,\
-                                    z, z, z, z, z, z, z, z,\ 
+                                    z, z, z, z, z, z, z, o,
+                                    z, z, z, z, z, z, z, z,
+                                    z, z, z, z, z, z, z, z, 
 
-                                    z, z, z, z, z, z, z, o,\
-                                    z, z, z, z, z, z, z, z,\
-                                    z, z, z, z, z, z, z, z,\ 
+                                    z, z, z, z, z, z, z, o,
+                                    z, z, z, z, z, z, z, z,
+                                    z, z, z, z, z, z, o, z, 
 
-                                    z, z, z, z, z, z, z, o,\
-                                    z, z, z, z, z, z, z, z,\
-                                    z, z, z, z, z, z, z, z,\ 
+                                    z, z, z, z, z, z, z, o,
+                                    z, z, z, z, z, z, z, z,
+                                    z, z, z, z, z, z, z, z, 
 
-                                    z, z, z, z, z, z, z, o,\
-                                    z, z, z, z, z, z, z, z,\
-                                    z, z, z, z, z, z, z, z,\ 
+                                    z, z, z, z, z, z, z, o,
+                                    z, z, z, z, z, z, z, z,
+                                    z, z, z, z, z, z, o, z, 
 
-                                    z, z, z, z, z, z, z, o,\
-                                    z, z, z, z, z, z, z, z,\
-                                    z, z, z, z, z, z, z, z,\ 
+                                    z, z, z, z, z, z, z, o,
+                                    z, z, z, z, z, z, z, z,
+                                    z, z, z, z, z, z, z, z, 
 
-                                    z, z, z, z, z, z, z, o,\
-                                    z, z, z, z, z, z, z, z,\
-                                    z, z, z, z, z, z, z, z,\ 
+                                    z, z, z, z, z, z, z, o,
+                                    z, z, z, z, z, z, z, z,
+                                    z, z, z, z, z, z, o, z, 
 
-                                    z, z, z, z, z, z, z, o,\
-                                    z, z, z, z, z, z, z, z,\
-                                    z, z, z, z, z, z, z, z,\ 
+                                    z, z, z, z, z, z, z, o,
+                                    z, z, z, z, z, z, z, z,
+                                    z, z, z, z, z, z, z, z, 
 
-                                    z, z, z, z, z, z, z, o,\
-                                    z, z, z, z, z, z, z, z,\
-                                    z, z, z, z, z, z, z, z,\ 
+                                    z, z, z, z, z, z, z, o,
+                                    z, z, z, z, z, z, z, z,
+                                    z, z, z, z, z, z, o, z, 
 
-                                    z, z, z, z, z, z, z, o,\
-                                    z, z, z, z, z, z, z, z,\
-                                    z, z, z, z, z, z, z, z,\ 
+                                    z, z, z, z, z, z, z, o,
+                                    z, z, z, z, z, z, z, z,
+                                    z, z, z, z, z, z, z, z, 
 
-                                    z, z, z, z, z, z, z, o,\
-                                    z, z, z, z, z, z, z, z,\
-                                    z, z, z, z, z, z, z, z,\ 
+                                    z, z, z, z, z, z, z, o,
+                                    z, z, z, z, z, z, z, z,
+                                    z, z, z, z, z, z, o, z, 
 
-                                    z, z, z, z, z, z, z, o,\
-                                    z, z, z, z, z, z, z, z,\
-                                    z, z, z, z, z, z, z, z,\ 
+                                    z, z, z, z, z, z, z, o,
+                                    z, z, z, z, z, z, z, z,
+                                    z, z, z, z, z, z, z, z, 
 
-                                    z, z, z, z, z, z, z, o,\
-                                    z, z, z, z, z, z, z, z,\
-                                    z, z, z, z, z, z, z, z,\ 
+                                    z, z, z, z, z, z, z, o,
+                                    z, z, z, z, z, z, z, z,
+                                    z, z, z, z, z, z, o, z, 
 
-                                    z, z, z, z, z, z, z, o,\
-                                    z, z, z, z, z, z, z, z,\
-                                    z, z, z, z, z, z, z, z,\ 
+                                    z, z, z, z, z, z, z, o,
+                                    z, z, z, z, z, z, z, z,
+                                    z, z, z, z, z, z, z, z, 
 
-                                    z, z, z, z, z, z, z, o,\
-                                    z, z, z, z, z, z, z, z,\
-                                    z, z, z, z, z, z, z, z,\ 
+                                    z, z, z, z, z, z, z, o,
+                                    z, z, z, z, z, z, z, z,
+                                    z, z, z, z, z, z, o, z, 
 
-                                    z, z, z, z, z, z, z, o,\
-                                    z, z, z, z, z, z, z, z,\
-                                    z, z, z, z, z, z, z, z,\ 
+                                    z, z, z, z, z, z, z, o,
+                                    z, z, z, z, z, z, z, z,
+                                    z, z, z, z, z, z, z, z, 
 
                                     0};
+
+  // 16 LEDS, 3 colors, 8 bytes per color, null character at the end
+  // 16 * 3 * 8 + 1 = 385
+  uint8_t payloadDupeTest[16 * 3 * 8 + 1];
+  PixelPacket_t *payloadDupePP = (PixelPacket_t *) &payloadDupeTest;
+
+  memset(&payloadDupeTest, 0x0, 16 * 3 * 8 + 1);
+  Pixel_t color1 = {.red = 0x0, .green = 0x1, .blue = 0x2};
+  Pixel_t color2 = {.red = 0x0, .green = 0x1, .blue = 0x0};
+ 
+  for (int i = 0; i < (16 * 3 * 8) / sizeof(PixelPacket_t); i++)
+  {
+    PixelPacket_t *currPixel = payloadDupePP + i;
+    if (i % 2)
+    {
+      PixelToPacket(&color1, currPixel);
+    }
+    else
+    {
+      PixelToPacket(&color2, currPixel);
+    }
+  }
+
+  while(1){}
+
   #else
   const uint8_t dmaTestPayload[] = {o, z, 1, 1, 1, 1, 0};
   #endif

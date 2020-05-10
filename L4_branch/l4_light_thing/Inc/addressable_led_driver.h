@@ -42,18 +42,18 @@ typedef enum {
 
 // Below type denotes a color. 3 bytes, one for each of RGB
 typedef struct {
-  uint8_t red;
   uint8_t green;
+  uint8_t red;
   uint8_t blue;
-} Pixel_t;
+} __attribute__((packed)) Pixel_t;
 
-// Below denotes the datastructure that will be sent to the the WS2812B via DMA.
+// Below denotes the raw datastructure that will be sent to the the WS2812B via DMA.
 // Each uint8_t represents the duty cycle (CCR value) the PWM will be set to.
 typedef struct {
-  uint8_t redRaw[8];
   uint8_t greenRaw[8];
+  uint8_t redRaw[8];
   uint8_t blueRaw[8];
-} PixelPacket_t;
+} __attribute__((packed)) PixelPacket_t;
   
 
 void AddrLED_Init(void);

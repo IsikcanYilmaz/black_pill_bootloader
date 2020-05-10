@@ -2,6 +2,12 @@
 #include "led.h"
 #include "tim.h"
 
+/*
+ * This module is to drive SINGLE RGB LEDs (NOT THE WS2182B PART) 
+ * This is currently unusued.
+ */
+
+
 LEDInstance led1;
 
 
