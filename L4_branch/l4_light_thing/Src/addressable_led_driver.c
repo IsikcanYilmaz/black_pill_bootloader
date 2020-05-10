@@ -27,7 +27,7 @@ Each WS2812B requires 24bits of data to reproduce a color. Each color is, in fac
 
 // PWM VALUES THAT MEET WS2812Bs SPECS
 #define ADDR_LED_PWM_PSC 2
-#define ADDR_LED_PWM_ARR 32
+#define ADDR_LED_PWM_ARR 50//32
 
 // PWM DUTY CYCLE VALUES FOR THE LOGIC HIGH AND LOW CODES
 #define ADDR_LED_CODE_HIGH_COMPARE_VAL 23 
@@ -80,32 +80,30 @@ static inline void ByteToCodes(uint8_t byte, uint8_t *codes)
 
 // Convert a Pixel_t object $p into codes that WS2812B accepts. 
 // 1 Byte converts into 8 bytes, a Pixel_t is 3 bytes so make sure $*packet points to a block of memory that has 24 bytes allocated
-static inline void PixelToPacket(Pixel_t *p, PixelPacket_t *packet)
+static inline void PixelToPacket(Pixel_t *pixel, PixelPacket_t *packet)
 {
-  ByteToCodes(p->green, &(packet->greenRaw[0]));
-  ByteToCodes(p->red, &(packet->redRaw[0]));
-  ByteToCodes(p->blue, &(packet->blueRaw[0]));
+  ByteToCodes(pixel->green, &(packet->greenRaw[0]));
+  ByteToCodes(pixel->red, &(packet->redRaw[0]));
+  ByteToCodes(pixel->blue, &(packet->blueRaw[0]));
 }
 
 // PUBLIC FUNCTIONS -------------------------------------------------
 
-void AddrLED_Init(void)
+// Once the user creates an AddrLEDStrip_t object, they must set the fields of the structure themselves 
+// and THEN pass that object here to be initialized
+void AddrLED_Init(AddrLEDStrip_t *l)
 {
   MICROSECOND_PRESCALER = ((HAL_RCC_GetSysClockFreq() / 1000000) - 1);    // 1000000 Hz
   MILLISECOND_PRESCALER = ((HAL_RCC_GetSysClockFreq() / 1000) - 1);       // 1000 Hz
 
   // ~ Initialize PWM Timer ~
-
   // Set update event flag so PSC and ARR are loaded
-  LED_PANEL_1_PWM_TIMER->PSC = ADDR_LED_PWM_PSC;
-  LED_PANEL_1_PWM_TIMER->ARR = ADDR_LED_PWM_ARR;
-  LED_PANEL_1_PWM_TIMER->EGR = TIM_EGR_UG;
-
-  AddrLED_SanityTest();
-  IDLE_FOREVER(100);
+  l->pwmTimerHandle->Instance->PSC = ADDR_LED_PWM_PSC;
+  l->pwmTimerHandle->Instance->ARR = ADDR_LED_PWM_ARR;
+  l->pwmTimerHandle->Instance->EGR = TIM_EGR_UG;
 }
 
-void AddrLED_SanityTest(void)
+void AddrLED_SanityTest(AddrLEDStrip_t *l)
 {
   //#define PWM_BASE_TEST
   #define PWM_DMA_TEST
@@ -118,33 +116,20 @@ void AddrLED_SanityTest(void)
   #ifdef PWM_DMA_TEST
   #if 1
 
-  // 16 LEDS, 3 colors, 8 bytes per color, null character at the end
-  // 16 * 3 * 8 + 1 = 385
-  uint8_t payloadDupeTest[16 * 3 * 8 + 1];
-  PixelPacket_t *payloadDupePP = (PixelPacket_t *) &payloadDupeTest;
-
-  memset(&payloadDupeTest, 0x0, 16 * 3 * 8 + 1);
-
-  Pixel_t color1 = {.red = 0x0, .green = 0x1, .blue = 0x2};
-  Pixel_t color2 = {.red = 0x0, .green = 0x1, .blue = 0x0};
-
-  for (int i = 0; i < (16 * 3 * 8) / sizeof(PixelPacket_t); i++)
+  PixelPacket_t *pixelPacketBufferPtr = (PixelPacket_t *) &(l->pixelPacketBuffer);
+  for (int i = 0; i < l->numLeds; i++)
   {
-    PixelPacket_t *currPixel = payloadDupePP + i;
-    if (i % 2)
-    {
-      PixelToPacket(&color2, currPixel);
-    }
-    else
-    {
-      PixelToPacket(&color1, currPixel);
-    }
+    Pixel_t *currPixel = &(l->pixels[i]);
+    PixelPacket_t *currPixelPacket = pixelPacketBufferPtr + i;
+    PixelToPacket(currPixel, currPixelPacket);
   }
+  
 
   #else
   const uint8_t dmaTestPayload[] = {ADDR_LED_CODE_HIGH_COMPARE_VAL, ADDR_LED_CODE_LOW_COMPARE_VAL, 1, 1, 1, 1, 0};
   #endif
-  HAL_TIM_PWM_Start_DMA(&LED_PANEL_1_PWM_TIMER_HANDLE, LED_PANEL_1_PWM_TIMER_CHANNEL, (uint32_t *) payloadDupeTest, sizeof(payloadDupeTest));
+  HAL_TIM_PWM_Start_DMA(&LED_PANEL_1_PWM_TIMER_HANDLE, LED_PANEL_1_PWM_TIMER_CHANNEL, (uint32_t *) pixelPacketBufferPtr, l->numLeds * sizeof(PixelPacket_t) + 1);
+  //IDLE_FOREVER(100);
   #endif
 }
 

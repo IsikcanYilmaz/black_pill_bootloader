@@ -1,4 +1,7 @@
 
+#ifndef ADDRLEDDRIVER_H
+#define ADDRLEDDRIVER_H
+
 #include "main.h"
 #include "tim.h"
 
@@ -18,28 +21,6 @@
 
 #define NAIVE false
 
-// There are 5 kinds of symbols.
-// To send a '0' code (logic low) one needs to send T0H, then T0L
-// To send a '1' code (logic hi ) one needs to send T1H, then T1L
-// The reset symbol finishes a transmission. 
-// Use the lookup table defined in the c file to get their respective times
-typedef enum {
-  ADDR_LED_SYMBOL_T0H,
-  ADDR_LED_SYMBOL_T1H,
-  ADDR_LED_SYMBOL_T0L,
-  ADDR_LED_SYMBOL_T1L,
-  ADDR_LED_SYMBOL_RESET,
-  ADDR_LED_SYMBOL_NONE,
-} AddrLEDSymbol_e;
-
-// Below enum just denotes logic high, logic low, and the reset codes. 
-typedef enum {
-  ADDR_LED_CODE_HIGH,
-  ADDR_LED_CODE_LOW,
-  ADDR_LED_CODE_RESET,
-  ADDR_LED_CODE_NONE
-} AddrLEDCode_e;
-
 // Below type denotes a color. 3 bytes, one for each of RGB
 typedef struct {
   uint8_t green;
@@ -54,18 +35,24 @@ typedef struct {
   uint8_t redRaw[8];
   uint8_t blueRaw[8];
 } __attribute__((packed)) PixelPacket_t;
+
+// Below structure denotes the encapsulation of one continuous LED strip (can be in any form. location of pixels handled by upper layer)
+typedef struct {
+  uint16_t numLeds; // Number of LEDs in the strip
+  Pixel_t *pixels; // The 1 dimensional array of Pixel_t objects. an upper layer manages the locations of said pixels
+  uint8_t *pixelPacketBuffer; // This is the bufer that will hold the raw data bytes to be transmitted that corresponds to the $*pixels array 
+  TIM_HandleTypeDef *pwmTimerHandle;
+  uint32_t pwmTimerHandleChannel;
+} AddrLEDStrip_t;
   
 
-void AddrLED_Init(void);
+void AddrLED_Init(AddrLEDStrip_t *l);
 void AddrLED_InitNaive(void);
 void AddrLED_StartPWM(void);
 void AddrLED_StopPWM(void);
-void AddrLED_SendColor(uint8_t red, uint8_t green, uint8_t blue);
 void AddrLED_SendReset(void);
-void AddrLED_SendLowNaive(void);
-void AddrLED_SendHighNaive(void);
-void AddrLED_SendCodeNaive(AddrLEDCode_e code, bool blocking);
 void AddrLED_NaiveISR(void);
 
-void AddrLED_SanityTest(void);
+void AddrLED_SanityTest(AddrLEDStrip_t *l);
 
+#endif
