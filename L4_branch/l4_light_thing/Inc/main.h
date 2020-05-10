@@ -48,6 +48,7 @@ extern "C" {
 /* Exported macro ------------------------------------------------------------*/
 /* USER CODE BEGIN EM */
 
+#define IDLE_FOREVER(x)   do {HAL_GPIO_TogglePin(LD4_GPIO_Port, LD4_Pin); HAL_Delay(x);} while(1)
 /* USER CODE END EM */
 
 /* Exported functions prototypes ---------------------------------------------*/
