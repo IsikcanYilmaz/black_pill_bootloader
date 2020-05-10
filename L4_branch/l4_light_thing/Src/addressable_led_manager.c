@@ -28,7 +28,7 @@ void AddrLEDManager_SanityTest(void)
   bool toggle = false;
   uint8_t c = 1;
   bool addc = true;
-  uint8_t top = 20;
+  uint8_t top = 10;
   uint8_t stage = 0;
   while(1){
 
@@ -39,6 +39,7 @@ void AddrLEDManager_SanityTest(void)
       Pixel_t color1, color2;
       switch(stage)
       {
+#if 0
         case 0:
         color1 = (Pixel_t) {.red = c, .green = 0x0, .blue = c};
         color2 = (Pixel_t) {.red = 0x0, .green = c, .blue = top-c};
@@ -53,6 +54,21 @@ void AddrLEDManager_SanityTest(void)
         color1 = (Pixel_t) {.red = 0x0, .green = c, .blue = top-c};
         color2 = (Pixel_t) {.red = c, .green = c, .blue = 0x0};
         break;
+#endif
+        case 0:
+        color1 = (Pixel_t) {.red = c, .green = 0x2, .blue = 0x0};
+        color2 = (Pixel_t) {.red = 0x0, .green = c, .blue = c};
+        break;
+
+        case 1:
+        color1 = (Pixel_t) {.red = 0x0, .green = c, .blue = c};
+        color2 = (Pixel_t) {.red = c, .green = 0x2, .blue = 0x0};
+        break;
+
+        case 2:
+        color1 = (Pixel_t) {.red = c, .green = 0x0, .blue = 0x0};
+        color2 = (Pixel_t) {.red = c, .green = 0x0, .blue = c};
+        break;
       }
 
       Pixel_t *currPixel = &(ledStrip1.pixels[i]);
@@ -65,7 +81,7 @@ void AddrLEDManager_SanityTest(void)
 
     AddrLED_SanityTest(&ledStrip1);
 
-    HAL_Delay(100);
+    HAL_Delay(50);
 
     if (c >= top)
     {
@@ -75,7 +91,7 @@ void AddrLEDManager_SanityTest(void)
     {
       addc = true;
       stage++;
-      if (stage > 2)
+      if (stage > 1)
         stage = 0;
     }
 
