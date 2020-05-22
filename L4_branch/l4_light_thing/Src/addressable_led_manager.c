@@ -86,7 +86,7 @@ void AddrLEDManager_SanityTest(void)
   bool toggle = false;
   uint8_t c = 1;
   bool addc = true;
-  uint8_t top = 5;
+  uint8_t top = 10;
   uint8_t stage = 0;
   while(1){
 
@@ -95,43 +95,36 @@ void AddrLEDManager_SanityTest(void)
     for (int i = 0; i < ledStrip1.numLeds; i++)
     {
       Pixel_t color1, color2;
+#define CURRENT_TEST 0
+#if CURRENT_TEST
+      uint8_t r = 50;
+      uint8_t g = 50;
+      uint8_t b = 50;
+      color1 = (Pixel_t) {.red = r, .green = g, .blue = b};
+      color2 = (Pixel_t) {.red = r, .green = g, .blue = b};
+#else
       switch(stage)
       {
-#if 0
         case 0:
-        color1 = (Pixel_t) {.red = c, .green = 0x0, .blue = c};
-        color2 = (Pixel_t) {.red = 0x0, .green = c, .blue = top-c};
-        break;
+          color1 = (Pixel_t) {.red = c, .green = top-c, .blue = 0x0};
+          color2 = (Pixel_t) {.red = top-c, .green = c, .blue = c};
+          break;
 
         case 1:
-        color1 = (Pixel_t) {.red = top-c, .green = c, .blue = 0x0};
-        color2 = (Pixel_t) {.red = 0x0, .green = c, .blue = 0x0};
-        break;
+          color1 = (Pixel_t) {.red = 0x0, .green = c, .blue = c};
+          color2 = (Pixel_t) {.red = c, .green = c, .blue = 0x0};
+          break;
 
         case 2:
-        color1 = (Pixel_t) {.red = 0x0, .green = c, .blue = top-c};
-        color2 = (Pixel_t) {.red = c, .green = c, .blue = 0x0};
-        break;
-#endif
-        case 0:
-        color1 = (Pixel_t) {.red = c, .green = top-c, .blue = 0x0};
-        color2 = (Pixel_t) {.red = top-c, .green = c, .blue = c};
-        break;
-
-        case 1:
-        color1 = (Pixel_t) {.red = 0x0, .green = c, .blue = c};
-        color2 = (Pixel_t) {.red = c, .green = c, .blue = 0x0};
-        break;
-
-        case 2:
-        color1 = (Pixel_t) {.red = c, .green = 0x0, .blue = 0x0};
-        color2 = (Pixel_t) {.red = c, .green = 0x0, .blue = 1};
-        break;
+          color1 = (Pixel_t) {.red = c, .green = 0x0, .blue = 0x0};
+          color2 = (Pixel_t) {.red = c, .green = 0x0, .blue = 1};
+          break;
       }
+#endif
 
       Pixel_t *currPixel = &(ledStrip1.pixels[i]);
-      
-      if (i % 2)
+
+      if (/*i % 2*/ i == 5 || i == 6 ||i == 9 || i == 10 || i == 21 || i == 22|| i == 25 || i ==26)
       {
         *currPixel = color1;
       }
@@ -140,17 +133,19 @@ void AddrLEDManager_SanityTest(void)
         *currPixel = color2;
       }
       /*
-      if (i == 5 || i == 6 || i == 9 || i == 10)
-        *currPixel = (toggle) ? color2 : color1; // CENTER
-      else
-        *currPixel = (toggle) ? color1 : color2; // OUTER
-      */
+         if (i == 5 || i == 6 || i == 9 || i == 10)
+       *currPixel = (toggle) ? color2 : color1; // CENTER
+       else
+       *currPixel = (toggle) ? color1 : color2; // OUTER
+       */
+      //if (i == 15)
+      //  break;
     }
     //toggle = !toggle;
 
     AddrLED_SanityTest(&ledStrip1);
-
-    HAL_Delay(100);
+    //IDLE_FOREVER(100);
+    HAL_Delay(1000);
 
     if (c >= top)
     {
