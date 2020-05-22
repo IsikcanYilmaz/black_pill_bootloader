@@ -26,6 +26,11 @@ typedef struct {
   uint8_t green;
   uint8_t red;
   uint8_t blue;
+  uint8_t localX; // X, Y of the pixel IN it's panel
+  uint8_t localY;
+  uint8_t globalX;
+  uint8_t globalY;
+  uint8_t globalZ;
 } __attribute__((packed)) Pixel_t;
 
 // Below denotes the raw datastructure that will be sent to the the WS2812B via DMA.

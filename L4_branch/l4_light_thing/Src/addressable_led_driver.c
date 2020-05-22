@@ -27,7 +27,7 @@ Each WS2812B requires 24bits of data to reproduce a color. Each color is, in fac
 
 // PWM VALUES THAT MEET WS2812Bs SPECS
 #define ADDR_LED_PWM_PSC 2
-#define ADDR_LED_PWM_ARR 40//32
+#define ADDR_LED_PWM_ARR 52//40//32
 
 // PWM DUTY CYCLE VALUES FOR THE LOGIC HIGH AND LOW CODES
 #define ADDR_LED_CODE_HIGH_COMPARE_VAL 23 
