@@ -86,7 +86,7 @@ void AddrLEDManager_SanityTest(void)
   bool toggle = false;
   uint8_t c = 1;
   bool addc = true;
-  uint8_t top = 10;
+  uint8_t top = 50;
   uint8_t stage = 0;
   while(1){
 
@@ -97,11 +97,12 @@ void AddrLEDManager_SanityTest(void)
       Pixel_t color1, color2;
 #define CURRENT_TEST 0
 #if CURRENT_TEST
-      uint8_t r = 50;
-      uint8_t g = 50;
-      uint8_t b = 50;
+      uint8_t r = 1;
+      uint8_t g = 73;
+      uint8_t b = 1;
       color1 = (Pixel_t) {.red = r, .green = g, .blue = b};
-      color2 = (Pixel_t) {.red = r, .green = g, .blue = b};
+      Pixel_t *currPixel = &(ledStrip1.pixels[i]);
+      *currPixel = color1;
 #else
       switch(stage)
       {
@@ -111,16 +112,15 @@ void AddrLEDManager_SanityTest(void)
           break;
 
         case 1:
-          color1 = (Pixel_t) {.red = 0x0, .green = c, .blue = c};
+          color1 = (Pixel_t) {.red = top-c, .green = c, .blue = c};
           color2 = (Pixel_t) {.red = c, .green = c, .blue = 0x0};
           break;
 
         case 2:
           color1 = (Pixel_t) {.red = c, .green = 0x0, .blue = 0x0};
-          color2 = (Pixel_t) {.red = c, .green = 0x0, .blue = 1};
+          color2 = (Pixel_t) {.red = top, .green = 0x0, .blue = 1};
           break;
       }
-#endif
 
       Pixel_t *currPixel = &(ledStrip1.pixels[i]);
 
@@ -132,12 +132,8 @@ void AddrLEDManager_SanityTest(void)
       {
         *currPixel = color2;
       }
-      /*
-         if (i == 5 || i == 6 || i == 9 || i == 10)
-       *currPixel = (toggle) ? color2 : color1; // CENTER
-       else
-       *currPixel = (toggle) ? color1 : color2; // OUTER
-       */
+#endif
+
       //if (i == 15)
       //  break;
     }
@@ -145,7 +141,10 @@ void AddrLEDManager_SanityTest(void)
 
     AddrLED_SanityTest(&ledStrip1);
     //IDLE_FOREVER(100);
-    HAL_Delay(1000);
+    HAL_Delay(10);
+
+    // We need to stop the pwm timer after our payload is sent and start it back up again
+    AddrLED_StopPWM();
 
     if (c >= top)
     {
@@ -154,14 +153,10 @@ void AddrLEDManager_SanityTest(void)
     if (c < 1)
     {
       addc = true;
-      //stage++;
+      stage++;
       if (stage > 2)
         stage = 0;
     }
-
     c += (addc) ? +1 : -1;
-
-    //__HAL_DMA_CLEAR_FLAG(&hdma_tim3_ch4_up, 
   }
-
 }
