@@ -2,10 +2,10 @@
 
 typedef enum {
   NORTH,
+  EAST,
   SOUTH,
   WEST,
-  EAST,
-  CENTER,
+  TOP,
   NONE
 } Position_e;
 

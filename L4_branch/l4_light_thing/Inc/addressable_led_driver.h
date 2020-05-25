@@ -11,17 +11,18 @@
 #define DEBUG_PIN_GPIO_PORT GPIOB
 #define DEBUG_PIN_GPIO_PIN  GPIO_PIN_0
 
-#define LED_PANEL_1_TIMER         TIM4
-#define LED_PANEL_1_TIMER_CHANNEL TIM_CHANNEL_4
-#define LED_PANEL_1_TIMER_HANDLE  htim4
+#define LED_PANEL_1_TIMER             TIM4
+#define LED_PANEL_1_TIMER_CHANNEL     TIM_CHANNEL_4
+#define LED_PANEL_1_TIMER_HANDLE      htim4
 
 #define LED_PANEL_1_PWM_TIMER         TIM3
 #define LED_PANEL_1_PWM_TIMER_CHANNEL TIM_CHANNEL_4
 #define LED_PANEL_1_PWM_TIMER_HANDLE  htim3
 
-#define NAIVE false
+#define NAIVE false // TODO / this isnt used anymore. could remove it
 
-// Below type denotes a color. 3 bytes, one for each of RGB
+// Below type denotes a single pixel (1 LED)
+// Some fields may be redundant
 typedef struct {
   uint8_t green;
   uint8_t red;

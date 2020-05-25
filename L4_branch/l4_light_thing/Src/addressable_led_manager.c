@@ -3,8 +3,9 @@
 #include "tim.h"
 #include <string.h>
 
+#define NUM_PANELS              5
 #define NUM_LEDS_PER_PANEL_SIDE 4
-#define NUM_LEDS_PER_PANEL (NUM_LEDS_PER_PANEL_SIDE * NUM_LEDS_PER_PANEL_SIDE)
+#define NUM_LEDS_PER_PANEL      (NUM_LEDS_PER_PANEL_SIDE * NUM_LEDS_PER_PANEL_SIDE)
 
 // 
 
@@ -22,6 +23,7 @@ AddrLEDPanel_t panels[5];
 
 static void InitPanel(AddrLEDPanel_t *p)
 {
+  // Set local coordinates of this panel
   Pixel_t *strip = p->strip->pixels;
   for (int i = 0; i < p->numLeds; i++)
   {
@@ -31,6 +33,9 @@ static void InitPanel(AddrLEDPanel_t *p)
     
     // TODO // HANDLE GLOBAL COORDINATES
   }
+
+  // Set global coordinates of this panel
+
 }
 
 static Pixel_t* GetPixelByLocalCoordinate(Position_e pos, uint8_t x, uint8_t y)
@@ -38,7 +43,7 @@ static Pixel_t* GetPixelByLocalCoordinate(Position_e pos, uint8_t x, uint8_t y)
   return NULL;
 }
 
-static Pixel_t* GetPixelByGlobalCoordinate(Position_e pos, uint8_t x, uint8_t y)
+static Pixel_t* GetPixelByGlobalCoordinate(uint8_t x, uint8_t y, uint8_t z)
 {
   return NULL;
 } 
@@ -52,7 +57,8 @@ inline static AddrLEDPanel_t* GetPanelByLocation(Position_e pos)
 
 void AddrLEDManager_Init(void)
 {
-  // Initialize the strip(s)
+  // Initialize the strip(s). This initialize one continuous strip. 
+  // If multiple panels are daisychained, that counts as one strip.
   ledStrip1 = (AddrLEDStrip_t) {
     .numLeds               = ledStrip1Size,
     .pwmTimerHandle        = &LED_PANEL_1_PWM_TIMER_HANDLE,
@@ -64,21 +70,22 @@ void AddrLEDManager_Init(void)
   AddrLED_Init(&ledStrip1);
 
   // Initialize the Panel(s)
-  // TODO Do the rest of the panels
+  for (int panelIdx = 0; panelIdx < NUM_PANELS; panelIdx++)
+  {
+    Position_e pos = (Position_e) panelIdx;
+    AddrLEDPanel_t p = {
+      .strip = &ledStrip1,
+      .numLeds = NUM_LEDS_PER_PANEL,
+      .stripRange = {(panelIdx * NUM_LEDS_PER_PANEL), ((panelIdx + 1)* NUM_LEDS_PER_PANEL - 1)},
+      .position = pos,
+      .neighborPanels = {NULL, NULL, NULL, NULL},
+    };
+    InitPanel(&p);
+    panels[pos] = p;
 
-  // WEST
-  AddrLEDPanel_t p = {
-    .strip = &ledStrip1,
-    .numLeds = 32,
-    .stripRange = {0, 31},
-    .position = WEST,
-    .neighborPanels = {NULL, NULL, NULL, NULL},
-  };
-
-  InitPanel(&p);
-  panels[WEST] = p;
-
-
+    // TODO // Remove below when you get the full cube
+    break;
+  }
 }
 
 void AddrLEDManager_SanityTest(void)
@@ -86,7 +93,7 @@ void AddrLEDManager_SanityTest(void)
   bool toggle = false;
   uint8_t c = 1;
   bool addc = true;
-  uint8_t top = 50;
+  uint8_t top = 100;
   uint8_t stage = 0;
   while(1){
 
@@ -107,18 +114,18 @@ void AddrLEDManager_SanityTest(void)
       switch(stage)
       {
         case 0:
-          color1 = (Pixel_t) {.red = c, .green = top-c, .blue = 0x0};
-          color2 = (Pixel_t) {.red = top-c, .green = c, .blue = c};
+          color1 = (Pixel_t) {.red = c, .green = c, .blue = top-c};
+          color2 = (Pixel_t) {.red = top-c, .green = top-c, .blue = c};
           break;
 
         case 1:
-          color1 = (Pixel_t) {.red = top-c, .green = c, .blue = c};
-          color2 = (Pixel_t) {.red = c, .green = c, .blue = 0x0};
+          color1 = (Pixel_t) {.red = c, .green = c, .blue = 0x0};
+          color2 = (Pixel_t) {.red = c, .green = top-c, .blue = 0x0};
           break;
 
         case 2:
-          color1 = (Pixel_t) {.red = c, .green = 0x0, .blue = 0x0};
-          color2 = (Pixel_t) {.red = top, .green = 0x0, .blue = 1};
+          color1 = (Pixel_t) {.red = c, .green = 0x0, .blue = c};
+          color2 = (Pixel_t) {.red = c, .green = 0x0, .blue = top-c};
           break;
       }
 
@@ -153,7 +160,7 @@ void AddrLEDManager_SanityTest(void)
     if (c < 1)
     {
       addc = true;
-      stage++;
+      //stage++;
       if (stage > 2)
         stage = 0;
     }
