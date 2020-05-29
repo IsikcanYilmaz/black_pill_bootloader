@@ -32,7 +32,7 @@ typedef struct {
   uint8_t globalX;
   uint8_t globalY;
   uint8_t globalZ;
-} __attribute__((packed)) Pixel_t;
+} Pixel_t;
 
 // Below denotes the raw datastructure that will be sent to the the WS2812B via DMA.
 // Each uint8_t represents the duty cycle (CCR value) the PWM will be set to.

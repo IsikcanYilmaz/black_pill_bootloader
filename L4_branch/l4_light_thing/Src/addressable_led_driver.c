@@ -73,7 +73,7 @@ static inline void ByteToCodes(uint8_t byte, uint8_t *codes)
 {
   for (int b = 0; b < 8; b++)
   {
-    *(codes + (7 - b)) = ((byte & (0x1 << b)) > 0) ? ADDR_LED_CODE_HIGH_COMPARE_VAL : ADDR_LED_CODE_LOW_COMPARE_VAL;
+    codes[7-b] = ((byte & (0x1 << b)) > 0) ? ADDR_LED_CODE_HIGH_COMPARE_VAL : ADDR_LED_CODE_LOW_COMPARE_VAL;
   }
 }
 
@@ -127,7 +127,6 @@ void AddrLED_SanityTest(AddrLEDStrip_t *l)
   #else
   const uint8_t dmaTestPayload[] = {ADDR_LED_CODE_HIGH_COMPARE_VAL, ADDR_LED_CODE_LOW_COMPARE_VAL, 1, 1, 1, 1, 0};
   #endif
-  volatile DMA_TypeDef *dmaptr = DMA1;
   HAL_StatusTypeDef ret = HAL_TIM_PWM_Start_DMA(&LED_PANEL_1_PWM_TIMER_HANDLE, LED_PANEL_1_PWM_TIMER_CHANNEL, (uint32_t *) pixelPacketBufferPtr, l->numLeds * sizeof(PixelPacket_t) + 1);
   //IDLE_FOREVER(100);
   #endif

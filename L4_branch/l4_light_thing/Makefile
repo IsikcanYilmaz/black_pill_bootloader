@@ -22,7 +22,7 @@ TARGET = l4_light_thing
 # debug build?
 DEBUG = 1
 # optimization
-OPT = -Og
+OPT = -g -O0
 
 
 #######################################
