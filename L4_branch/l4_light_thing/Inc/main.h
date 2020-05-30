@@ -48,8 +48,6 @@ extern "C" {
 /* Exported macro ------------------------------------------------------------*/
 /* USER CODE BEGIN EM */
 
-#define TOGGLE_ONBOARD_LED() HAL_GPIO_TogglePin(LD4_GPIO_Port, LD4_Pin);
-#define IDLE_FOREVER(x)      do {TOGGLE_ONBOARD_LED(); HAL_Delay(x);} while(1)
 /* USER CODE END EM */
 
 /* Exported functions prototypes ---------------------------------------------*/

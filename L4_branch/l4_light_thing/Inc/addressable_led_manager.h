@@ -1,3 +1,6 @@
+#ifndef ADDRLEDMANAGER_H
+#define ADDRLEDMANAGER_H
+
 #include "addressable_led_driver.h"
 
 typedef enum {
@@ -6,7 +9,7 @@ typedef enum {
   SOUTH,
   WEST,
   TOP,
-  NONE
+  NUM_SIDES 
 } Position_e;
 
 // LEDs are arranged in a 1 dimensional array, even though they are physically arranged in a square shape (or else)
@@ -49,3 +52,4 @@ typedef struct {
 void AddrLEDManager_Init(void);
 
 void AddrLEDManager_SanityTest(void);
+#endif

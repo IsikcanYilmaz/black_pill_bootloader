@@ -65,7 +65,8 @@ Drivers/STM32L4xx_HAL_Driver/Src/stm32l4xx_hal_uart_ex.c \
 Src/system_stm32l4xx.c \
 Src/addressable_led_driver.c \
 Src/addressable_led_manager.c \
-Src/led.c
+Src/led.c \
+Src/random_fade_animation.c
 
 # ASM sources
 ASM_SOURCES =  \
