@@ -115,7 +115,7 @@ void AddrLED_SanityTest(AddrLEDStrip_t *l)
   #ifdef PWM_DMA_TEST
   #if 1
 
-  PixelPacket_t *pixelPacketBufferPtr = (PixelPacket_t *) &(l->pixelPacketBuffer);
+  PixelPacket_t *pixelPacketBufferPtr = (PixelPacket_t *) (l->pixelPacketBuffer);
   for (int i = 0; i < l->numLeds; i++)
   {
     Pixel_t *currPixel = &(l->pixels[i]);

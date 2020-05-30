@@ -38,6 +38,7 @@ typedef enum {
 
 typedef struct {
   AddrLEDStrip_t *strip;
+  Pixel_t *stripFirstPixel;
   uint16_t numLeds;
   uint16_t stripRange[2]; // Inclusive
   Position_e position;

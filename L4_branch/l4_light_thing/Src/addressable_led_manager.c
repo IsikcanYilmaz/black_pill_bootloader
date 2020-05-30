@@ -12,7 +12,7 @@
 
 // PRIVATE VARIBLES -------------------------------------------------
 
-const uint16_t ledStrip1Size = NUM_LEDS_PER_PANEL;
+const uint16_t ledStrip1Size = NUM_LEDS_PER_PANEL * NUM_PANELS;
 AddrLEDStrip_t ledStrip1;
 Pixel_t ledStrip1Pixels[sizeof(PixelPacket_t) * NUM_LEDS_PER_PANEL * NUM_PANELS];
 uint8_t ledStrip1PacketBuffer[sizeof(PixelPacket_t) * NUM_LEDS_PER_PANEL * NUM_PANELS + 1]; // (3 * 8) * 16 + 1
@@ -43,7 +43,6 @@ static Pixel_t* GetPixelByLocalCoordinate(Position_e pos, uint8_t x, uint8_t y)
 {
   AddrLEDPanel_t *panel = &panels[pos];
   AddrLEDStrip_t *strip = panel->strip;
-  
   uint8_t ledIdx;
 #if LEDS_BEGIN_AT_BOTTOM
   y = NUM_LEDS_PER_PANEL_SIDE - y - 1;
@@ -56,7 +55,7 @@ static Pixel_t* GetPixelByLocalCoordinate(Position_e pos, uint8_t x, uint8_t y)
   {
     ledIdx = (NUM_LEDS_PER_PANEL_SIDE - 1 - x) + (NUM_LEDS_PER_PANEL_SIDE * y);
   }
-  return &(strip->pixels[ledIdx]);
+  return &(panel->stripFirstPixel[ledIdx]);
 }
 
 static Pixel_t* GetPixelByGlobalCoordinate(uint8_t x, uint8_t y, uint8_t z)
@@ -76,7 +75,7 @@ void AddrLEDManager_Init(void)
   // Initialize the strip(s). This initialize one continuous strip. 
   // If multiple panels are daisychained, that counts as one strip.
   ledStrip1 = (AddrLEDStrip_t) {
-    .numLeds               = ledStrip1Size,
+    .numLeds                 = ledStrip1Size,
       .pwmTimerHandle        = &LED_PANEL_1_PWM_TIMER_HANDLE,
       .pwmTimerHandleChannel = LED_PANEL_1_PWM_TIMER_CHANNEL,
       .pixels                = (Pixel_t *) &ledStrip1Pixels,
@@ -96,11 +95,9 @@ void AddrLEDManager_Init(void)
       .position = pos,
       .neighborPanels = {NULL, NULL, NULL, NULL},
     };
+    p.stripFirstPixel = &(p.strip->pixels[p.stripRange[0]]);
     InitPanel(&p);
     panels[pos] = p;
-
-    // TODO // Remove below when you get the full cube
-    break;
   }
 }
 
@@ -121,24 +118,29 @@ void AddrLEDManager_SanityTest(void)
     {
       Pixel_t color1, color2;
       uint8_t r = 0;
-      uint8_t g = 30;
-      uint8_t b = 30;
+      uint8_t g = 10;
+      uint8_t b = 10;
       color1 = (Pixel_t) {.red = r, .green = g, .blue = b};
       Pixel_t *currPixel = &(ledStrip1.pixels[i]);
       *currPixel = color1;
     }
-    /*
+    
     static uint8_t testx = 0;
-    Pixel_t col = {0, 0, 10};
+    Pixel_t col = {10, 10, 0};
     Pixel_t *p1 = GetPixelByLocalCoordinate(NORTH, testx, testx);
-    Pixel_t *p2 = GetPixelByLocalCoordinate(NORTH, testx, 3-testx);
+    Pixel_t *p2 = GetPixelByLocalCoordinate(SOUTH, testx, testx);
+    Pixel_t *p3 = GetPixelByLocalCoordinate(WEST, testx, testx);
+    Pixel_t *p4 = GetPixelByLocalCoordinate(EAST, testx, testx);
+    Pixel_t *p5 = GetPixelByLocalCoordinate(TOP, testx, testx);
     *p1 = col;
     *p2 = col;
-
+    *p3 = col;
+    *p4 = col;
+    *p5 = col;
     testx++;
     if (testx > 3)
       testx = 0;
-    */
+   
 
 #elif (TEST == 1) // REGULAR TEST
     for (int i = 0; i < ledStrip1.numLeds; i++)
@@ -164,23 +166,16 @@ void AddrLEDManager_SanityTest(void)
 
       Pixel_t *currPixel = &(ledStrip1.pixels[i]);
 
-      if (/*i % 2*/ i == 5 || i == 6 ||i == 9 || i == 10 || i == 21 || i == 22|| i == 25 || i ==26)
+      if (i % 2)
       {
-        *currPixel = color1;
+        *currPixel = (toggle) ? color1 : color2;
       }
       else
       {
-        *currPixel = color2;
+        *currPixel = (toggle) ? color2 : color1;
       }
     }
-
-#elif (TEST == 2) // ADDRESSING TEST
-    volatile Pixel_t *p = GetPixelByLocalCoordinate(NORTH, 0, 1);
-
-    Pixel_t color1 = {10, 0, 0};
-    *p = color1;
 #endif
-
     //if (i == 15)
     //  break;
     //toggle = !toggle;
@@ -206,6 +201,7 @@ void AddrLEDManager_SanityTest(void)
       //stage++;
       if (stage > 2)
         stage = 0;
+      //toggle = !toggle;
     }
     c += (addc) ? +1 : -1;
   }
