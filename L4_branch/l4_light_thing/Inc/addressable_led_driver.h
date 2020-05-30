@@ -58,7 +58,9 @@ void AddrLED_StartPWM(void);
 void AddrLED_StopPWM(void);
 void AddrLED_SendReset(void);
 void AddrLED_NaiveISR(void);
+void AddrLED_DisplayStrip(AddrLEDStrip_t *l);
 
 void AddrLED_SanityTest(AddrLEDStrip_t *l);
+
 
 #endif

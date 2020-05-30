@@ -2,12 +2,15 @@
 #include "addressable_led_manager.h"
 #include "tim.h"
 #include <string.h>
+#include <stdlib.h>
 
 #define NUM_PANELS              5
 #define NUM_LEDS_PER_PANEL_SIDE 4
 #define NUM_LEDS_PER_PANEL      (NUM_LEDS_PER_PANEL_SIDE * NUM_LEDS_PER_PANEL_SIDE)
 
 #define LEDS_BEGIN_AT_BOTTOM    1
+
+#define RAND_IN_RANGE(min, max) (rand() % (max - min + 1) + min)
 // 
 
 // PRIVATE VARIBLES -------------------------------------------------
@@ -116,6 +119,7 @@ void AddrLEDManager_SanityTest(void)
 #if (TEST == 0)   // CURRENT DRAW TEST
     for (int i = 0; i < ledStrip1.numLeds; i++)
     {
+      continue;
       Pixel_t color1, color2;
       uint8_t r = 0;
       uint8_t g = 10;
@@ -125,22 +129,61 @@ void AddrLEDManager_SanityTest(void)
       *currPixel = color1;
     }
     
-    static uint8_t testx = 0;
-    Pixel_t col = {10, 10, 0};
-    Pixel_t *p1 = GetPixelByLocalCoordinate(NORTH, testx, testx);
-    Pixel_t *p2 = GetPixelByLocalCoordinate(SOUTH, testx, testx);
-    Pixel_t *p3 = GetPixelByLocalCoordinate(WEST, testx, testx);
-    Pixel_t *p4 = GetPixelByLocalCoordinate(EAST, testx, testx);
-    Pixel_t *p5 = GetPixelByLocalCoordinate(TOP, testx, testx);
-    *p1 = col;
-    *p2 = col;
-    *p3 = col;
-    *p4 = col;
-    *p5 = col;
-    testx++;
+    static uint8_t testx = 2;
+    static uint8_t testy = 0;
+    uint8_t upper = 10;
+    uint8_t lower = 10;
+    static Pixel_t col1 = {0, 10, 10};
+    static Pixel_t col2 = {10, 0, 10};
+    static Pixel_t col3 = {10, 10, 0};
+
+    for (int j = 0; j < 4; j++)
+    {
+      if (testx >= j)
+      {
+        Pixel_t *p1 = GetPixelByLocalCoordinate(NORTH, testx-j, testy+j);
+        Pixel_t *p2 = GetPixelByLocalCoordinate(SOUTH, testx-j, testy+j);
+        Pixel_t *p3 = GetPixelByLocalCoordinate(WEST, testx-j, testy+j);
+        Pixel_t *p4 = GetPixelByLocalCoordinate(EAST, testx-j, testy+j);
+        Pixel_t *p5 = GetPixelByLocalCoordinate(TOP, testx-j, testy+j);
+        *p1 = col1;
+        *p2 = col1;
+        *p3 = col1;
+        *p4 = col1;
+        *p5 = col1;
+        
+        p1 = GetPixelByLocalCoordinate(NORTH, 3-testx-j, 3-testy+j);
+        p2 = GetPixelByLocalCoordinate(SOUTH, 3-testx-j, 3-testy+j);
+        p3 = GetPixelByLocalCoordinate(WEST, 3-testx-j, 3-testy+j);
+        p4 = GetPixelByLocalCoordinate(EAST, 3-testx-j, 3-testy+j);
+        p5 = GetPixelByLocalCoordinate(TOP, 3-testx-j, 3-testy+j);
+        if (testx != 3)
+        {
+          *p1 = col2;
+          *p2 = col2;
+          *p3 = col2;
+          *p4 = col2;
+          *p5 = col2;
+        }
+        else
+        {
+          *p1 = col3;
+          *p2 = col3;
+          *p3 = col3;
+          *p4 = col3;
+          *p5 = col3;
+        }
+      }
+    }
+
+    //testx++;
     if (testx > 3)
+    {
       testx = 0;
-   
+      col1 = (Pixel_t) {RAND_IN_RANGE(0, 10), RAND_IN_RANGE(0, 10), RAND_IN_RANGE(0, 10)};
+      col2 = (Pixel_t) {RAND_IN_RANGE(0, 10), RAND_IN_RANGE(0, 10), RAND_IN_RANGE(0, 10)};
+      col3 = (Pixel_t) {RAND_IN_RANGE(0, 10), RAND_IN_RANGE(0, 10), RAND_IN_RANGE(0, 10)};
+    }
 
 #elif (TEST == 1) // REGULAR TEST
     for (int i = 0; i < ledStrip1.numLeds; i++)
