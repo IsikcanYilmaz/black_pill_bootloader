@@ -47,10 +47,10 @@ RandomTrianglesPixelData_t randomTrianglesPixelData[NUM_LEDS_TOTAL];
 static void InitPanel(AddrLEDPanel_t *p)
 {
   // Set local coordinates of this panel
-  Pixel_t *strip = p->strip->pixels;
+  Pixel_t *pixels = p->strip->pixels;
   for (int i = 0; i < p->numLeds; i++)
   {
-    Pixel_t *pixel = &strip[p->stripRange[0] + i];
+    Pixel_t *pixel = &pixels[p->stripRange[0] + i];
     pixel->localX = NUM_LEDS_PER_PANEL_SIDE - (i / NUM_LEDS_PER_PANEL_SIDE);
     pixel->localY = NUM_LEDS_PER_PANEL_SIDE - (i % NUM_LEDS_PER_PANEL_SIDE);
     
@@ -147,8 +147,12 @@ void AddrLEDManager_SanityTest(void)
     {
       Animation_RandomFade_Update();
     }
-    count++;
+    /*
+    for (int i = 0; i < 4; i++)
+      ledStrip1.pixels[i] = (Pixel_t) {255, 0, 0};
+    */
 
+    count++;
     AddrLED_DisplayStrip(&ledStrip1);
     //IDLE_FOREVER(100);
     HAL_Delay(100);

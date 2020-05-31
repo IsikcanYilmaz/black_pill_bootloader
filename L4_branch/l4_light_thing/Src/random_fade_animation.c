@@ -71,10 +71,10 @@ void Animation_RandomFade_Init(AddrLEDPanel_t *panels, uint8_t numPanels, Random
   context.numPanels = numPanels;
   context.numLeds = panels->numLeds * numPanels;
   
-  context.lowerBrightness    = 30;
-  context.upperBrightness    = 30;
+  context.lowerBrightness    = 10;
+  context.upperBrightness    = 10;
   context.lowerDecrementRate = 1;
-  context.upperDecrementRate = 5;
+  context.upperDecrementRate = 2;
   context.lowerWaitTime      = 1;
   context.upperWaitTime      = 30;
   context.cutoff             = 0;

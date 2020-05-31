@@ -39,7 +39,7 @@ void Animation_RandomTriangles_Init(AddrLEDPanel_t *panels, uint8_t numPanels, R
   context.numLeds = panels->numLeds * numPanels;
 
   context.lowerBrightness = 0;
-  context.upperBrightness = 50;
+  context.upperBrightness = 5;
 }
 
 
@@ -85,15 +85,23 @@ void Animation_RandomTriangles_Update(void)
     {
       for (int k = 0; k < 4; k++)
       {
-        Pixel_t *p = GetPixelByLocalCoordinate(TOP, j, k);
-        if ((j == 1 || j == 2) && (k == 1 || k == 2))
+        Pixel_t *p;
+        switch(count % 4)
         {
-          *p = col1;
+          case 0:
+            p = GetPixelByLocalCoordinate(TOP, testx, k);
+            break;
+          case 1:
+            p = GetPixelByLocalCoordinate(TOP, testx, 3-k);
+            break;
+          case 2:
+            p = GetPixelByLocalCoordinate(TOP, 3-testx, k);
+            break;
+          case 3:
+            p = GetPixelByLocalCoordinate(TOP, 3-testx, 3-k);
+            break;
         }
-        else
-        {
-          *p = col2;
-        }
+        *p = col1;
       }
     }
 
