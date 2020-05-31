@@ -71,14 +71,22 @@ void Animation_RandomFade_Init(AddrLEDPanel_t *panels, uint8_t numPanels, Random
   context.numPanels = numPanels;
   context.numLeds = panels->numLeds * numPanels;
   
-  context.lowerBrightness    = 100;
-  context.upperBrightness    = 100;
-  context.lowerDecrementRate = 10;
-  context.upperDecrementRate = 30;
+  context.lowerBrightness    = 30;
+  context.upperBrightness    = 30;
+  context.lowerDecrementRate = 1;
+  context.upperDecrementRate = 5;
   context.lowerWaitTime      = 1;
   context.upperWaitTime      = 30;
   context.cutoff             = 0;
   context.singleValForAllChannels = false;
+
+  // Start pixels with a wait time so all of them dont go full brightness at the same time at the beginning
+  for (int i = 0; i < context.numLeds; i++)
+  {
+    RandomFadePixelData_t *currData = (RandomFadePixelData_t *) &context.pixelDataPtr[i];
+    currData->waitTime = RAND_IN_RANGE(context.lowerWaitTime, context.upperWaitTime);
+    currData->decrementRate = RAND_IN_RANGE(context.lowerDecrementRate, context.upperDecrementRate);
+  }
 }
 
 

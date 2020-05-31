@@ -3,6 +3,7 @@
 #include "tim.h"
 #include "utils.h"
 #include "random_fade_animation.h"
+#include "random_triangles_animation.h"
 #include <string.h>
 #include <stdlib.h>
 
@@ -13,7 +14,17 @@
 
 #define LEDS_BEGIN_AT_BOTTOM    1
 
-// 
+/*
+ * ADDRESSABLE LED MANAGER
+ *
+ * This module is to handle abstract neopixel usage. It will handle the initialization of the AddrLEDPanel_t and 
+ * the AddrLEDStrip_t abstractions, initialize Pixel_ts with their coordinate data, etc. The neopixel driver code is 
+ * not aware of the overall shape and structure of the strips. The manger module has awareness of this, and one of  its 
+ * purposes is to provide functions to make addressing the pixels easier.
+ *
+ * The manager module also initializes and plays "Animation" modules. 
+ *
+ */
 
 // PRIVATE VARIBLES -------------------------------------------------
 
@@ -28,6 +39,7 @@ AddrLEDPanel_t panels[5];
 // They are to be instantiated here and a pointer of them to be passed to aniation
 // modules during their inits.
 RandomFadePixelData_t randomFadePixelData[NUM_LEDS_TOTAL];
+RandomTrianglesPixelData_t randomTrianglesPixelData[NUM_LEDS_TOTAL];
 
 
 // PRIVATE FUNCTIONS -------------------------------------------------
@@ -47,35 +59,6 @@ static void InitPanel(AddrLEDPanel_t *p)
 
   // Set global coordinates of this panel
 
-}
-
-static Pixel_t* GetPixelByLocalCoordinate(Position_e pos, uint8_t x, uint8_t y)
-{
-  AddrLEDPanel_t *panel = &panels[pos];
-  AddrLEDStrip_t *strip = panel->strip;
-  uint8_t ledIdx;
-#if LEDS_BEGIN_AT_BOTTOM
-  y = NUM_LEDS_PER_PANEL_SIDE - y - 1;
-#endif
-  if (y % 2 == 0)
-  {
-    ledIdx = x + (NUM_LEDS_PER_PANEL_SIDE * y);
-  }
-  else
-  {
-    ledIdx = (NUM_LEDS_PER_PANEL_SIDE - 1 - x) + (NUM_LEDS_PER_PANEL_SIDE * y);
-  }
-  return &(panel->stripFirstPixel[ledIdx]);
-}
-
-static Pixel_t* GetPixelByGlobalCoordinate(uint8_t x, uint8_t y, uint8_t z)
-{
-  return NULL;
-} 
-
-inline static AddrLEDPanel_t* GetPanelByLocation(Position_e pos)
-{
-  return NULL;
 }
 
 // PUBLIC FUNCTIONS -------------------------------------------------
@@ -110,8 +93,38 @@ void AddrLEDManager_Init(void)
     panels[pos] = p;
   }
 
-  // Initialize our animation
+  // Initialize our animations
   Animation_RandomFade_Init((AddrLEDPanel_t *) &panels, NUM_PANELS, (RandomFadePixelData_t *) &randomFadePixelData);
+  Animation_RandomTriangles_Init((AddrLEDPanel_t *) &panels, NUM_PANELS, (RandomFadePixelData_t *) &randomFadePixelData);
+}
+
+Pixel_t* GetPixelByLocalCoordinate(Position_e pos, uint8_t x, uint8_t y)
+{
+  AddrLEDPanel_t *panel = &panels[pos];
+  AddrLEDStrip_t *strip = panel->strip;
+  uint8_t ledIdx;
+#if LEDS_BEGIN_AT_BOTTOM
+  y = NUM_LEDS_PER_PANEL_SIDE - y - 1;
+#endif
+  if (y % 2 == 0)
+  {
+    ledIdx = x + (NUM_LEDS_PER_PANEL_SIDE * y);
+  }
+  else
+  {
+    ledIdx = (NUM_LEDS_PER_PANEL_SIDE - 1 - x) + (NUM_LEDS_PER_PANEL_SIDE * y);
+  }
+  return &(panel->stripFirstPixel[ledIdx]);
+}
+
+Pixel_t* GetPixelByGlobalCoordinate(uint8_t x, uint8_t y, uint8_t z)
+{
+  return NULL;
+} 
+
+inline AddrLEDPanel_t* GetPanelByLocation(Position_e pos)
+{
+  return NULL;
 }
 
 void AddrLEDManager_SanityTest(void)
@@ -121,130 +134,26 @@ void AddrLEDManager_SanityTest(void)
   bool addc = true;
   uint8_t top = 10;
   uint8_t stage = 0;
+
+  uint32_t count = 0;
   while(1){
-
     TOGGLE_ONBOARD_LED();
-
-#define TEST 3
-#if (TEST == 0)   // CURRENT DRAW TEST
-    for (int i = 0; i < ledStrip1.numLeds; i++)
-    {
-      continue;
-      Pixel_t color1, color2;
-      uint8_t r = 0;
-      uint8_t g = 10;
-      uint8_t b = 10;
-      color1 = (Pixel_t) {.red = r, .green = g, .blue = b};
-      Pixel_t *currPixel = &(ledStrip1.pixels[i]);
-      *currPixel = color1;
-    }
     
-    static uint8_t testx = 0;
-    static uint8_t testy = 0;
-    uint8_t upper = 10;
-    uint8_t lower = 1;
-    static Pixel_t col1 = {0, 10, 10};
-    static Pixel_t col2 = {10, 0, 10};
-    static Pixel_t col3 = {10, 10, 0};
-    static uint32_t count = 0;
-
-    for (int side = 0; side < NUM_SIDES; side++)
+    if (count % 200 < 100)
     {
-      for (int j = 0; j < 4; j++)
-      {
-        if (testx >= j)
-        {
-          Pixel_t *p1 = GetPixelByLocalCoordinate(side, testx-j, testy+j);
-          *p1 = (side % 2) ? col1 : col2;
-        }
-      }
+      Animation_RandomTriangles_Update();
     }
-
-    for (int side = 0; side < NUM_SIDES; side++)
+    else
     {
-      for (int j = 0; j < 4; j++)
-      {
-        if (testx >= j)
-        {
-          Pixel_t *p1 = GetPixelByLocalCoordinate(side, 3-(testx-j), 3-(testy+j));
-          *p1 = (side % 2) ? col2 : col1;
-
-          if (testx == 3)
-            *p1 = col3;
-        }
-      }
+      Animation_RandomFade_Update();
     }
+    count++;
 
-
-    testx++;
-    if (testx > 3)
-    {
-      testx = 0;
-      count++;
-      if (count % 2 == 0)
-      {
-        col1 = (Pixel_t) {RAND_IN_RANGE(lower, upper), RAND_IN_RANGE(lower, upper), RAND_IN_RANGE(lower, upper)};
-        col2 = (Pixel_t) {RAND_IN_RANGE(lower, upper), RAND_IN_RANGE(lower, upper), RAND_IN_RANGE(lower, upper)};
-        col3 = (Pixel_t) {RAND_IN_RANGE(lower, upper), RAND_IN_RANGE(lower, upper), RAND_IN_RANGE(lower, upper)};
-      }
-      else
-      {
-        col1 = (Pixel_t) {0,0,0};
-        col2 = (Pixel_t) {0,0,0};
-        col3 = (Pixel_t) {0,0,0};
-      }
-    }
-
-#elif (TEST == 1) // REGULAR TEST
-    for (int i = 0; i < ledStrip1.numLeds; i++)
-    {
-      Pixel_t color1, color2;
-      switch(stage)
-      {
-        case 0:
-          color1 = (Pixel_t) {.red = c, .green = 0, .blue = top-c};
-          color2 = (Pixel_t) {.red = 0, .green = top-c, .blue = c};
-          break;
-
-        case 1:
-          color1 = (Pixel_t) {.red = c, .green = c, .blue = 0x0};
-          color2 = (Pixel_t) {.red = c, .green = top-c, .blue = 0x0};
-          break;
-
-        case 2:
-          color1 = (Pixel_t) {.red = c, .green = 0x0, .blue = c};
-          color2 = (Pixel_t) {.red = c, .green = 0x0, .blue = top-c};
-          break;
-      }
-
-      Pixel_t *currPixel = &(ledStrip1.pixels[i]);
-
-      if (i % 2)
-      {
-        *currPixel = (toggle) ? color1 : color2;
-      }
-      else
-      {
-        *currPixel = (toggle) ? color2 : color1;
-      }
-    }
-#elif (TEST == 3)
-    Animation_RandomFade_Update();
-#endif
-    //if (i == 15)
-    //  break;
-    //toggle = !toggle;
-
-    AddrLED_SanityTest(&ledStrip1);
-
-    // TODO THERES A MEMORY ERROR SOMEWHERE THAT AFTER THE ABOVE FUNCTION, panels[0].strip GETS OVERWRITTEN
-    //panels[0].strip = &ledStrip1; 
-
+    AddrLED_DisplayStrip(&ledStrip1);
     //IDLE_FOREVER(100);
     HAL_Delay(100);
 
-    // We need to stop the pwm timer after our payload is sent and start it back up again
-    AddrLED_StopPWM();
+
 
     if (c >= top)
     {

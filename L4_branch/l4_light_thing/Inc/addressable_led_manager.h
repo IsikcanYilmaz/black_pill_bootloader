@@ -50,6 +50,8 @@ typedef struct {
 } AddrLEDPanel_t;
 
 void AddrLEDManager_Init(void);
-
+Pixel_t* GetPixelByLocalCoordinate(Position_e pos, uint8_t x, uint8_t y);
+Pixel_t* GetPixelByGlobalCoordinate(uint8_t x, uint8_t y, uint8_t z);
+inline AddrLEDPanel_t* GetPanelByLocation(Position_e pos);
 void AddrLEDManager_SanityTest(void);
 #endif

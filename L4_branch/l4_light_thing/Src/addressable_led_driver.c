@@ -114,20 +114,23 @@ void AddrLED_DisplayStrip(AddrLEDStrip_t *l)
   }
   HAL_StatusTypeDef ret = HAL_TIM_PWM_Start_DMA(&LED_PANEL_1_PWM_TIMER_HANDLE, LED_PANEL_1_PWM_TIMER_CHANNEL, (uint32_t *) pixelPacketBufferPtr, l->numLeds * sizeof(PixelPacket_t) + 1);
   HAL_Delay(4);
+  
+  // We need to stop the pwm timer after our payload is sent and start it back up again
+  AddrLED_StopPWM();
 }
 
 void AddrLED_SanityTest(AddrLEDStrip_t *l)
 {
   //#define PWM_BASE_TEST
-  #define PWM_DMA_TEST
+#define PWM_DMA_TEST
 
-  #ifdef PWM_BASE_TEST
+#ifdef PWM_BASE_TEST
   ADDR_LED_PWM_START();
   ADDR_LED_PWM_SET_DUTY_CYCLE(10);
   while(1){}
-  #endif
-  #ifdef PWM_DMA_TEST
-  #if 1
+#endif
+#ifdef PWM_DMA_TEST
+#if 1
 
   PixelPacket_t *pixelPacketBufferPtr = (PixelPacket_t *) (l->pixelPacketBuffer);
   for (int i = 0; i < l->numLeds; i++)
@@ -136,14 +139,14 @@ void AddrLED_SanityTest(AddrLEDStrip_t *l)
     PixelPacket_t *currPixelPacket = pixelPacketBufferPtr + i;
     PixelToPacket(currPixel, currPixelPacket);
   }
-  
 
-  #else
+
+#else
   const uint8_t dmaTestPayload[] = {ADDR_LED_CODE_HIGH_COMPARE_VAL, ADDR_LED_CODE_LOW_COMPARE_VAL, 1, 1, 1, 1, 0};
-  #endif
+#endif
   HAL_StatusTypeDef ret = HAL_TIM_PWM_Start_DMA(&LED_PANEL_1_PWM_TIMER_HANDLE, LED_PANEL_1_PWM_TIMER_CHANNEL, (uint32_t *) pixelPacketBufferPtr, l->numLeds * sizeof(PixelPacket_t) + 1);
   //IDLE_FOREVER(100);
-  #endif
+#endif
 }
 
 void AddrLED_StartPWM(void)
