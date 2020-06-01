@@ -41,7 +41,6 @@ AddrLEDPanel_t panels[5];
 RandomFadePixelData_t randomFadePixelData[NUM_LEDS_TOTAL];
 RandomTrianglesPixelData_t randomTrianglesPixelData[NUM_LEDS_TOTAL];
 
-
 // PRIVATE FUNCTIONS -------------------------------------------------
 
 static void InitPanel(AddrLEDPanel_t *p)

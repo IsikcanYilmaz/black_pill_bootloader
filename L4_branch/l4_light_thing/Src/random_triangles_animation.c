@@ -42,7 +42,6 @@ void Animation_RandomTriangles_Init(AddrLEDPanel_t *panels, uint8_t numPanels, R
   context.upperBrightness = 5;
 }
 
-
 void Animation_RandomTriangles_Update(void)
 {
     static uint8_t testx = 0;
@@ -55,30 +54,31 @@ void Animation_RandomTriangles_Update(void)
     // DO ALL SIDES BESIDES THE TOP
     for (int side = 0; side < TOP; side++)
     {
-      for (int j = 0; j < 4; j++)
+      if (count % 2 == 0)
       {
-        if (testx >= j)
+        for (int j = 0; j < 4; j++)
         {
-          Pixel_t *p1 = GetPixelByLocalCoordinate(side, testx-j, testy+j);
-          *p1 = (side % 2) ? col1 : col2;
+          if (testx >= j)
+          {
+            Pixel_t *p1 = GetPixelByLocalCoordinate(side, testx-j, testy+j);
+            *p1 = col1;
+          }
+        }
+      }
+      else
+      {
+        for (int j = 0; j < 4; j++)
+        {
+          if (3-testx >= j)
+          {
+            Pixel_t *p1 = GetPixelByLocalCoordinate(side, 3-(2-testx-j), 3-(testy+j));
+            *p1 = col1;
+          }
         }
       }
     }
 
-    for (int side = 0; side < TOP; side++)
-    {
-      for (int j = 0; j < 4; j++)
-      {
-        if (testx >= j)
-        {
-          Pixel_t *p1 = GetPixelByLocalCoordinate(side, 3-(testx-j), 3-(testy+j));
-          *p1 = (side % 2) ? col2 : col1;
 
-          if (testx == 3)
-            *p1 = col3;
-        }
-      }
-    }
 
     // DO TOP DIFFERENTLY
     for (int j = 0; j < 4; j++)
@@ -110,17 +110,11 @@ void Animation_RandomTriangles_Update(void)
     {
       testx = 0;
       count++;
-      if (count % 2 == 0 || 1)
+      if (count % 2 == 0)
       {
         col1 = (Pixel_t) {RAND_IN_RANGE(context.lowerBrightness, context.upperBrightness), RAND_IN_RANGE(context.lowerBrightness, context.upperBrightness), RAND_IN_RANGE(context.lowerBrightness, context.upperBrightness)};
         col2 = (Pixel_t) {RAND_IN_RANGE(context.lowerBrightness, context.upperBrightness), RAND_IN_RANGE(context.lowerBrightness, context.upperBrightness), RAND_IN_RANGE(context.lowerBrightness, context.upperBrightness)};
         col3 = (Pixel_t) {RAND_IN_RANGE(context.lowerBrightness, context.upperBrightness), RAND_IN_RANGE(context.lowerBrightness, context.upperBrightness), RAND_IN_RANGE(context.lowerBrightness, context.upperBrightness)};
-      }
-      else
-      {
-        col1 = (Pixel_t) {0,0,0};
-        col2 = (Pixel_t) {0,0,0};
-        col3 = (Pixel_t) {0,0,0};
       }
     }
 }
