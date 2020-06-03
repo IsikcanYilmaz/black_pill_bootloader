@@ -10,6 +10,15 @@
 
 ~ L I G H T  C U B E ~
 
-A "Cube of light" project using panels full of WS2812B addressable LEDs, based on some ST MCU. 
+A "Cube of light" project using panels full of WS2812B addressable LEDs, based on an STM32L453.
 
-Originally this thing was based on the Robotdyn Blackpill (stm32f303) but I bricked that board (RIP) and now i'm on a Nucleo-STM32L453, and the main folder in which the code resides is "L4_branch", though this will eventually change. 
+Current state of the project is:
+ - LED panels glued and soldered into forming the 5 sides of the cube.
+ - The panels work; STM devboard able to play animations and whatnot.
+ - Picked most of the parts for the hardware. 
+
+Need to do:
+ - Design power portion.
+ - Finish PCB design. 
+ - Order it, assemble it.
+
