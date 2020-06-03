@@ -1,4 +1,14 @@
-L I G H T  T H I N G
+        _________
+       /         /|
+      /         / |
+     /         /  |
+    /________ /   |
+    |o o o o |   /
+    |o o o o |  /
+    |o o o o | /
+    |o o o o |/
+
+~ L I G H T  C U B E ~
 
 A "Cube of light" project using panels full of WS2812B addressable LEDs, based on some ST MCU. 
 

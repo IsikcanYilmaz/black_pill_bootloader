@@ -39,7 +39,7 @@ void Animation_RandomTriangles_Init(AddrLEDPanel_t *panels, uint8_t numPanels, R
   context.numLeds = panels->numLeds * numPanels;
 
   context.lowerBrightness = 0;
-  context.upperBrightness = 5;
+  context.upperBrightness = 10;
 }
 
 void Animation_RandomTriangles_Update(void)

@@ -67,7 +67,8 @@ Src/addressable_led_driver.c \
 Src/addressable_led_manager.c \
 Src/led.c \
 Src/random_fade_animation.c \
-Src/random_triangles_animation.c
+Src/random_triangles_animation.c \
+Src/sw_timers.c
 # ASM sources
 ASM_SOURCES =  \
 startup_stm32l452xx.s

@@ -138,7 +138,7 @@ void AddrLEDManager_SanityTest(void)
   while(1){
     TOGGLE_ONBOARD_LED();
     
-    if (count % 200 < 100)
+    if (count % 200 < 100 || 1)
     {
       Animation_RandomTriangles_Update();
     }
@@ -154,7 +154,7 @@ void AddrLEDManager_SanityTest(void)
     count++;
     AddrLED_DisplayStrip(&ledStrip1);
     //IDLE_FOREVER(100);
-    HAL_Delay(100);
+    HAL_Delay(50);
 
 
 
