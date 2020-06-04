@@ -22,3 +22,4 @@ Need to do:
  - Finish PCB design. 
  - Order it, assemble it.
 
+![Prototype 1](https://raw.githubusercontent.com/IsikcanYilmaz/light_cube/master/misc/proto_preview1.jpg)
