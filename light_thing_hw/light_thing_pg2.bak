@@ -1,0 +1,106 @@
+EESchema Schematic File Version 4
+LIBS:light_thing_hw-cache
+EELAYER 26 0
+EELAYER END
+$Descr A4 11693 8268
+encoding utf-8
+Sheet 2 2
+Title ""
+Date ""
+Rev ""
+Comp ""
+Comment1 ""
+Comment2 ""
+Comment3 ""
+Comment4 ""
+$EndDescr
+$Comp
+L Fanstel-kicad-library-cache:BM832 U3
+U 1 1 5EC8F98B
+P 3250 2700
+F 0 "U3" H 3350 4492 45  0000 C CNN
+F 1 "BM832" H 3300 3550 45  0000 C CNN
+F 2 "Fanstel_modules:BC832-BC832" H 3250 2700 20  0001 C CNN
+F 3 "" H 1850 1150 60  0001 C CNN
+	1    3250 2700
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	1650 2000 950  2000
+Wire Wire Line
+	950  2000 950  2100
+Wire Wire Line
+	1650 2100 950  2100
+Connection ~ 950  2100
+Wire Wire Line
+	950  2100 950  2200
+Wire Wire Line
+	1650 2200 950  2200
+Connection ~ 950  2200
+Wire Wire Line
+	950  2200 950  2300
+Wire Wire Line
+	1650 2300 950  2300
+Connection ~ 950  2300
+Wire Wire Line
+	950  2300 950  2400
+Wire Wire Line
+	1650 2400 950  2400
+Connection ~ 950  2400
+Wire Wire Line
+	950  2400 950  3200
+Wire Wire Line
+	1650 3200 950  3200
+Connection ~ 950  3200
+Wire Wire Line
+	950  3200 950  3400
+Wire Wire Line
+	1650 3400 950  3400
+Connection ~ 950  3400
+Wire Wire Line
+	950  3400 950  3600
+$Comp
+L power:GND #PWR013
+U 1 1 5EC8FB9C
+P 950 3600
+F 0 "#PWR013" H 950 3350 50  0001 C CNN
+F 1 "GND" H 955 3427 50  0000 C CNN
+F 2 "" H 950 3600 50  0001 C CNN
+F 3 "" H 950 3600 50  0001 C CNN
+	1    950  3600
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	2800 4450 2800 4950
+Wire Wire Line
+	2800 4950 2900 4950
+Wire Wire Line
+	2900 4450 2900 4950
+Connection ~ 2900 4950
+Wire Wire Line
+	2900 4950 4000 4950
+Wire Wire Line
+	4000 4450 4000 4950
+Connection ~ 4000 4950
+Wire Wire Line
+	4000 4950 4450 4950
+$Comp
+L power:GND #PWR014
+U 1 1 5EC8FF81
+P 4450 4950
+F 0 "#PWR014" H 4450 4700 50  0001 C CNN
+F 1 "GND" H 4455 4777 50  0000 C CNN
+F 2 "" H 4450 4950 50  0001 C CNN
+F 3 "" H 4450 4950 50  0001 C CNN
+	1    4450 4950
+	1    0    0    -1  
+$EndComp
+Text GLabel 5050 2500 2    50   Input ~ 0
+BT_SWCLK
+Text GLabel 5050 2400 2    50   Input ~ 0
+BT_SWDIO
+Text GLabel 5050 2700 2    50   Input ~ 0
+BT_RST
+Text Notes 7050 6900 0    185  ~ 0
+FANSTEL BT832 BLE MODULE
+$EndSCHEMATC
