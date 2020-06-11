@@ -3,6 +3,7 @@ import time
 import pygame
 from common import *
 from random import randint
+from color import *
 
 PANEL_DISP_WIDTH = 105
 PANEL_DISP_HEIGHT = 105

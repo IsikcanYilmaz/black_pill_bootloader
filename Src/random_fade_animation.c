@@ -35,6 +35,9 @@
  *  100 100   : 120-150mA
  */
 
+static void randomFade1(void);
+static void randomFade2(void);
+
 typedef struct {
   uint8_t numPanels;
   uint8_t numLeds;
@@ -71,12 +74,12 @@ void Animation_RandomFade_Init(AddrLEDPanel_t *panels, uint8_t numPanels, Random
   context.numPanels = numPanels;
   context.numLeds = panels->numLeds * numPanels;
   
-  context.lowerBrightness    = 10;
-  context.upperBrightness    = 10;
+  context.lowerBrightness    = 0;
+  context.upperBrightness    = 50;
   context.lowerDecrementRate = 1;
   context.upperDecrementRate = 2;
-  context.lowerWaitTime      = 1;
-  context.upperWaitTime      = 30;
+  context.lowerWaitTime      = 10;
+  context.upperWaitTime      = 50;
   context.cutoff             = 0;
   context.singleValForAllChannels = false;
 
@@ -86,11 +89,65 @@ void Animation_RandomFade_Init(AddrLEDPanel_t *panels, uint8_t numPanels, Random
     RandomFadePixelData_t *currData = (RandomFadePixelData_t *) &context.pixelDataPtr[i];
     currData->waitTime = RAND_IN_RANGE(context.lowerWaitTime, context.upperWaitTime);
     currData->decrementRate = RAND_IN_RANGE(context.lowerDecrementRate, context.upperDecrementRate);
+    currData->redDecrementRate = currData->decrementRate;
+    currData->greenDecrementRate = currData->decrementRate;
+    currData->blueDecrementRate = currData->decrementRate;
   }
 }
 
 
 void Animation_RandomFade_Update(void)
+{
+  randomFade2();
+}
+
+// There may be multiple animations defined here. they differ slightly but in general are similar to one another,
+// thus they reside in the same animation module. they share the context and metadata variables.
+// honestly its redundant and inefficient in terms of space, but fuck it. the thing is still early in dev.
+
+static void randomFade2(void)
+{
+  static uint32_t count = 0;
+  static Pixel_t currColor = (Pixel_t) {.red = 0, .green = 0, .blue = 0};
+  if (count % 100 == 0)
+  {
+    currColor = (Pixel_t) getRandomColor(context.lowerBrightness, context.upperBrightness);
+  }
+
+  for (int i = 0; i < context.numLeds; i++)
+  {
+    Pixel_t *currPixel = (Pixel_t *) &context.stripBegin->pixels[i];
+    RandomFadePixelData_t *currData = (RandomFadePixelData_t *) &context.pixelDataPtr[i];
+    uint8_t decrementRate = currData->decrementRate;
+
+    // If all colors reached 0, check for wait time, decrement it, and if it too 
+    // has reached zero, find a new random value.
+    // If all colors havent reached 0, decrement them
+    if (currPixel->red <= context.cutoff && currPixel->green <= context.cutoff && currPixel->blue <= context.cutoff)
+    {
+      if (currData->waitTime > 0)
+      {
+        currData->waitTime--;
+        continue;
+      }
+      currData->decrementRate = RAND_IN_RANGE(context.lowerDecrementRate, context.upperDecrementRate);
+      *currPixel = currColor;
+      currData->redDecrementRate = currData->decrementRate;
+      currData->greenDecrementRate = currData->decrementRate;
+      currData->blueDecrementRate = currData->decrementRate;
+      currData->waitTime = RAND_IN_RANGE(context.lowerWaitTime, context.upperWaitTime);
+    }
+    else
+    {
+      currPixel->red = (currPixel->red > currData->redDecrementRate) ? currPixel->red - currData->redDecrementRate : 0;
+      currPixel->green = (currPixel->green > currData->greenDecrementRate) ? currPixel->green - currData->greenDecrementRate : 0;
+      currPixel->blue = (currPixel->blue > currData->blueDecrementRate) ? currPixel->blue - currData->blueDecrementRate : 0;
+    }
+  }
+  count++;
+}
+
+static void randomFade1(void)
 {
   static uint32_t count = 0;
   for (int i = 0; i < context.numLeds; i++)
@@ -98,7 +155,7 @@ void Animation_RandomFade_Update(void)
     Pixel_t *currPixel = (Pixel_t *) &context.stripBegin->pixels[i];
     RandomFadePixelData_t *currData = (RandomFadePixelData_t *) &context.pixelDataPtr[i];
     uint8_t decrementRate = currData->decrementRate;
-    
+
     // If all colors reached 0, check for wait time, decrement it, and if it too 
     // has reached zero, find a new random value.
     // If all colors havent reached 0, decrement them
@@ -135,7 +192,7 @@ void Animation_RandomFade_Update(void)
         currPixel->green = r1;
         currPixel->blue = 0;
       }
-      
+
       currData->waitTime = RAND_IN_RANGE(context.lowerWaitTime, context.upperWaitTime);
     }
     else

@@ -47,8 +47,6 @@ void Animation_RandomTriangles_Update(void)
     static uint8_t testx = 0;
     static uint8_t testy = 0;
     static Pixel_t col1 = {0, 10, 10};
-    static Pixel_t col2 = {10, 0, 10};
-    static Pixel_t col3 = {10, 10, 0};
     static uint32_t count = 0;
 
     // DO ALL SIDES BESIDES THE TOP
@@ -77,8 +75,6 @@ void Animation_RandomTriangles_Update(void)
         }
       }
     }
-
-
 
     // DO TOP DIFFERENTLY
     for (int j = 0; j < 4; j++)
@@ -112,9 +108,11 @@ void Animation_RandomTriangles_Update(void)
       count++;
       if (count % 2 == 0)
       {
-        col1 = (Pixel_t) {RAND_IN_RANGE(context.lowerBrightness, context.upperBrightness), RAND_IN_RANGE(context.lowerBrightness, context.upperBrightness), RAND_IN_RANGE(context.lowerBrightness, context.upperBrightness)};
-        col2 = (Pixel_t) {RAND_IN_RANGE(context.lowerBrightness, context.upperBrightness), RAND_IN_RANGE(context.lowerBrightness, context.upperBrightness), RAND_IN_RANGE(context.lowerBrightness, context.upperBrightness)};
-        col3 = (Pixel_t) {RAND_IN_RANGE(context.lowerBrightness, context.upperBrightness), RAND_IN_RANGE(context.lowerBrightness, context.upperBrightness), RAND_IN_RANGE(context.lowerBrightness, context.upperBrightness)};
+        col1 = (Pixel_t) {
+          RAND_IN_RANGE(context.lowerBrightness, context.upperBrightness), \
+          RAND_IN_RANGE(context.lowerBrightness, context.upperBrightness), \
+          RAND_IN_RANGE(context.lowerBrightness, context.upperBrightness)
+        };
       }
     }
 }
