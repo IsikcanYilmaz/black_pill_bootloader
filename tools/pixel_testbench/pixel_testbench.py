@@ -3,6 +3,7 @@
 import pygame
 from random_blink_animation import *
 from random_triangle_animation import *
+from color_test_animation import *
 from classes import *
 from random import randint
 from common import *
@@ -13,6 +14,7 @@ panels = []
 # Initialize animation classes
 randomBlink = RandomBlink(panels)
 randomTriangle = RandomTriangle(panels)
+colorTest = ColorTest(panels)
 
 # Rotate panels according to their locations
 ROTATE_ENABLED = True
@@ -38,7 +40,8 @@ def initBoard(screen):
         p = Panel(4, 4, side)
         panels.append(p)
     #randomBlink.start()
-    randomTriangle.start()
+    #randomTriangle.start()
+    colorTest.start()
 
 def drawBoard(screen):
     screen.fill((0, 0, 0))
@@ -63,7 +66,8 @@ def stopUpdates():
     pygame.time.set_timer(UPDATE_EVENT, 0)
 
 def updateBoard():
-    randomTriangle.update()
+    #randomTriangle.update()
+    colorTest.update()
 
 def main():
     global updateCount

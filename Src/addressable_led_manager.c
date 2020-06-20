@@ -138,7 +138,7 @@ void AddrLEDManager_SanityTest(void)
   while(1){
     TOGGLE_ONBOARD_LED();
     
-    if (count % 500 < 250)
+    if (count % 500 < 250 || 1)
     {
       Animation_RandomTriangles_Update();
     }
