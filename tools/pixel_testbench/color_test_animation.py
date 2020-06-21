@@ -2,7 +2,7 @@
 from classes import *
 from common import *
 
-ANIMATION_UPDATE_FREQUENCY = 1
+ANIMATION_UPDATE_FREQUENCY = 10
 ANIMATION_UPDATE_PERIOD_MS = int(100 / ANIMATION_UPDATE_FREQUENCY)
 
 class ColorTestMetaData:
@@ -15,7 +15,7 @@ class ColorTest:
         self.r = self.g = self.b = 0
 
         self.h = 0
-        self.s = 0
+        self.s = 50
         self.v = 100
 
         self.addv = True
@@ -24,7 +24,7 @@ class ColorTest:
 
         self.ratev = 0
         self.rateh = 1
-        self.rates = 1
+        self.rates = 0
 
         self.panelsPtr = panelsPtr
         self.panelMetadata = []
@@ -42,6 +42,9 @@ class ColorTest:
     def start(self):
         pygame.time.set_timer(UPDATE_EVENT, ANIMATION_UPDATE_PERIOD_MS)
 
+    def stop(self):
+        pygame.time.set_timer(UPDATE_EVENT, 0)
+
     def update(self):
         for panelIdx, panel in enumerate(self.panelsPtr):
             for x in range(0, PANEL_PIXEL_WIDTH):
@@ -49,7 +52,7 @@ class ColorTest:
                     pix = panel.getPixelByCoords(x, y)
                     (rr, gg, bb) = hls_to_rgb(self.h / 359, self.s / 100,  self.v / 100)
                     (pix.r, pix.g, pix.b) = (int(rr * 255), int(gg * 255), int(bb * 255))
-        print(pix)
+        print(pix, " | " , self.h, self.s, self.v)
 
         if (self.addv):
             self.v += self.ratev

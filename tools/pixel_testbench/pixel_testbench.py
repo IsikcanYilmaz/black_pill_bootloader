@@ -16,6 +16,8 @@ randomBlink = RandomBlink(panels)
 randomTriangle = RandomTriangle(panels)
 colorTest = ColorTest(panels)
 
+currentAnimation = colorTest
+
 # Rotate panels according to their locations
 ROTATE_ENABLED = True
 
@@ -39,9 +41,7 @@ def initBoard(screen):
     for side in range(0, 5):
         p = Panel(4, 4, side)
         panels.append(p)
-    #randomBlink.start()
-    #randomTriangle.start()
-    colorTest.start()
+    currentAnimation.start()
 
 def drawBoard(screen):
     screen.fill((0, 0, 0))
@@ -66,8 +66,7 @@ def stopUpdates():
     pygame.time.set_timer(UPDATE_EVENT, 0)
 
 def updateBoard():
-    #randomTriangle.update()
-    colorTest.update()
+    currentAnimation.update()
 
 def main():
     global updateCount
