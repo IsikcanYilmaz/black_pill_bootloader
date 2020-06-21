@@ -1,7 +1,10 @@
 #include "random_fade_animation.h"
 #include "addressable_led_manager.h"
 #include "utils.h"
+#include "color.h"
 #include <stdlib.h>
+
+#define HSV_TEST false
 
 /*
  *  RANDOM TRIANGLES ANIMATION MODULE 
@@ -41,6 +44,78 @@ void Animation_RandomTriangles_Init(AddrLEDPanel_t *panels, uint8_t numPanels, R
   context.lowerBrightness = 0;
   context.upperBrightness = 10;
 }
+
+#if HSV_TEST
+
+void Animation_RandomTriangles_Update(void)
+{
+  static double r = 0.0;
+  static double g = 0.0;
+  static double b = 0.0;
+
+  static uint8_t rscaled, gscaled, bscaled;
+
+  static double h = 3;
+  static double s = 0.516;
+  static double v = 0.711;
+
+  static double hrate = 0;
+  static double srate = 0;
+  static double vrate = 0;
+
+  // First, convert our current hsv values to rgb
+  HsvToRgb(h, s, v, &r, &g, &b);
+
+  // scale down rgb so that they are uint8s that are between our led lower and upper limits 
+  rscaled = (uint8_t) (r * context.upperBrightness);
+  gscaled = (uint8_t) (g * context.upperBrightness);
+  bscaled = (uint8_t) (b * context.upperBrightness);
+
+  // Now color all our leds with this color
+  for (int panel = 0; panel < NUM_SIDES; panel++)
+  { 
+    for (int x = 0; x < NUM_LEDS_PER_PANEL_SIDE; x++)
+    {
+      for (int y = 0; y < NUM_LEDS_PER_PANEL_SIDE; y++)
+      {
+        Pixel_t * currPixel = GetPixelByLocalCoordinate(panel, x, y);
+        currPixel->red = rscaled;
+        currPixel->green = gscaled;
+        currPixel->blue = bscaled;
+      }
+    }
+  }
+
+  // Update our hsv values
+  if (h < 0.400)
+  {
+    h += hrate;
+  }
+  else
+  {
+    h = 0;
+  }
+
+  if (s < 1)
+  {
+    s += srate;
+  }
+  else
+  {
+    s = 0;
+  }
+
+  if (v < 1)
+  {
+    v += vrate;
+  }
+  else
+  {
+    v = 0;
+  }
+}
+
+#else
 
 void Animation_RandomTriangles_Update(void)
 {
@@ -116,3 +191,5 @@ void Animation_RandomTriangles_Update(void)
       }
     }
 }
+
+#endif

@@ -69,7 +69,8 @@ Src/led.c \
 Src/random_fade_animation.c \
 Src/random_triangles_animation.c \
 Src/sw_timers.c \
-Src/utils.c
+Src/utils.c \
+Src/color.c
 
 # ASM sources
 ASM_SOURCES =  \

@@ -45,14 +45,14 @@ def initBoard(screen):
 
 def drawBoard(screen):
     screen.fill((0, 0, 0))
+    X_OFFSET = 10
+    Y_OFFSET = 10
 
     # Draw the panels on
     for side in range(0, 5):
         panels[side].renderPanel()
 
     # Place the panels on our board
-    X_OFFSET = 10
-    Y_OFFSET = 10
     screen.blit(getRotatedPanel(NORTH), (X_OFFSET + PANEL_DISP_WIDTH, Y_OFFSET + 0))
     screen.blit(getRotatedPanel(WEST),  (X_OFFSET + 0, Y_OFFSET + PANEL_DISP_HEIGHT))
     screen.blit(getRotatedPanel(TOP),   (X_OFFSET + PANEL_DISP_WIDTH, Y_OFFSET + PANEL_DISP_HEIGHT))

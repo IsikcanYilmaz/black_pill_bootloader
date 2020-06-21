@@ -7,11 +7,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-#define NUM_PANELS              5
-#define NUM_LEDS_PER_PANEL_SIDE 4
-#define NUM_LEDS_PER_PANEL      (NUM_LEDS_PER_PANEL_SIDE * NUM_LEDS_PER_PANEL_SIDE)
-#define NUM_LEDS_TOTAL          (NUM_PANELS * NUM_LEDS_PER_PANEL)
-
 #define LEDS_BEGIN_AT_BOTTOM    1
 
 /*

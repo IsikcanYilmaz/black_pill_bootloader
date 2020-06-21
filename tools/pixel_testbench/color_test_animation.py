@@ -23,7 +23,7 @@ class ColorTest:
         self.adds = True
 
         self.ratev = 0
-        self.rateh = 1
+        self.rateh = 10
         self.rates = 0
 
         self.panelsPtr = panelsPtr
@@ -51,6 +51,7 @@ class ColorTest:
                 for y in range(0, PANEL_PIXEL_WIDTH):
                     pix = panel.getPixelByCoords(x, y)
                     (rr, gg, bb) = hls_to_rgb(self.h / 359, self.s / 100,  self.v / 100)
+                    print(rr, gg, bb)
                     (pix.r, pix.g, pix.b) = (int(rr * 255), int(gg * 255), int(bb * 255))
         print(pix, " | " , self.h, self.s, self.v)
 
