@@ -4,7 +4,7 @@
 #include "color.h"
 #include <stdlib.h>
 
-#define HSV_TEST false
+#define HSV_TEST true
 
 /*
  *  RANDOM TRIANGLES ANIMATION MODULE 
@@ -42,7 +42,7 @@ void Animation_RandomTriangles_Init(AddrLEDPanel_t *panels, uint8_t numPanels, R
   context.numLeds = panels->numLeds * numPanels;
 
   context.lowerBrightness = 0;
-  context.upperBrightness = 10;
+  context.upperBrightness = 70;
 }
 
 #if HSV_TEST
@@ -55,11 +55,11 @@ void Animation_RandomTriangles_Update(void)
 
   static uint8_t rscaled, gscaled, bscaled;
 
-  static double h = 3;
-  static double s = 0.516;
-  static double v = 0.711;
+  static double h = 3.0;
+  static double s = 0.6;
+  static double v = 0.1;
 
-  static double hrate = 0;
+  static double hrate = 0.1;
   static double srate = 0;
   static double vrate = 0;
 
@@ -87,7 +87,7 @@ void Animation_RandomTriangles_Update(void)
   }
 
   // Update our hsv values
-  if (h < 0.400)
+  if (h < 400)
   {
     h += hrate;
   }
