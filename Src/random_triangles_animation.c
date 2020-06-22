@@ -42,7 +42,7 @@ void Animation_RandomTriangles_Init(AddrLEDPanel_t *panels, uint8_t numPanels, R
   context.numLeds = panels->numLeds * numPanels;
 
   context.lowerBrightness = 0;
-  context.upperBrightness = 70;
+  context.upperBrightness = 255;
 }
 
 #if HSV_TEST
@@ -55,13 +55,17 @@ void Animation_RandomTriangles_Update(void)
 
   static uint8_t rscaled, gscaled, bscaled;
 
-  static double h = 3.0;
-  static double s = 0.6;
-  static double v = 0.1;
+  static double h = 0.0;
+  static double s = 0.99;
+  static double v = 0.10;
 
-  static double hrate = 0.1;
-  static double srate = 0;
+  static double hrate = 0.5;
+  static double srate = 0.0;
   static double vrate = 0;
+
+  static bool hadd = true;
+  static bool sadd = true;
+  static bool vadd = true;
 
   // First, convert our current hsv values to rgb
   HsvToRgb(h, s, v, &r, &g, &b);
@@ -87,31 +91,30 @@ void Animation_RandomTriangles_Update(void)
   }
 
   // Update our hsv values
-  if (h < 400)
+  h += hrate;
+
+  s += (sadd) ? srate : -srate;
+  if (s < 0.50 && !sadd)
   {
-    h += hrate;
+    sadd = true;
+    s = 0.50;
   }
-  else
+  if (s >= 1 && sadd)
   {
-    h = 0;
+    sadd = false;
+    s = 0.99;
   }
 
-  if (s < 1)
+  v += (vadd) ? vrate : -vrate;
+  if (v < 0 && !vadd)
   {
-    s += srate;
-  }
-  else
-  {
-    s = 0;
-  }
-
-  if (v < 1)
-  {
-    v += vrate;
-  }
-  else
-  {
+    vadd = true;
     v = 0;
+  }
+  if (v >= 1 && vadd)
+  {
+    vadd = false;
+    v = 0.99;
   }
 }
 

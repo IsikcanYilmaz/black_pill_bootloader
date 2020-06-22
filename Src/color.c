@@ -23,6 +23,9 @@ void HsvToRgb(double h, double s, double v, double *r, double *g, double *b)
   int i;
   double f, p, q, t;
 
+  if (h > 360)
+    h = fmod(h, 360);
+
   if (h == 360)
     h = 0;
   else
