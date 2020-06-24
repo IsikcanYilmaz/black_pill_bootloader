@@ -2,7 +2,7 @@
 from classes import *
 from common import *
 
-ANIMATION_UPDATE_FREQUENCY = 10 # Hz
+ANIMATION_UPDATE_FREQUENCY = 100 # Hz
 ANIMATION_UPDATE_PERIOD_MS = int(100 / ANIMATION_UPDATE_FREQUENCY)
 
 class ColorTestMetaData:
@@ -15,16 +15,20 @@ class ColorTest:
         self.r = self.g = self.b = 0
 
         self.h = 1
-        self.s = 50
-        self.v = 100
+        self.s = 100
+        self.v = 60
 
         self.addv = True
         self.addh = True
         self.adds = True
 
-        self.rateh = 0
+        self.rateh = 1
         self.ratev = 0
         self.rates = 0
+
+        self.rowHueOffset = 0
+        self.rowHueOffsetAdd = True
+        self.rowHueOffsetRate = 0.1
 
         self.panelsPtr = panelsPtr
         self.panelMetadata = []
@@ -47,12 +51,22 @@ class ColorTest:
 
     def update(self):
         for panelIdx, panel in enumerate(self.panelsPtr):
-            for x in range(0, PANEL_PIXEL_WIDTH):
+            if (panelIdx != TOP):
                 for y in range(0, PANEL_PIXEL_WIDTH):
-                    pix = panel.getPixelByCoords(x, y)
-                    (rr, gg, bb) = hsv_to_rgb(self.h / 359, self.s / 100,  self.v / 100)
-                    #print(rr, gg, bb)
-                    (pix.r, pix.g, pix.b) = (int(rr * 255), int(gg * 255), int(bb * 255))
+                    for x in range(0, PANEL_PIXEL_WIDTH):
+                        pix = panel.getPixelByCoords(x, y)
+                        (rr, gg, bb) = hsv_to_rgb((self.h + (self.rowHueOffset * (y + 3)))/ 360, self.s / 100,  self.v / 100)
+                        (pix.r, pix.g, pix.b) = (int(rr * 255), int(gg * 255), int(bb * 255))
+            else:
+                for y in range(0, PANEL_PIXEL_WIDTH):
+                    for x in range(0, PANEL_PIXEL_WIDTH):
+                        pix = panel.getPixelByCoords(x, y)
+                        if (y == 0 or y == 3 or (y == 1 and (x == 0 or x == 3)) or (y == 2 and (x == 0 or x == 3))):
+                            (rr, gg, bb) = hsv_to_rgb((self.h + (self.rowHueOffset * 2))/ 360, self.s / 100,  self.v / 100)
+                        else:
+                            (rr, gg, bb) = hsv_to_rgb((self.h + (self.rowHueOffset * 1))/ 360, self.s / 100,  self.v / 100)
+                        (pix.r, pix.g, pix.b) = (int(rr * 255), int(gg * 255), int(bb * 255))
+
         print(pix, " | " , self.h, self.s, self.v)
 
         if (self.v >= 100 or self.v <= 0):
@@ -63,7 +77,8 @@ class ColorTest:
             self.v -= self.ratev
 
         if (self.h >= 359 or self.h <= 0):
-            self.addh = not self.addh
+            pass
+            #self.addh = not self.addh
         if (self.addh):
             self.h += self.rateh
         else:
@@ -76,3 +91,12 @@ class ColorTest:
         else:
             self.s -= self.rates
 
+        if (self.rowHueOffsetAdd):
+            self.rowHueOffset += self.rowHueOffsetRate
+        else:
+            self.rowHueOffset -= self.rowHueOffsetRate
+
+        if (self.rowHueOffset > 100):
+            self.rowHueOffsetAdd = False
+        if (self.rowHueOffset <= 0):
+            self.rowHueOffsetAdd = True

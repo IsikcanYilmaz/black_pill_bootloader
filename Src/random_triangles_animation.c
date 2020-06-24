@@ -56,7 +56,7 @@ void Animation_RandomTriangles_Update(void)
   static uint8_t rscaled, gscaled, bscaled;
 
   static double h = 0.0;
-  static double s = 0.99;
+  static double s = 0.85;
   static double v = 0.10;
 
   static double hrate = 0.5;
