@@ -149,7 +149,7 @@ void AddrLEDManager_SanityTest(void)
     count++;
     AddrLED_DisplayStrip(&ledStrip1);
     //IDLE_FOREVER(100);
-    HAL_Delay(10);
+    HAL_Delay(5);
 
 
 

@@ -55,11 +55,15 @@ void Animation_RandomTriangles_Update(void)
 
   static uint8_t rscaled, gscaled, bscaled;
 
-  static double h = 0.0;
-  static double s = 0.85;
-  static double v = 0.10;
+  static double rowHueOffset = 30;
+  static bool rowHueOffsetAdd = true;
+  static double rowHueOffsetRate = 0.0;
 
-  static double hrate = 0.5;
+  static double h = 0.0;
+  static double s = 0.80;
+  static double v = 0.05;
+
+  static double hrate = 1;
   static double srate = 0.0;
   static double vrate = 0;
 
@@ -67,30 +71,66 @@ void Animation_RandomTriangles_Update(void)
   static bool sadd = true;
   static bool vadd = true;
 
-  // First, convert our current hsv values to rgb
-  HsvToRgb(h, s, v, &r, &g, &b);
-
-  // scale down rgb so that they are uint8s that are between our led lower and upper limits 
-  rscaled = (uint8_t) (r * context.upperBrightness);
-  gscaled = (uint8_t) (g * context.upperBrightness);
-  bscaled = (uint8_t) (b * context.upperBrightness);
-
   // Now color all our leds with this color
   for (int panel = 0; panel < NUM_SIDES; panel++)
   { 
-    for (int x = 0; x < NUM_LEDS_PER_PANEL_SIDE; x++)
+    // TODO // Theres heavy inefficient code below. i'm just impatient now and i know future jon will take care of it
+    if (panel == TOP)
     {
       for (int y = 0; y < NUM_LEDS_PER_PANEL_SIDE; y++)
-      {
-        Pixel_t * currPixel = GetPixelByLocalCoordinate(panel, x, y);
-        currPixel->red = rscaled;
-        currPixel->green = gscaled;
-        currPixel->blue = bscaled;
+      {  
+        for (int x = 0; x < NUM_LEDS_PER_PANEL_SIDE; x++)
+        {
+          // If top panel, outer square, or not
+          if (y == 0 || y == 3 || (y == 1 && (x == 0 || x == 3)) || (y == 2 && (x == 0 || x == 3)))
+          {
+            HsvToRgb(h + (rowHueOffset * 2), s, v, &r, &g, &b);
+          }
+          else
+          {
+            HsvToRgb(h + (rowHueOffset * 1), s, v, &r, &g, &b);
+          }
+          rscaled = (uint8_t) (r * context.upperBrightness);
+          gscaled = (uint8_t) (g * context.upperBrightness);
+          bscaled = (uint8_t) (b * context.upperBrightness);
+          Pixel_t * currPixel = GetPixelByLocalCoordinate(panel, x, y);
+          currPixel->red = rscaled;
+          currPixel->green = gscaled;
+          currPixel->blue = bscaled;
+        }
       }
     }
+    else
+    {
+      for (int y = 0; y < NUM_LEDS_PER_PANEL_SIDE; y++)
+      {  
+        HsvToRgb(h + (rowHueOffset * (6 - y)), s, v, &r, &g, &b);
+        rscaled = (uint8_t) (r * context.upperBrightness);
+        gscaled = (uint8_t) (g * context.upperBrightness);
+        bscaled = (uint8_t) (b * context.upperBrightness);
+        for (int x = 0; x < NUM_LEDS_PER_PANEL_SIDE; x++)
+        {
+          Pixel_t * currPixel = GetPixelByLocalCoordinate(panel, x, y);
+          currPixel->red = rscaled;
+          currPixel->green = gscaled;
+          currPixel->blue = bscaled;
+        }
+      }
+    }
+
   }
 
   // Update our hsv values
+  rowHueOffset += (rowHueOffsetAdd) ? rowHueOffsetRate : -rowHueOffsetRate;
+  if (rowHueOffset > 100)
+  {
+    rowHueOffsetAdd = false;
+  }
+  if (rowHueOffset <= 0)
+  {
+    rowHueOffsetAdd = true;
+  }
+  
   h += hrate;
 
   s += (sadd) ? srate : -srate;
@@ -122,77 +162,77 @@ void Animation_RandomTriangles_Update(void)
 
 void Animation_RandomTriangles_Update(void)
 {
-    static uint8_t testx = 0;
-    static uint8_t testy = 0;
-    static Pixel_t col1 = {0, 10, 10};
-    static uint32_t count = 0;
+  static uint8_t testx = 0;
+  static uint8_t testy = 0;
+  static Pixel_t col1 = {0, 10, 10};
+  static uint32_t count = 0;
 
-    // DO ALL SIDES BESIDES THE TOP
-    for (int side = 0; side < TOP; side++)
+  // DO ALL SIDES BESIDES THE TOP
+  for (int side = 0; side < TOP; side++)
+  {
+    if (count % 2 == 0)
     {
-      if (count % 2 == 0)
+      for (int j = 0; j < 4; j++)
       {
-        for (int j = 0; j < 4; j++)
+        if (testx >= j)
         {
-          if (testx >= j)
-          {
-            Pixel_t *p1 = GetPixelByLocalCoordinate(side, testx-j, testy+j);
-            *p1 = col1;
-          }
-        }
-      }
-      else
-      {
-        for (int j = 0; j < 4; j++)
-        {
-          if (3-testx >= j)
-          {
-            Pixel_t *p1 = GetPixelByLocalCoordinate(side, 3-(2-testx-j), 3-(testy+j));
-            *p1 = col1;
-          }
+          Pixel_t *p1 = GetPixelByLocalCoordinate(side, testx-j, testy+j);
+          *p1 = col1;
         }
       }
     }
-
-    // DO TOP DIFFERENTLY
-    for (int j = 0; j < 4; j++)
+    else
     {
-      for (int k = 0; k < 4; k++)
+      for (int j = 0; j < 4; j++)
       {
-        Pixel_t *p;
-        switch(count % 4)
+        if (3-testx >= j)
         {
-          case 0:
-            p = GetPixelByLocalCoordinate(TOP, testx, k);
-            break;
-          case 1:
-            p = GetPixelByLocalCoordinate(TOP, testx, 3-k);
-            break;
-          case 2:
-            p = GetPixelByLocalCoordinate(TOP, 3-testx, k);
-            break;
-          case 3:
-            p = GetPixelByLocalCoordinate(TOP, 3-testx, 3-k);
-            break;
+          Pixel_t *p1 = GetPixelByLocalCoordinate(side, 3-(2-testx-j), 3-(testy+j));
+          *p1 = col1;
         }
-        *p = col1;
       }
     }
+  }
 
-    testx++;
-    if (testx > 3)
+  // DO TOP DIFFERENTLY
+  for (int j = 0; j < 4; j++)
+  {
+    for (int k = 0; k < 4; k++)
     {
-      testx = 0;
-      count++;
-      if (count % 2 == 0)
+      Pixel_t *p;
+      switch(count % 4)
       {
-        col1 = (Pixel_t) {
-          RAND_IN_RANGE(context.lowerBrightness, context.upperBrightness), \
+        case 0:
+          p = GetPixelByLocalCoordinate(TOP, testx, k);
+          break;
+        case 1:
+          p = GetPixelByLocalCoordinate(TOP, testx, 3-k);
+          break;
+        case 2:
+          p = GetPixelByLocalCoordinate(TOP, 3-testx, k);
+          break;
+        case 3:
+          p = GetPixelByLocalCoordinate(TOP, 3-testx, 3-k);
+          break;
+      }
+      *p = col1;
+    }
+  }
+
+  testx++;
+  if (testx > 3)
+  {
+    testx = 0;
+    count++;
+    if (count % 2 == 0)
+    {
+      col1 = (Pixel_t) {
+        RAND_IN_RANGE(context.lowerBrightness, context.upperBrightness), \
           RAND_IN_RANGE(context.lowerBrightness, context.upperBrightness), \
           RAND_IN_RANGE(context.lowerBrightness, context.upperBrightness)
-        };
-      }
+      };
     }
+  }
 }
 
 #endif
