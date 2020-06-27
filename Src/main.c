@@ -104,6 +104,7 @@ int main(void)
   MX_USB_PCD_Init();
   /* USER CODE BEGIN 2 */
 
+  DbgUart_Init();
   AddrLEDManager_Init();
   AddrLEDManager_SanityTest();
   /* USER CODE END 2 */

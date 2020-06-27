@@ -197,6 +197,7 @@ ProjectManager.DeletePrevious=true
 RCC.VCOSAI2OutputFreq_Value=128000000
 boardIOC=true
 PA13\ (JTMS/SWDIO).GPIOParameters=GPIO_Label
+NVIC.USART2_IRQn=true\:0\:0\:false\:false\:true\:true\:true
 RCC.FamilyName=M
 PH1-OSC_OUT\ (PH1).Signal=RCC_OSC_OUT
 PC3.GPIOParameters=GPIO_Label
