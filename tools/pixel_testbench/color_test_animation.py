@@ -16,7 +16,7 @@ class ColorTest:
 
         self.h = 1
         self.s = 100
-        self.v = 60
+        self.v = 100
 
         self.addv = True
         self.addh = True

@@ -55,15 +55,15 @@ void Animation_RandomTriangles_Update(void)
 
   static uint8_t rscaled, gscaled, bscaled;
 
-  static double rowHueOffset = 30;
+  static double rowHueOffset = 20;
   static bool rowHueOffsetAdd = true;
-  static double rowHueOffsetRate = 0.0;
+  static double rowHueOffsetRate = 0.00;
 
   static double h = 0.0;
-  static double s = 0.80;
-  static double v = 0.05;
+  static double s = 0.999;
+  static double v = 0.100;
 
-  static double hrate = 1;
+  static double hrate = 0.5;
   static double srate = 0.0;
   static double vrate = 0;
 
@@ -124,7 +124,7 @@ void Animation_RandomTriangles_Update(void)
   rowHueOffset += (rowHueOffsetAdd) ? rowHueOffsetRate : -rowHueOffsetRate;
   if (rowHueOffset > 100)
   {
-    rowHueOffsetAdd = false;
+    //rowHueOffsetAdd = false;
   }
   if (rowHueOffset <= 0)
   {

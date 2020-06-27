@@ -60,18 +60,34 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 #define B1_Pin GPIO_PIN_13
 #define B1_GPIO_Port GPIOC
+#define BT_GPIO_0_Pin GPIO_PIN_2
+#define BT_GPIO_0_GPIO_Port GPIOC
+#define BT_GPIO_1_Pin GPIO_PIN_3
+#define BT_GPIO_1_GPIO_Port GPIOC
 #define USART_TX_Pin GPIO_PIN_2
 #define USART_TX_GPIO_Port GPIOA
 #define USART_RX_Pin GPIO_PIN_3
 #define USART_RX_GPIO_Port GPIOA
 #define LD4_Pin GPIO_PIN_5
 #define LD4_GPIO_Port GPIOA
+#define BATT_ADC_IN_Pin GPIO_PIN_6
+#define BATT_ADC_IN_GPIO_Port GPIOA
+#define BT_GPIO_2_Pin GPIO_PIN_4
+#define BT_GPIO_2_GPIO_Port GPIOC
+#define BT_GPIO_3_Pin GPIO_PIN_5
+#define BT_GPIO_3_GPIO_Port GPIOC
+#define BATT_ADC_ENABLE_Pin GPIO_PIN_6
+#define BATT_ADC_ENABLE_GPIO_Port GPIOC
 #define TMS_Pin GPIO_PIN_13
 #define TMS_GPIO_Port GPIOA
 #define TCK_Pin GPIO_PIN_14
 #define TCK_GPIO_Port GPIOA
 #define SWO_Pin GPIO_PIN_3
 #define SWO_GPIO_Port GPIOB
+#define ACCEL_EXTI_0_Pin GPIO_PIN_6
+#define ACCEL_EXTI_0_GPIO_Port GPIOB
+#define ACCEL_EXTI_1_Pin GPIO_PIN_7
+#define ACCEL_EXTI_1_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */
