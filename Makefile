@@ -81,6 +81,8 @@ Src/adc.c \
 Src/i2c.c \
 Src/usb.c \
 Src/button_driver.c \
+Src/button_manager.c \
+
 
 
 # ASM sources

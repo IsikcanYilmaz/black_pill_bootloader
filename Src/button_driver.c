@@ -1,5 +1,6 @@
 #include "button_driver.h"
 #include "sw_timers.h"
+#include "addressable_led_manager.h"
 
 /*
  * BUTTON DRUVER
@@ -18,13 +19,14 @@ ButtonContext_t userButton1;
 static uint32_t DebounceTimeout(void)
 {
   GPIO_PinState state = HAL_GPIO_ReadPin(userButton1.port, userButton1.pin); 
-
   // Check if this is a succesfull button press
   if (state == userButton1.debounceCheck && userButton1.debouncePending)
   {
     // TODO //
-    userButton1.debouncePending = false;
+    if (state == GPIO_PIN_RESET)
+      animationIndex++;
   }
+  userButton1.debouncePending = false;
   return 0;
 }
 
@@ -38,7 +40,7 @@ void ButtonDriver_Init(void)
 {
   // Initialize our times
   buttonDebounceTimer.fn = DebounceTimeout;
-  buttonDebounceTimer.remainingMs = CNFG_BUTTON_DEBOUNCE_TIME_MS;
+  buttonDebounceTimer.Ms = CNFG_BUTTON_DEBOUNCE_TIME_MS;
   buttonSequenceTimer.fn = SequenceTimeout;
 
   // Initialize our button contexts

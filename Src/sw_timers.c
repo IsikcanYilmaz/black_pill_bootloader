@@ -23,11 +23,48 @@ SwTimer_t *timerListTail = NULL;
 // Upon timeout or stop, remove $timer from the linked list.
 static void SwTimer_Unlist(SwTimer_t *timer)
 {
+  // One of three things may happen at unlisting a timer
+  // - the timer at the head is to be unlisted
+  // - the timer at the tail
+  // - a timer in between
+
+  CRITICAL_SECTION_BEGIN;
+
   SwTimer_t *originalPrev = timer->prev;
   SwTimer_t *originalNext = timer->next;
-  originalPrev->next = originalNext;
+
+  // this is the head of the list update our head
+  if (timer == timerListHead)
+  {
+    if (timer->next)
+      timerListHead = timer->next;
+    else
+      timerListHead = NULL;
+  }
+
+  // this is the tail of the list update our tail
+  if (timer == timerListTail)
+  {
+    if (timer->prev)
+      timerListTail = timer->prev;
+    else
+      timerListTail = NULL;
+  }
+
+  // this is a timer in the middle
+  if (originalPrev)
+  {
+    if (originalNext)
+      originalPrev->next = originalNext;
+  }
+
   if (originalNext)
-    originalNext->prev = originalPrev;
+  {
+    if (originalPrev)
+      originalNext->prev = originalPrev;
+  }
+
+  CRITICAL_SECTION_END;
 }
 
 // Go through all registered timers and call their functions if they timeout
@@ -46,9 +83,7 @@ static void SwTimer_ProcessTimers(void)
   {
     if (t->running)
     {
-      t->remainingMs--;
-
-      // Check if this timer timed out
+      // Check if this timer timed out. if not decrement its remaining ms
       if (t->remainingMs == 0)
       {
         // This timer timed out. Call its function and set the timers 
@@ -63,6 +98,10 @@ static void SwTimer_ProcessTimers(void)
         {
           SwTimer_Unlist(t);
         }
+      }
+      else
+      {
+        t->remainingMs--;
       }
     }
 
@@ -97,6 +136,7 @@ void SwTimer_Start(SwTimer_t *timer)
     timerListTail = timer;
   }
   timer->running = true;
+  timer->remainingMs = timer->Ms;
 
   CRITICAL_SECTION_END;
 }
