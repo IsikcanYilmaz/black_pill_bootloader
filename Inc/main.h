@@ -91,6 +91,11 @@ void Error_Handler(void);
 #define ACCEL_EXTI_1_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
 
+#define CRITICAL_SECTION_BEGIN uint32_t p = __get_PRIMASK(); \
+                               __disable_irq();  
+
+#define CRITICAL_SECTION_END   __set_PRIMASK(p);
+
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

@@ -1,7 +1,5 @@
 #include "main.h"
 
-#define SwTimer_GetCounterMs() HAL_GetTick()a
-
 typedef struct SwTimer_t
 {
   bool running;
