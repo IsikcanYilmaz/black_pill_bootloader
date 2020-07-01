@@ -33,6 +33,9 @@ typedef struct {
 
 static AnimationContext_t context;
 
+static void randomTriangles1();
+static void randomTriangles2();
+
 void Animation_RandomTriangles_Init(AddrLEDPanel_t *panels, uint8_t numPanels, RandomFadePixelData_t *pixelDataPtr)
 {
   context.panels = panels;
@@ -42,12 +45,15 @@ void Animation_RandomTriangles_Init(AddrLEDPanel_t *panels, uint8_t numPanels, R
   context.numLeds = panels->numLeds * numPanels;
 
   context.lowerBrightness = 0;
-  context.upperBrightness = 255;
+  context.upperBrightness = 225;
 }
 
-#if HSV_TEST
-
 void Animation_RandomTriangles_Update(void)
+{
+  randomTriangles1();
+}
+
+static void randomTriangles1(void)
 {
   static double r = 0.0;
   static double g = 0.0;
@@ -55,9 +61,9 @@ void Animation_RandomTriangles_Update(void)
 
   static uint8_t rscaled, gscaled, bscaled;
 
-  static double rowHueOffset = 20;
+  static double rowHueOffset = 0;
   static bool rowHueOffsetAdd = true;
-  static double rowHueOffsetRate = 0.00;
+  static double rowHueOffsetRate = 0.01;
 
   static double h = 0.0;
   static double s = 0.999;
@@ -158,9 +164,7 @@ void Animation_RandomTriangles_Update(void)
   }
 }
 
-#else
-
-void Animation_RandomTriangles_Update(void)
+static void randomTriangles2(void)
 {
   static uint8_t testx = 0;
   static uint8_t testy = 0;
@@ -235,4 +239,3 @@ void Animation_RandomTriangles_Update(void)
   }
 }
 
-#endif

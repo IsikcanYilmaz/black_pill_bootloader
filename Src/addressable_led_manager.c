@@ -28,6 +28,8 @@ AddrLEDStrip_t ledStrip1;
 Pixel_t ledStrip1Pixels[sizeof(PixelPacket_t) * NUM_LEDS_PER_PANEL * NUM_PANELS];
 uint8_t ledStrip1PacketBuffer[sizeof(PixelPacket_t) * NUM_LEDS_PER_PANEL * NUM_PANELS + 1]; // (3 * 8) * 16 + 1
 
+volatile uint8_t animationIndex = 0; // TODO // this is a temporary gimmick. 
+
 AddrLEDPanel_t panels[5];
 
 // PixelData_t arrays are for animation modules to hold misc data about every pixel.
@@ -123,48 +125,24 @@ inline AddrLEDPanel_t* GetPanelByLocation(Position_e pos)
 
 void AddrLEDManager_SanityTest(void)
 {
-  bool toggle = false;
-  uint8_t c = 1;
-  bool addc = true;
-  uint8_t top = 10;
-  uint8_t stage = 0;
-
-  uint32_t count = 0;
   while(1){
     TOGGLE_ONBOARD_LED();
     
-    if (count % 500 < 250 || 1)
+    switch (animationIndex % 2)
     {
-      Animation_RandomTriangles_Update();
+      case 0:
+      {
+        Animation_RandomTriangles_Update();
+        break;
+      }
+      case 1:
+      {
+        Animation_RandomFade_Update();
+        break;
+      }
     }
-    else
-    {
-      Animation_RandomFade_Update();
-    }
-    /*
-    for (int i = 0; i < 4; i++)
-      ledStrip1.pixels[i] = (Pixel_t) {255, 0, 0};
-    */
 
-    count++;
     AddrLED_DisplayStrip(&ledStrip1);
-    //IDLE_FOREVER(100);
-    HAL_Delay(5);
-
-
-
-    if (c >= top)
-    {
-      addc = false;
-    }
-    if (c < 1)
-    {
-      addc = true;
-      //stage++;
-      if (stage > 2)
-        stage = 0;
-      //toggle = !toggle;
-    }
-    c += (addc) ? +1 : -1;
+    HAL_Delay(10);
   }
 }

@@ -60,6 +60,7 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 #define B1_Pin GPIO_PIN_13
 #define B1_GPIO_Port GPIOC
+#define B1_EXTI_IRQn EXTI15_10_IRQn
 #define BT_GPIO_0_Pin GPIO_PIN_2
 #define BT_GPIO_0_GPIO_Port GPIOC
 #define BT_GPIO_1_Pin GPIO_PIN_3
@@ -89,6 +90,11 @@ void Error_Handler(void);
 #define ACCEL_EXTI_1_Pin GPIO_PIN_7
 #define ACCEL_EXTI_1_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
+
+#define CRITICAL_SECTION_BEGIN uint32_t p = __get_PRIMASK(); \
+                               __disable_irq();  
+
+#define CRITICAL_SECTION_END   __set_PRIMASK(p);
 
 /* USER CODE END Private defines */
 

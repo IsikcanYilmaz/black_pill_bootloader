@@ -32,6 +32,7 @@
 /* USER CODE BEGIN Includes */
 #include "addressable_led_driver.h"
 #include "addressable_led_manager.h"
+#include "sw_timers.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -103,8 +104,12 @@ int main(void)
   MX_UART4_Init();
   MX_USB_PCD_Init();
   /* USER CODE BEGIN 2 */
-
+  
+  ButtonDriver_Init();
+  DbgUart_Init();
   AddrLEDManager_Init();
+
+  // Infinite loop v // TODO // refactor this test stuff
   AddrLEDManager_SanityTest();
   /* USER CODE END 2 */
 
