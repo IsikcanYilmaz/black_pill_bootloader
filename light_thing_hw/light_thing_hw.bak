@@ -303,11 +303,11 @@ F 3 "" H 3700 2350 50  0001 C CNN
 $EndComp
 Text GLabel 10000 1250 2    50   Input ~ 0
 ADDR_LED_BACKUP_PWM
-Text GLabel 4900 2350 0    60   Input ~ 0
+Text GLabel 4900 2450 0    60   Input ~ 0
 SWDIO
 Text GLabel 4900 2250 0    60   Input ~ 0
 SWCLK
-Text GLabel 4900 2450 0    60   Input ~ 0
+Text GLabel 4900 2350 0    60   Input ~ 0
 RESET
 Text GLabel 4900 2550 0    50   Input ~ 0
 BT_SWCLK
@@ -673,9 +673,9 @@ Wire Wire Line
 	8000 4250 8450 4250
 Wire Wire Line
 	7900 4550 8450 4550
-Text GLabel 4900 1950 0    60   Input ~ 0
-USART_2_TX
 Text GLabel 4900 1850 0    60   Input ~ 0
+USART_2_TX
+Text GLabel 4900 2050 0    60   Input ~ 0
 USART_2_RX
 Connection ~ 8450 4250
 $Comp
@@ -1326,9 +1326,9 @@ F 3 "~" H 5100 2250 50  0001 C CNN
 	1    5100 2250
 	1    0    0    -1  
 $EndComp
-Text GLabel 4900 2150 0    50   Input ~ 0
+Text GLabel 4900 1950 0    50   Input ~ 0
 BT_TX
-Text GLabel 4900 2050 0    50   Input ~ 0
+Text GLabel 4900 2150 0    50   Input ~ 0
 BT_RX
 Text GLabel 3500 6300 2    50   Input ~ 0
 BT_GPIO_0
@@ -1733,12 +1733,12 @@ Text GLabel 10000 3850 2    50   Input ~ 0
 TEST_GPIO1
 Text GLabel 10000 3950 2    50   Input ~ 0
 TEST_GPIO2
-Text GLabel 5350 4500 0    50   Input ~ 0
+Text GLabel 5350 4600 0    50   Input ~ 0
 ADDR_LED_BACKUP_PWM
 NoConn ~ 10000 4150
-Text GLabel 5350 4600 0    50   Input ~ 0
-TEST_GPIO0
 Text GLabel 5350 4700 0    50   Input ~ 0
+TEST_GPIO0
+Text GLabel 5350 4500 0    50   Input ~ 0
 TEST_GPIO1
 Text GLabel 5350 4800 0    50   Input ~ 0
 TEST_GPIO2
