@@ -196,7 +196,7 @@ U 1 1 5EC93EF5
 P 5250 6700
 F 0 "U2" H 4950 7300 50  0000 L CNN
 F 1 "LSM6DS3" H 5150 6700 50  0000 L CNN
-F 2 "Package_LGA:LGA-14_3x2.5mm_P0.5mm_LayoutBorder3x4y" H 4850 6000 50  0001 L CNN
+F 2 "footprints:LSM6DS3TR" H 4850 6000 50  0001 L CNN
 F 3 "www.st.com/resource/en/datasheet/lsm6ds3.pdf" H 5350 6050 50  0001 C CNN
 	1    5250 6700
 	1    0    0    -1  
@@ -1326,9 +1326,9 @@ F 3 "~" H 5100 2250 50  0001 C CNN
 	1    5100 2250
 	1    0    0    -1  
 $EndComp
-Text GLabel 4900 1950 0    50   Input ~ 0
-BT_TX
 Text GLabel 4900 2150 0    50   Input ~ 0
+BT_TX
+Text GLabel 4900 1950 0    50   Input ~ 0
 BT_RX
 Text GLabel 3500 6300 2    50   Input ~ 0
 BT_GPIO_0
@@ -1368,7 +1368,7 @@ Text GLabel 8700 3550 0    50   Input ~ 0
 BATT_ADC_ENABLE
 Text GLabel 6500 4350 0    50   Input ~ 0
 BATT_ADC_ENABLE
-Text Notes 7150 5600 0    50   ~ 0
+Text Notes 7200 6500 0    50   ~ 0
 BATTERY: \n- 1100mAH, 40.5mm x 41.5mm x 6.1mm, li-po battery. (3.0V - 4.2V)\nhttps://www.digikey.com/product-detail/en/tinycircuits/ASR00008/1832-1044-ND/8680974
 Wire Wire Line
 	3700 2450 3600 2450
@@ -1742,4 +1742,26 @@ Text GLabel 5350 4500 0    50   Input ~ 0
 TEST_GPIO1
 Text GLabel 5350 4800 0    50   Input ~ 0
 TEST_GPIO2
+$Comp
+L power:+3V3 #PWR0108
+U 1 1 5F08E176
+P 7350 5500
+F 0 "#PWR0108" H 7350 5350 50  0001 C CNN
+F 1 "+3V3" H 7365 5673 50  0000 C CNN
+F 2 "" H 7350 5500 50  0001 C CNN
+F 3 "" H 7350 5500 50  0001 C CNN
+	1    7350 5500
+	0    1    1    0   
+$EndComp
+$Comp
+L Connector:TestPoint TP1
+U 1 1 5F0817CD
+P 7350 5500
+F 0 "TP1" V 7545 5574 50  0000 C CNN
+F 1 "TestPoint" V 7454 5574 50  0000 C CNN
+F 2 "TestPoint:TestPoint_Pad_D1.0mm" H 7550 5500 50  0001 C CNN
+F 3 "~" H 7550 5500 50  0001 C CNN
+	1    7350 5500
+	0    -1   -1   0   
+$EndComp
 $EndSCHEMATC
