@@ -1764,4 +1764,26 @@ F 3 "~" H 7550 5500 50  0001 C CNN
 	1    7350 5500
 	0    -1   -1   0   
 $EndComp
+$Comp
+L Connector:TestPoint TP2
+U 1 1 5F09DB21
+P 7350 5850
+F 0 "TP2" V 7545 5924 50  0000 C CNN
+F 1 "TestPoint" V 7454 5924 50  0000 C CNN
+F 2 "TestPoint:TestPoint_Pad_D1.0mm" H 7550 5850 50  0001 C CNN
+F 3 "~" H 7550 5850 50  0001 C CNN
+	1    7350 5850
+	0    -1   -1   0   
+$EndComp
+$Comp
+L power:GND #PWR0112
+U 1 1 5F0B5555
+P 7350 5850
+F 0 "#PWR0112" H 7350 5600 50  0001 C CNN
+F 1 "GND" H 7355 5677 50  0000 C CNN
+F 2 "" H 7350 5850 50  0001 C CNN
+F 3 "" H 7350 5850 50  0001 C CNN
+	1    7350 5850
+	0    -1   -1   0   
+$EndComp
 $EndSCHEMATC

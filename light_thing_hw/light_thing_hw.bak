@@ -196,7 +196,7 @@ U 1 1 5EC93EF5
 P 5250 6700
 F 0 "U2" H 4950 7300 50  0000 L CNN
 F 1 "LSM6DS3" H 5150 6700 50  0000 L CNN
-F 2 "footprints:LSM6DS3TR" H 4850 6000 50  0001 L CNN
+F 2 "footprints:LGA-14_3x2.5mm_P0.5mm_LayoutBorder3x4y_modded" H 4850 6000 50  0001 L CNN
 F 3 "www.st.com/resource/en/datasheet/lsm6ds3.pdf" H 5350 6050 50  0001 C CNN
 	1    5250 6700
 	1    0    0    -1  
@@ -1762,6 +1762,28 @@ F 1 "TestPoint" V 7454 5574 50  0000 C CNN
 F 2 "TestPoint:TestPoint_Pad_D1.0mm" H 7550 5500 50  0001 C CNN
 F 3 "~" H 7550 5500 50  0001 C CNN
 	1    7350 5500
+	0    -1   -1   0   
+$EndComp
+$Comp
+L Connector:TestPoint TP?
+U 1 1 5F09DB21
+P 7350 5850
+F 0 "TP?" V 7545 5924 50  0000 C CNN
+F 1 "TestPoint" V 7454 5924 50  0000 C CNN
+F 2 "TestPoint:TestPoint_Pad_D1.0mm" H 7550 5850 50  0001 C CNN
+F 3 "~" H 7550 5850 50  0001 C CNN
+	1    7350 5850
+	0    -1   -1   0   
+$EndComp
+$Comp
+L power:GND #PWR?
+U 1 1 5F0B5555
+P 7350 5850
+F 0 "#PWR?" H 7350 5600 50  0001 C CNN
+F 1 "GND" H 7355 5677 50  0000 C CNN
+F 2 "" H 7350 5850 50  0001 C CNN
+F 3 "" H 7350 5850 50  0001 C CNN
+	1    7350 5850
 	0    -1   -1   0   
 $EndComp
 $EndSCHEMATC
