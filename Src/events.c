@@ -18,12 +18,12 @@ void Events_Init(void)
 
 void Events_Enqueue(Event_t e)
 {
-  Queue_Enqueue(&eventQueueHandle, e);
+  Queue_Enqueue(&eventQueueHandle, * (uint32_t *) &e);
 }
 
 Event_t Events_Dequeue(void)
 {
-  Event_t e = NULL;
-  Queue_Dequeue(&eventQueueHandle, &e);
+  Event_t e;
+  Queue_Dequeue(&eventQueueHandle, (uint32_t *) &e);
   return e;
 }

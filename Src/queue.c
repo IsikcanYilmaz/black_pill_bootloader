@@ -2,8 +2,8 @@
 
 /* 
  * QUEUE API
- * This file defines queue functionality that can store uint32_t data
- * structures. The user must allocate the buffer space the queue will use
+ * This file defines queue functionality that can store uint32_ts.
+ * The user must allocate the buffer space the queue will use
  * outside of the init call, must pass the pointer to the buffer to the init,
  * and get the queue handle from the init function.
  */

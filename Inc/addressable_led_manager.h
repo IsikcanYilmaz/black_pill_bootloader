@@ -44,6 +44,36 @@ typedef enum {
 // This is how the cube of panels will be imagined in 2d. 
 // Neighboring panels are obvious; like the neighbors of N are W, C, E. Center panel's neighbors are all other panels, etc. 
 
+typedef enum {
+  RAMPING_UP,
+  RUNNING,
+  RAMPING_DOWN,
+  STOPPED,
+} AnimationState_e;
+
+typedef enum {
+  BEGIN,
+  PAUSE,
+} AnimationSignal_e;
+
+typedef struct {
+  AnimationSignal_e signal;
+  uint64_t payload; // TODO think about this. you may wanna pass more data to animations
+} AnimationMessage_t;
+
+typedef enum {
+  ANIMATION_RANDOMFADE,
+  ANIMATION_RANDOMTRIANGLES,
+  NUM_ANIMATIONS
+} Animation_e;
+
+typedef struct {
+  void (*init) (void);
+  void (*update) (void);
+  AnimationState_e (*getState) (void);
+  void (*sendMessage) (AnimationMessage_t *message);
+} AnimationInterface_t;
+
 typedef struct {
   AddrLEDStrip_t *strip;
   Pixel_t *stripFirstPixel;
@@ -51,7 +81,6 @@ typedef struct {
   uint16_t stripRange[2]; // Inclusive
   Position_e position;
   struct AddrLEDPanel_t *neighborPanels[4];
-
 } AddrLEDPanel_t;
 
 void AddrLEDManager_Init(void);

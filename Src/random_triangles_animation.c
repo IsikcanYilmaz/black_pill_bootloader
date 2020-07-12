@@ -15,6 +15,7 @@
 typedef struct {
   uint8_t numPanels;
   uint8_t numLeds;
+  AnimationState_e state;
 
   // This will be a ptr to an array of consecutive panel objects
   AddrLEDPanel_t *panels; 
@@ -35,6 +36,8 @@ static AnimationContext_t context;
 
 static void randomTriangles1();
 static void randomTriangles2();
+static void rampUp();
+static void rampDown();
 
 void Animation_RandomTriangles_Init(AddrLEDPanel_t *panels, uint8_t numPanels, RandomFadePixelData_t *pixelDataPtr)
 {
@@ -48,9 +51,53 @@ void Animation_RandomTriangles_Init(AddrLEDPanel_t *panels, uint8_t numPanels, R
   context.upperBrightness = 225;
 }
 
+void Animation_RandomTriangles_SendMessage(AnimationMessage_t *message)
+{
+  // TODO
+}
+
+AnimationState_e Animation_RandomTriangles_GetState(void)
+{
+  return context.state;
+}
+
 void Animation_RandomTriangles_Update(void)
 {
-  randomTriangles1();
+  switch(context.state)
+  {
+    case(RAMPING_UP):
+      {
+        rampUp();
+        break;
+      }
+    case(RUNNING):
+      {
+        randomTriangles1();
+        break;
+      }
+    case(RAMPING_DOWN):
+      {
+        rampDown();
+        break;
+      }
+    case(STOPPED):
+      {
+        //
+        break;
+      }
+    default:
+      break;
+  }
+}
+
+static void rampUp(void)
+{
+
+}
+
+static void rampDown(void)
+{
+
 }
 
 static void randomTriangles1(void)

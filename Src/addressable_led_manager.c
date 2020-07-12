@@ -39,6 +39,25 @@ AddrLEDPanel_t panels[5];
 RandomFadePixelData_t randomFadePixelData[NUM_LEDS_TOTAL];
 RandomTrianglesPixelData_t randomTrianglesPixelData[NUM_LEDS_TOTAL];
 
+AnimationInterface_t animations[NUM_ANIMATIONS] = 
+{
+
+  [ANIMATION_RANDOMFADE] = {
+                            .init = Animation_RandomFade_Init, 
+                            .update = Animation_RandomFade_Update,  
+                            .getState = Animation_RandomFade_GetState,
+                            .sendMessage = Animation_RandomFade_SendMessage
+                           },
+
+  [ANIMATION_RANDOMTRIANGLES] = {
+                            .init = Animation_RandomTriangles_Init, 
+                            .update = Animation_RandomTriangles_Update,  
+                            .getState = Animation_RandomTriangles_GetState,
+                            .sendMessage = Animation_RandomTriangles_SendMessage
+                           },
+
+};
+
 // PRIVATE FUNCTIONS -------------------------------------------------
 
 static void InitPanel(AddrLEDPanel_t *p)

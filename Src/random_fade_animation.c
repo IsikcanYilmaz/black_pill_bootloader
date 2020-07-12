@@ -37,10 +37,13 @@
 
 static void randomFade1(void);
 static void randomFade2(void);
+static void rampUp();
+static void rampDown();
 
 typedef struct {
   uint8_t numPanels;
   uint8_t numLeds;
+  AnimationState_e state;
 
   // This will be a ptr to an array of consecutive panel objects
   AddrLEDPanel_t *panels; 
@@ -95,15 +98,56 @@ void Animation_RandomFade_Init(AddrLEDPanel_t *panels, uint8_t numPanels, Random
   }
 }
 
+AnimationState_e Animation_RandomFade_GetState(void)
+{
+  return context.state;
+}
+void Animation_RandomFade_SendMessage(AnimationMessage_t *message)
+{
+}
 
 void Animation_RandomFade_Update(void)
 {
-  randomFade2();
+  switch(context.state)
+  {
+    case(RAMPING_UP):
+      {
+        rampUp();
+        break;
+      }
+    case(RUNNING):
+      {
+        randomFade2();
+        break;
+      }
+    case(RAMPING_DOWN):
+      {
+        rampDown();
+        break;
+      }
+    case(STOPPED):
+      {
+        //
+        break;
+      }
+    default:
+      break;
+  }
 }
 
 // There may be multiple animations defined here. they differ slightly but in general are similar to one another,
 // thus they reside in the same animation module. they share the context and metadata variables.
 // honestly its redundant and inefficient in terms of space, but fuck it. the thing is still early in dev.
+
+static void rampUp()
+{
+
+}
+
+static void rampDown()
+{
+
+}
 
 static void randomFade2(void)
 {
