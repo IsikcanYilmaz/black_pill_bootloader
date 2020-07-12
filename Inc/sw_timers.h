@@ -1,5 +1,7 @@
 #include "main.h"
 
+#define SwTimer_GetCountMs() (counterMs)
+
 typedef struct SwTimer_t
 {
   bool running;

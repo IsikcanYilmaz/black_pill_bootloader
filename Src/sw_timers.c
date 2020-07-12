@@ -8,6 +8,11 @@
  * Api that allows for the execution of arbitrary functions at specified time
  * A user is to create an instance of SwTimer_t, and populate the fn field 
  * with the desired callback function. 
+ * How to use it:
+ * - Create SwTimer_t object. Set its .fn member to the desired callback 
+ *   function. set the Ms field to the millisecond value after which you want
+ *   the callback to be called.
+ * - Start timer with SwTimer_Start(&timer)
  * How it works:
  * - $counter is incremented every millisecond.
  * - We have a "timer" structure that has a function pointer that gets called
@@ -141,13 +146,17 @@ void SwTimer_Start(SwTimer_t *timer)
   CRITICAL_SECTION_END;
 }
 
+// Stop timer. 
+// TODO theres no way of pausing and resuming available in this
+// thing yet. you can reset the timer but cant pause and continue.
 void SwTimer_Stop(SwTimer_t *timer)
 {
   timer->running = false;
   SwTimer_Unlist(timer);
 }
 
-// This is called upon the SysTick IRQ
+// This is called upon the SysTick IRQ. It will increment our Ms counter and
+// process all timers. 
 void SwTimer_ISR(void)
 {
   counterMs++;

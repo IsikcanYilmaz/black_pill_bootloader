@@ -82,8 +82,7 @@ Src/i2c.c \
 Src/usb.c \
 Src/button_driver.c \
 Src/button_manager.c \
-
-
+Src/geometry.c 
 
 # ASM sources
 ASM_SOURCES =  \
@@ -144,8 +143,8 @@ C_INCLUDES =  \
 -IDrivers/STM32L4xx_HAL_Driver/Inc \
 -IDrivers/STM32L4xx_HAL_Driver/Inc/Legacy \
 -IDrivers/CMSIS/Device/ST/STM32L4xx/Include \
--IDrivers/CMSIS/Include
-
+-IDrivers/CMSIS/Include \
+-Iunit_tests
 
 # compile gcc flags
 ASFLAGS = $(MCU) $(AS_DEFS) $(AS_INCLUDES) $(OPT) -Wall -fdata-sections -ffunction-sections

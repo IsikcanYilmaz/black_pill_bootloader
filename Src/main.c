@@ -33,6 +33,7 @@
 #include "addressable_led_driver.h"
 #include "addressable_led_manager.h"
 #include "sw_timers.h"
+#include "geometry.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -108,9 +109,11 @@ int main(void)
   ButtonDriver_Init();
   DbgUart_Init();
   AddrLEDManager_Init();
+  Geometry_Init();
 
   // Infinite loop v // TODO // refactor this test stuff
   AddrLEDManager_SanityTest();
+  //AddrLEDManager_RefreshTimerStart();
   /* USER CODE END 2 */
 
   /* Infinite loop */

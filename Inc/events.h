@@ -1,6 +1,8 @@
 
 #include "main.h"
 
+#define CNFG_EVENTS_QUEUE_SIZE 128
+
 typedef enum
 {
   LED_MODULE,
@@ -8,7 +10,7 @@ typedef enum
   DFU_MODULE,
   CMD_MODULE,
   NUM_MODULES = CMD_MODULE,
-  NUM_MODULES_MAX = 0xff
+  NUM_MODULES_MAX = 0xffff
 } Module_e;
 
 typedef enum
@@ -30,7 +32,7 @@ typedef enum
 
   // 
   NUM_EVENTS,
-  NUM_EVENTS_MAX = 0xff
+  NUM_EVENTS_MAX = 0xffff
 } Event_e;
 
 typedef struct 
@@ -39,4 +41,7 @@ typedef struct
   Event_e event;
 } __attribute__((packed)) Event_t;
 
-void EventEnqueue(Event_t *e);
+void Events_Init(void);
+void Events_Enqueue(Event_t e);
+
+

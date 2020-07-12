@@ -16,6 +16,8 @@ PIXEL_DISP_SIZE = (PIXEL_DISP_WIDTH, PIXEL_DISP_HEIGHT)
 
 class Pixel:
     def __init__(self, r = 0, g = 0, b = 0):
+        self.location = NUM_PANELS
+        self.x = self.y = 0
         self.surf = pygame.Surface(PIXEL_DISP_SIZE)
         self.r = r
         self.g = g
@@ -26,7 +28,11 @@ class Pixel:
         self.surf.fill((self.r, self.g, self.b))
 
     def __str__(self):
-        return "%03d %03d %03d" % (self.r, self.g, self.b)
+        ret = ''
+        if (self.location < NUM_PANELS):
+            ret += "x:%d y:%d loc:%d" % (self.x, self.y, self.location)
+        ret += " %03d %03d %03d" % (self.r, self.g, self.b)
+        return ret
 
 class Panel:
     def __init__(self, sizex, sizey, location):
@@ -38,8 +44,17 @@ class Panel:
         for y in range(0, sizey):
             row = []
             for x in range(0, sizex):
-                row.append(Pixel(0,0,0))
+                p = Pixel(0,0,0)
+                p.location = location
+                row.append(p)
             self.pixels.append(row)
+
+        # TODO below can be done better but i kinda dont care about this init code
+        for x in range(0, sizex):
+            for y in range(0, sizey):
+                p = self.getPixelByCoords(x, y, True)
+                p.x = x if (location != TOP) else PANEL_PIXEL_WIDTH - 1 - x
+                p.y = y
 
     def renderPanel(self):
         self.surf.fill((40, 40, 0))
@@ -56,6 +71,7 @@ class Panel:
         # this works now, somehow but need to fix it
         # i.e. the need of xIdx and yIdx. its weird. for this hack to work
         # one needs to pass True for debug
+
         if (debug):
             xIdx = self.sizex - 1 - x
             yIdx = y

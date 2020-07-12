@@ -4,6 +4,7 @@ import pygame
 from random_blink_animation import *
 from random_triangle_animation import *
 from color_test_animation import *
+from random_shape_animation import *
 from classes import *
 from random import randint
 from common import *
@@ -15,8 +16,9 @@ panels = []
 randomBlink = RandomBlink(panels)
 randomTriangle = RandomTriangle(panels)
 colorTest = ColorTest(panels)
+randomShape = RandomShape(panels)
 
-currentAnimation = colorTest
+currentAnimation = randomShape
 
 # Rotate panels according to their locations
 ROTATE_ENABLED = True
@@ -82,10 +84,13 @@ def main():
             if event.type == pygame.QUIT:
                 running = False
 
-            if event.type == UPDATE_EVENT:
+            elif event.type == UPDATE_EVENT:
                 updateBoard()
                 drawBoard(screen)
                 updateCount += 1
+
+            else:
+                print(event, event.type)
 
 
     pygame.quit()

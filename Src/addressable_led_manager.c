@@ -4,6 +4,7 @@
 #include "utils.h"
 #include "random_fade_animation.h"
 #include "random_triangles_animation.h"
+#include "sw_timers.h"
 #include <string.h>
 #include <stdlib.h>
 
@@ -27,7 +28,7 @@ const uint16_t ledStrip1Size = NUM_LEDS_TOTAL;
 AddrLEDStrip_t ledStrip1;
 Pixel_t ledStrip1Pixels[sizeof(PixelPacket_t) * NUM_LEDS_PER_PANEL * NUM_PANELS];
 uint8_t ledStrip1PacketBuffer[sizeof(PixelPacket_t) * NUM_LEDS_PER_PANEL * NUM_PANELS + 1]; // (3 * 8) * 16 + 1
-
+SwTimer_t refreshTimer;
 volatile uint8_t animationIndex = 0; // TODO // this is a temporary gimmick. 
 
 AddrLEDPanel_t panels[5];
@@ -55,6 +56,27 @@ static void InitPanel(AddrLEDPanel_t *p)
 
   // Set global coordinates of this panel
 
+}
+
+static uint32_t AddrLEDManager_RefreshCallback(void)
+{
+  TOGGLE_ONBOARD_LED();
+  switch (animationIndex % 2)
+  {
+    case 0:
+      {
+        Animation_RandomTriangles_Update();
+        break;
+      }
+    case 1:
+      {
+        Animation_RandomFade_Update();
+        break;
+      }
+  }
+  HAL_Delay(1);
+  //AddrLED_DisplayStrip(&ledStrip1);
+  return 100;
 }
 
 // PUBLIC FUNCTIONS -------------------------------------------------
@@ -92,6 +114,10 @@ void AddrLEDManager_Init(void)
   // Initialize our animations
   Animation_RandomFade_Init((AddrLEDPanel_t *) &panels, NUM_PANELS, (RandomFadePixelData_t *) &randomFadePixelData);
   Animation_RandomTriangles_Init((AddrLEDPanel_t *) &panels, NUM_PANELS, (RandomFadePixelData_t *) &randomFadePixelData);
+
+  // Initialize refresh timer
+  refreshTimer.fn = AddrLEDManager_RefreshCallback;
+  refreshTimer.Ms = 100;
 }
 
 Pixel_t* GetPixelByLocalCoordinate(Position_e pos, uint8_t x, uint8_t y)
@@ -123,23 +149,28 @@ inline AddrLEDPanel_t* GetPanelByLocation(Position_e pos)
   return NULL;
 }
 
+void AddrLEDManager_RefreshTimerStart(void)
+{
+  SwTimer_Start(&refreshTimer);
+}
+
 void AddrLEDManager_SanityTest(void)
 {
   while(1){
-    TOGGLE_ONBOARD_LED();
-    
+    //TOGGLE_ONBOARD_LED();
+
     switch (animationIndex % 2)
     {
       case 0:
-      {
-        Animation_RandomTriangles_Update();
-        break;
-      }
+        {
+          Animation_RandomTriangles_Update();
+          break;
+        }
       case 1:
-      {
-        Animation_RandomFade_Update();
-        break;
-      }
+        {
+          Animation_RandomFade_Update();
+          break;
+        }
     }
 
     AddrLED_DisplayStrip(&ledStrip1);

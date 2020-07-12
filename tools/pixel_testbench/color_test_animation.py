@@ -67,7 +67,7 @@ class ColorTest:
                             (rr, gg, bb) = hsv_to_rgb((self.h + (self.rowHueOffset * 1))/ 360, self.s / 100,  self.v / 100)
                         (pix.r, pix.g, pix.b) = (int(rr * 255), int(gg * 255), int(bb * 255))
 
-        print(pix, " | " , self.h, self.s, self.v)
+        #print(pix, " | " , self.h, self.s, self.v)
 
         if (self.v >= 100 or self.v <= 0):
             self.addv = not self.addv
