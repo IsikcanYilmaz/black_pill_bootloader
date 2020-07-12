@@ -82,7 +82,9 @@ Src/i2c.c \
 Src/usb.c \
 Src/button_driver.c \
 Src/button_manager.c \
-Src/geometry.c 
+Src/geometry.c \
+Src/queue.c \
+Src/events.c \
 
 # ASM sources
 ASM_SOURCES =  \
