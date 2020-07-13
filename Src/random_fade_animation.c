@@ -104,6 +104,29 @@ AnimationState_e Animation_RandomFade_GetState(void)
 }
 void Animation_RandomFade_SendMessage(AnimationMessage_t *message)
 {
+  switch(message->signal)
+  {
+    case BEGIN:
+      {
+        context.state = RAMPING_UP;
+        break;
+      }
+    case PAUSE:
+    case STOP:
+      {
+        context.state = RAMPING_DOWN;
+        for (int i = 0; i < NUM_LEDS_PER_PANEL_SIDE; i++)
+        {
+          Pixel_t *currPixel = (Pixel_t *) &context.stripBegin->pixels[i];
+          currPixel->red = 0;
+          currPixel->green = 0;
+          currPixel->blue = 0;
+        } 
+        break;
+      }
+    default:
+      break;
+  }
 }
 
 void Animation_RandomFade_Update(void)
@@ -141,12 +164,12 @@ void Animation_RandomFade_Update(void)
 
 static void rampUp()
 {
-
+  context.state = RUNNING;
 }
 
 static void rampDown()
 {
-
+  context.state = STOPPED;
 }
 
 static void randomFade2(void)

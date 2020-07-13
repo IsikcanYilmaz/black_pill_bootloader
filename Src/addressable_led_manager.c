@@ -29,6 +29,8 @@ AddrLEDStrip_t ledStrip1;
 Pixel_t ledStrip1Pixels[sizeof(PixelPacket_t) * NUM_LEDS_PER_PANEL * NUM_PANELS];
 uint8_t ledStrip1PacketBuffer[sizeof(PixelPacket_t) * NUM_LEDS_PER_PANEL * NUM_PANELS + 1]; // (3 * 8) * 16 + 1
 SwTimer_t refreshTimer;
+
+volatile bool animationSkipInProgress = false;
 volatile uint8_t animationIndex = 0; // TODO // this is a temporary gimmick. 
 
 AddrLEDPanel_t panels[5];
@@ -41,14 +43,12 @@ RandomTrianglesPixelData_t randomTrianglesPixelData[NUM_LEDS_TOTAL];
 
 AnimationInterface_t animations[NUM_ANIMATIONS] = 
 {
-
   [ANIMATION_RANDOMFADE] = {
                             .init = Animation_RandomFade_Init, 
                             .update = Animation_RandomFade_Update,  
                             .getState = Animation_RandomFade_GetState,
                             .sendMessage = Animation_RandomFade_SendMessage
                            },
-
   [ANIMATION_RANDOMTRIANGLES] = {
                             .init = Animation_RandomTriangles_Init, 
                             .update = Animation_RandomTriangles_Update,  
@@ -173,26 +173,35 @@ void AddrLEDManager_RefreshTimerStart(void)
   SwTimer_Start(&refreshTimer);
 }
 
+void AddrLEDManager_PlayNextAnimation(void)
+{
+  // Tell current animation to start ramping down
+  AnimationMessage_t pauseMsg = {PAUSE, NULL};
+  animations[animationIndex].sendMessage(&pauseMsg);
+
+  // Set our state machine to "transitioning from animation to animation"
+  animationSkipInProgress = true;
+}
+
 void AddrLEDManager_SanityTest(void)
 {
   while(1){
-    //TOGGLE_ONBOARD_LED();
-
-    switch (animationIndex % 2)
+    TOGGLE_ONBOARD_LED();
+    
+    // If we're in process of skipping, wait for current animation to ramp down
+    if (animationSkipInProgress)
     {
-      case 0:
-        {
-          Animation_RandomTriangles_Update();
-          break;
-        }
-      case 1:
-        {
-          Animation_RandomFade_Update();
-          break;
-        }
+      AnimationState_e animState = animations[animationIndex % NUM_ANIMATIONS].getState();
+      if (animState == STOPPED)
+      {
+        animationIndex++;
+        AnimationMessage_t start = {BEGIN, NULL};
+        animations[animationIndex % NUM_ANIMATIONS].sendMessage(&start);
+        animationSkipInProgress = false;
+      }
     }
-
+    animations[animationIndex % NUM_ANIMATIONS].update();
     AddrLED_DisplayStrip(&ledStrip1);
-    HAL_Delay(10);
+    HAL_Delay(5);
   }
 }

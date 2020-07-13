@@ -38,7 +38,7 @@ static uint32_t DebounceTimeout(void)
     {
       if (userButton1.pressed == true)
       {
-        animationIndex++;
+        AddrLEDManager_PlayNextAnimation();
         if (deltaT < CNFG_BUTTON_SHORT_PRESS_MS)
         {
           // Short press happened

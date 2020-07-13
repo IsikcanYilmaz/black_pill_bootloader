@@ -1,4 +1,4 @@
-#include "random_fade_animation.h"
+#include "random_triangles_animation.h"
 #include "addressable_led_manager.h"
 #include "utils.h"
 #include "color.h"
@@ -21,7 +21,7 @@ typedef struct {
   AddrLEDPanel_t *panels; 
 
   // Below is tobe used as storage for metadata about the Pixels that this animation module will keep
-  RandomFadePixelData_t *pixelDataPtr;
+  RandomTrianglesPixelData_t *pixelDataPtr;
   
   // Below are animation config variables
   // lower and upper limits for the random numbers
@@ -39,7 +39,7 @@ static void randomTriangles2();
 static void rampUp();
 static void rampDown();
 
-void Animation_RandomTriangles_Init(AddrLEDPanel_t *panels, uint8_t numPanels, RandomFadePixelData_t *pixelDataPtr)
+void Animation_RandomTriangles_Init(AddrLEDPanel_t *panels, uint8_t numPanels, RandomTrianglesPixelData_t *pixelDataPtr)
 {
   context.panels = panels;
   context.pixelDataPtr = pixelDataPtr;
@@ -51,9 +51,35 @@ void Animation_RandomTriangles_Init(AddrLEDPanel_t *panels, uint8_t numPanels, R
   context.upperBrightness = 225;
 }
 
+// TODO // Change SendMessage to ProcessMessage
 void Animation_RandomTriangles_SendMessage(AnimationMessage_t *message)
 {
-  // TODO
+  switch(message->signal)
+  {
+    case BEGIN:
+      {
+        context.state = RAMPING_UP;
+        break;
+      }
+    case PAUSE:
+    case STOP:
+      {
+        context.state = RAMPING_DOWN;
+
+        // Keep a backup of where we leave off the LEDs
+        for (int i = 0; i < NUM_LEDS_PER_PANEL_SIDE; i++)
+        {
+          RandomTrianglesPixelData_t *currData = (RandomTrianglesPixelData_t *) &context.pixelDataPtr[i];
+          Pixel_t *currPixel = (Pixel_t *) &context.stripBegin->pixels[i];
+          currData->backupR = currPixel->red;
+          currData->backupG = currPixel->green;
+          currData->backupB = currPixel->blue;
+        } 
+        break;
+      }
+    default:
+      break;
+  }
 }
 
 AnimationState_e Animation_RandomTriangles_GetState(void)
@@ -92,16 +118,68 @@ void Animation_RandomTriangles_Update(void)
 
 static void rampUp(void)
 {
+  //context.state = RUNNING; // TODO DO RAMP UP ANIMATION
 
+  bool rampUpFinished = true;
+  for (int i = 0; i < NUM_LEDS_PER_PANEL_SIDE; i++)
+  {
+    RandomTrianglesPixelData_t *currData = (RandomTrianglesPixelData_t *) &context.pixelDataPtr[i];
+    Pixel_t *currPixel = (Pixel_t *) &context.stripBegin->pixels[i];
+    
+    rampUpFinished &= (currPixel->red == currData->backupR && currPixel->green == currData->backupG && currPixel->blue == currData->backupB);
+   
+    if (currPixel->red != currData->backupR)
+      currPixel->red += (currPixel->red < currData->backupR) ? 1 : -1;
+    
+    if (currPixel->green != currData->backupG)
+      currPixel->green += (currPixel->green < currData->backupG) ? 1 : -1;
+    
+    if (currPixel->blue != currData->backupB)
+      currPixel->blue += (currPixel->blue < currData->backupB) ? 1 : -1;
+  }
+
+  if (rampUpFinished)
+  {
+    context.state = RUNNING;
+  }
 }
 
 static void rampDown(void)
 {
+  static bool clockdivider = true;
+  if (clockdivider == 0)
+  {
+    clockdivider = !clockdivider;
+    return;
+  }
+  clockdivider = !clockdivider;
 
+  bool rampDownFinished = true;
+  for (int i = 0; i < NUM_LEDS_PER_PANEL_SIDE; i++)
+  {
+    RandomTrianglesPixelData_t *currData = (RandomTrianglesPixelData_t *) &context.pixelDataPtr[i];
+    Pixel_t *currPixel = (Pixel_t *) &context.stripBegin->pixels[i];
+    
+    rampDownFinished &= (!currPixel->red && !currPixel->green && !currPixel->blue);
+   
+    if (currPixel->red)
+      currPixel->red--;
+    if (currPixel->green)
+      currPixel->green--;
+    if (currPixel->blue)
+      currPixel->blue--;
+  }
+
+  if (rampDownFinished)
+  {
+    context.state = STOPPED;
+  }
 }
 
 static void randomTriangles1(void)
 {
+  // TODO make these more generic
+
   static double r = 0.0;
   static double g = 0.0;
   static double b = 0.0;
@@ -183,7 +261,7 @@ static void randomTriangles1(void)
   {
     rowHueOffsetAdd = true;
   }
-  
+
   h += hrate;
 
   s += (sadd) ? srate : -srate;
