@@ -155,10 +155,10 @@ static void rampDown(void)
   clockdivider = !clockdivider;
 
   bool rampDownFinished = true;
-  for (int i = 0; i < NUM_LEDS_PER_PANEL_SIDE; i++)
+  for (int i = 0; i < context.numLeds; i++)
   {
-    RandomTrianglesPixelData_t *currData = (RandomTrianglesPixelData_t *) &context.pixelDataPtr[i];
     Pixel_t *currPixel = (Pixel_t *) &context.stripBegin->pixels[i];
+    RandomTrianglesPixelData_t *currData = (RandomTrianglesPixelData_t *) &context.pixelDataPtr[i];
     
     rampDownFinished &= (!currPixel->red && !currPixel->green && !currPixel->blue);
    
