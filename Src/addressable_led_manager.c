@@ -177,7 +177,7 @@ void AddrLEDManager_PlayNextAnimation(void)
 {
   // Tell current animation to start ramping down
   AnimationMessage_t pauseMsg = {PAUSE, NULL};
-  animations[animationIndex].sendMessage(&pauseMsg);
+  animations[animationIndex % NUM_ANIMATIONS].sendMessage(&pauseMsg);
 
   // Set our state machine to "transitioning from animation to animation"
   animationSkipInProgress = true;
@@ -202,6 +202,6 @@ void AddrLEDManager_SanityTest(void)
     }
     animations[animationIndex % NUM_ANIMATIONS].update();
     AddrLED_DisplayStrip(&ledStrip1);
-    HAL_Delay(5);
+    HAL_Delay(10);
   }
 }
