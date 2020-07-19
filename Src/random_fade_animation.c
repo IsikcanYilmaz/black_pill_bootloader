@@ -169,7 +169,26 @@ static void rampUp()
 
 static void rampDown()
 {
-  context.state = STOPPED;
+  bool rampDownFinished = true;
+  for (int i = 0; i < context.numLeds; i++)
+  {
+    Pixel_t *currPixel = (Pixel_t *) &context.stripBegin->pixels[i];
+    RandomFadePixelData_t *currData = (RandomFadePixelData_t *) &context.pixelDataPtr[i];
+    
+    rampDownFinished &= (!currPixel->red && !currPixel->green && !currPixel->blue);
+   
+    if (currPixel->red)
+      currPixel->red--;
+    if (currPixel->green)
+      currPixel->green--;
+    if (currPixel->blue)
+      currPixel->blue--;
+  }
+
+  if (rampDownFinished)
+  {
+    context.state = STOPPED;
+  }
 }
 
 static void randomFade2(void)

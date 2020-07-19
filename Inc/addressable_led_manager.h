@@ -63,8 +63,8 @@ typedef struct {
 } AnimationMessage_t;
 
 typedef enum {
-  ANIMATION_RANDOMFADE,
   ANIMATION_RANDOMTRIANGLES,
+  ANIMATION_RANDOMFADE,
   NUM_ANIMATIONS
 } Animation_e;
 

@@ -132,7 +132,7 @@ void AddrLEDManager_Init(void)
 
   // Initialize our animations
   Animation_RandomFade_Init((AddrLEDPanel_t *) &panels, NUM_PANELS, (RandomFadePixelData_t *) &randomFadePixelData);
-  Animation_RandomTriangles_Init((AddrLEDPanel_t *) &panels, NUM_PANELS, (RandomFadePixelData_t *) &randomFadePixelData);
+  Animation_RandomTriangles_Init((AddrLEDPanel_t *) &panels, NUM_PANELS, (RandomTrianglesPixelData_t *) &randomTrianglesPixelData);
 
   // Initialize refresh timer
   refreshTimer.fn = AddrLEDManager_RefreshCallback;

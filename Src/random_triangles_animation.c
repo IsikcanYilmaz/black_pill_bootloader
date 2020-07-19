@@ -41,6 +41,8 @@ static void rampDown();
 
 void Animation_RandomTriangles_Init(AddrLEDPanel_t *panels, uint8_t numPanels, RandomTrianglesPixelData_t *pixelDataPtr)
 {
+  memset(pixelDataPtr, 0x00, sizeof(RandomTrianglesPixelData_t) * numPanels * panels->numLeds);
+
   context.panels = panels;
   context.pixelDataPtr = pixelDataPtr;
   context.stripBegin = panels->strip;
@@ -67,7 +69,7 @@ void Animation_RandomTriangles_SendMessage(AnimationMessage_t *message)
         context.state = RAMPING_DOWN;
 
         // Keep a backup of where we leave off the LEDs
-        for (int i = 0; i < NUM_LEDS_PER_PANEL_SIDE; i++)
+        for (int i = 0; i < context.numLeds; i++)
         {
           RandomTrianglesPixelData_t *currData = (RandomTrianglesPixelData_t *) &context.pixelDataPtr[i];
           Pixel_t *currPixel = (Pixel_t *) &context.stripBegin->pixels[i];
@@ -118,15 +120,17 @@ void Animation_RandomTriangles_Update(void)
 
 static void rampUp(void)
 {
-  //context.state = RUNNING; // TODO DO RAMP UP ANIMATION
+  static uint8_t clockdivider = 0;
 
-  bool rampUpFinished = true;
-  for (int i = 0; i < NUM_LEDS_PER_PANEL_SIDE; i++)
+  clockdivider++;
+
+  bool rampUpFinished = false;
+  for (int i = 0; i < context.numLeds; i++)
   {
     RandomTrianglesPixelData_t *currData = (RandomTrianglesPixelData_t *) &context.pixelDataPtr[i];
     Pixel_t *currPixel = (Pixel_t *) &context.stripBegin->pixels[i];
     
-    rampUpFinished &= (currPixel->red == currData->backupR && currPixel->green == currData->backupG && currPixel->blue == currData->backupB);
+    rampUpFinished = (currPixel->red == currData->backupR && currPixel->green == currData->backupG && currPixel->blue == currData->backupB);
    
     if (currPixel->red != currData->backupR)
       currPixel->red += (currPixel->red < currData->backupR) ? 1 : -1;
