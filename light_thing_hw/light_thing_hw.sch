@@ -28,69 +28,58 @@ $EndComp
 $Comp
 L light_thing_hw-rescue:C_Small C9
 U 1 1 5EBF990E
-P 8000 1500
-F 0 "C9" H 8010 1570 50  0000 L CNN
-F 1 "100nF" H 8010 1420 50  0000 L CNN
-F 2 "Capacitor_SMD:C_0603_1608Metric_Pad1.05x0.95mm_HandSolder" H 8000 1500 50  0001 C CNN
-F 3 "" H 8000 1500 50  0001 C CNN
-	1    8000 1500
+P 7900 1350
+F 0 "C9" H 7910 1420 50  0000 L CNN
+F 1 "100nF" H 7910 1270 50  0000 L CNN
+F 2 "Capacitor_SMD:C_0603_1608Metric_Pad1.05x0.95mm_HandSolder" H 7900 1350 50  0001 C CNN
+F 3 "" H 7900 1350 50  0001 C CNN
+	1    7900 1350
 	0    1    1    0   
 $EndComp
 $Comp
 L power:GND #PWR09
 U 1 1 5EBF9A08
-P 7600 1900
-F 0 "#PWR09" H 7600 1650 50  0001 C CNN
-F 1 "GND" H 7600 1750 50  0000 C CNN
-F 2 "" H 7600 1900 50  0001 C CNN
-F 3 "" H 7600 1900 50  0001 C CNN
-	1    7600 1900
+P 7500 1750
+F 0 "#PWR09" H 7500 1500 50  0001 C CNN
+F 1 "GND" H 7500 1600 50  0000 C CNN
+F 2 "" H 7500 1750 50  0001 C CNN
+F 3 "" H 7500 1750 50  0001 C CNN
+	1    7500 1750
 	1    0    0    -1  
 $EndComp
 Wire Wire Line
-	8200 1250 8400 1250
+	8100 1100 8300 1100
 Wire Wire Line
-	7800 1250 7600 1250
+	7700 1100 7500 1100
 Wire Wire Line
-	8400 1250 8400 1500
+	8300 1100 8300 1350
 Wire Wire Line
-	8400 1500 8100 1500
+	8300 1350 8000 1350
 Wire Wire Line
-	7600 1250 7600 1500
+	7500 1100 7500 1350
 Wire Wire Line
-	7900 1500 7600 1500
-Connection ~ 7600 1500
+	7800 1350 7500 1350
+Connection ~ 7500 1350
 $Comp
 L light_thing_hw-rescue:R R5
 U 1 1 5EBFB07E
-P 8550 2700
-F 0 "R5" V 8630 2700 50  0000 C CNN
-F 1 "10K" V 8550 2700 50  0000 C CNN
-F 2 "Resistor_SMD:R_0603_1608Metric_Pad1.05x0.95mm_HandSolder" V 8480 2700 50  0001 C CNN
-F 3 "" H 8550 2700 50  0001 C CNN
-	1    8550 2700
+P 8600 1650
+F 0 "R5" V 8680 1650 50  0000 C CNN
+F 1 "10K" V 8600 1650 50  0000 C CNN
+F 2 "Resistor_SMD:R_0603_1608Metric_Pad1.05x0.95mm_HandSolder" V 8530 1650 50  0001 C CNN
+F 3 "" H 8600 1650 50  0001 C CNN
+	1    8600 1650
 	1    0    0    -1  
 $EndComp
 $Comp
 L power:GND #PWR010
 U 1 1 5EBFB10B
-P 8550 2850
-F 0 "#PWR010" H 8550 2600 50  0001 C CNN
-F 1 "GND" H 8550 2700 50  0000 C CNN
-F 2 "" H 8550 2850 50  0001 C CNN
-F 3 "" H 8550 2850 50  0001 C CNN
-	1    8550 2850
-	1    0    0    -1  
-$EndComp
-$Comp
-L power:+3V3 #PWR011
-U 1 1 5EBFBC95
-P 8600 750
-F 0 "#PWR011" H 8600 600 50  0001 C CNN
-F 1 "+3V3" H 8600 890 50  0000 C CNN
-F 2 "" H 8600 750 50  0001 C CNN
-F 3 "" H 8600 750 50  0001 C CNN
-	1    8600 750 
+P 8600 1800
+F 0 "#PWR010" H 8600 1550 50  0001 C CNN
+F 1 "GND" H 8600 1650 50  0000 C CNN
+F 2 "" H 8600 1800 50  0001 C CNN
+F 3 "" H 8600 1800 50  0001 C CNN
+	1    8600 1800
 	1    0    0    -1  
 $EndComp
 $Comp
@@ -102,19 +91,6 @@ F 1 "+3V3" H 4200 990 50  0000 C CNN
 F 2 "" H 4200 850 50  0001 C CNN
 F 3 "" H 4200 850 50  0001 C CNN
 	1    4200 850 
-	1    0    0    -1  
-$EndComp
-Wire Wire Line
-	9700 4850 9700 4950
-$Comp
-L power:GND #PWR012
-U 1 1 5EBFDD28
-P 9700 4950
-F 0 "#PWR012" H 9700 4700 50  0001 C CNN
-F 1 "GND" H 9700 4800 50  0000 C CNN
-F 2 "" H 9700 4950 50  0001 C CNN
-F 3 "" H 9700 4950 50  0001 C CNN
-	1    9700 4950
 	1    0    0    -1  
 $EndComp
 $Comp
@@ -140,28 +116,14 @@ F 3 "" H 3450 3550 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 Wire Wire Line
-	7600 1500 7600 1900
-Text GLabel 8550 1250 3    60   Input ~ 0
+	7500 1350 7500 1750
+Text GLabel 8450 1100 3    60   Input ~ 0
 RESET
-Text GLabel 10000 1450 2    60   Input ~ 0
-USART_2_TX
-Text GLabel 10000 1550 2    60   Input ~ 0
-USART_2_RX
-Text GLabel 10000 2550 2    60   Input ~ 0
-SWDIO
-Text GLabel 10000 2650 2    60   Input ~ 0
-SWCLK
-Text GLabel 10000 3050 2    60   Input ~ 0
-ADDR_LED_PANEL_1_PWM
-Text GLabel 10000 3250 2    60   Input ~ 0
-SWO
-Wire Wire Line
-	8700 2550 8550 2550
 Wire Notes Line
 	11200 500  11200 6500
 Text Notes 7200 6900 0    196  ~ 0
 LIGHT THING MLB
-Connection ~ 8400 1250
+Connection ~ 8300 1100
 $Comp
 L power:VBUS #PWR0101
 U 1 1 5EC855CA
@@ -188,7 +150,7 @@ F 3 "" H 3700 2450 50  0001 C CNN
 	1    3700 2450
 	0    -1   -1   0   
 $EndComp
-Text Notes 10300 900  0    129  ~ 0
+Text Notes 10450 800  0    129  ~ 0
 MCU
 $Comp
 L Sensor_Motion:LSM6DS3 U2
@@ -225,18 +187,6 @@ Text GLabel 4650 6800 0    60   Input ~ 0
 I2C1_SDA
 Text GLabel 4650 6900 0    60   Input ~ 0
 I2C1_SCL
-Text GLabel 10000 2250 2    60   Input ~ 0
-I2C1_SDA
-Text GLabel 10000 2150 2    60   Input ~ 0
-I2C1_SCL
-Text GLabel 10000 4250 2    50   Input ~ 0
-I2C2_SCL
-Text GLabel 10000 4050 2    50   Input ~ 0
-I2C2_SDA
-Text GLabel 10000 2350 2    50   Input ~ 0
-D-
-Text GLabel 10000 2450 2    50   Input ~ 0
-D+
 $Comp
 L power:GND #PWR?
 U 1 1 5EC4B938
@@ -301,8 +251,6 @@ F 3 "" H 3700 2350 50  0001 C CNN
 	1    3700 2350
 	0    1    1    0   
 $EndComp
-Text GLabel 10000 1250 2    50   Input ~ 0
-ADDR_LED_BACKUP_PWM
 Text GLabel 4900 2450 0    60   Input ~ 0
 SWDIO
 Text GLabel 4900 2250 0    60   Input ~ 0
@@ -518,83 +466,79 @@ Wire Wire Line
 Connection ~ 5350 5800
 Wire Wire Line
 	5350 5800 5350 6100
-Text GLabel 8550 4250 3    50   Input ~ 0
+Text GLabel 8450 4100 3    50   Input ~ 0
 BUTTON1
 $Comp
 L light_thing_hw-rescue:C_Small C13
 U 1 1 5EEA19F9
-P 7800 4550
-F 0 "C13" H 7810 4620 50  0000 L CNN
-F 1 "100nF" H 7810 4470 50  0000 L CNN
-F 2 "Capacitor_SMD:C_0603_1608Metric_Pad1.05x0.95mm_HandSolder" H 7800 4550 50  0001 C CNN
-F 3 "" H 7800 4550 50  0001 C CNN
-	1    7800 4550
+P 7700 4400
+F 0 "C13" H 7710 4470 50  0000 L CNN
+F 1 "100nF" H 7710 4320 50  0000 L CNN
+F 2 "Capacitor_SMD:C_0603_1608Metric_Pad1.05x0.95mm_HandSolder" H 7700 4400 50  0001 C CNN
+F 3 "" H 7700 4400 50  0001 C CNN
+	1    7700 4400
 	0    1    1    0   
 $EndComp
 $Comp
 L power:GND #PWR022
 U 1 1 5EEA19FF
-P 7400 4900
-F 0 "#PWR022" H 7400 4650 50  0001 C CNN
-F 1 "GND" H 7400 4750 50  0000 C CNN
-F 2 "" H 7400 4900 50  0001 C CNN
-F 3 "" H 7400 4900 50  0001 C CNN
-	1    7400 4900
+P 7300 4750
+F 0 "#PWR022" H 7300 4500 50  0001 C CNN
+F 1 "GND" H 7300 4600 50  0000 C CNN
+F 2 "" H 7300 4750 50  0001 C CNN
+F 3 "" H 7300 4750 50  0001 C CNN
+	1    7300 4750
 	1    0    0    -1  
 $EndComp
 Wire Wire Line
-	7600 4250 7400 4250
+	7500 4100 7300 4100
 Wire Wire Line
-	8700 4250 8450 4250
+	8600 4100 8350 4100
 $Comp
 L Device:R R7
 U 1 1 5EEC1947
-P 7550 4550
-F 0 "R7" V 7350 4550 50  0000 C CNN
-F 1 "100" V 7450 4550 50  0000 C CNN
-F 2 "Resistor_SMD:R_0603_1608Metric_Pad1.05x0.95mm_HandSolder" V 7480 4550 50  0001 C CNN
-F 3 "~" H 7550 4550 50  0001 C CNN
-	1    7550 4550
+P 7450 4400
+F 0 "R7" V 7250 4400 50  0000 C CNN
+F 1 "100" V 7350 4400 50  0000 C CNN
+F 2 "Resistor_SMD:R_0603_1608Metric_Pad1.05x0.95mm_HandSolder" V 7380 4400 50  0001 C CNN
+F 3 "~" H 7450 4400 50  0001 C CNN
+	1    7450 4400
 	0    -1   -1   0   
 $EndComp
 Wire Wire Line
-	7400 4250 7400 4550
-Connection ~ 7400 4550
+	7300 4100 7300 4400
+Connection ~ 7300 4400
 Wire Wire Line
-	7400 4550 7400 4900
+	7300 4400 7300 4750
 Wire Wire Line
-	8450 4250 8450 4550
+	8350 4100 8350 4400
 Wire Wire Line
-	7400 4250 7400 4050
-Connection ~ 7400 4250
+	7300 4100 7300 3900
+Connection ~ 7300 4100
 $Comp
 L Device:R R6
 U 1 1 5EED8185
-P 7400 3900
-F 0 "R6" H 7470 3946 50  0000 L CNN
-F 1 "4.7k" H 7470 3855 50  0000 L CNN
-F 2 "Resistor_SMD:R_0603_1608Metric_Pad1.05x0.95mm_HandSolder" V 7330 3900 50  0001 C CNN
-F 3 "~" H 7400 3900 50  0001 C CNN
-	1    7400 3900
+P 7300 3750
+F 0 "R6" H 7370 3796 50  0000 L CNN
+F 1 "4.7k" H 7370 3705 50  0000 L CNN
+F 2 "Resistor_SMD:R_0603_1608Metric_Pad1.05x0.95mm_HandSolder" V 7230 3750 50  0001 C CNN
+F 3 "~" H 7300 3750 50  0001 C CNN
+	1    7300 3750
 	1    0    0    -1  
 $EndComp
 $Comp
 L power:+3V3 #PWR021
 U 1 1 5EED823F
-P 7400 3750
-F 0 "#PWR021" H 7400 3600 50  0001 C CNN
-F 1 "+3V3" H 7415 3923 50  0000 C CNN
-F 2 "" H 7400 3750 50  0001 C CNN
-F 3 "" H 7400 3750 50  0001 C CNN
-	1    7400 3750
+P 7300 3600
+F 0 "#PWR021" H 7300 3450 50  0001 C CNN
+F 1 "+3V3" H 7315 3773 50  0000 C CNN
+F 2 "" H 7300 3600 50  0001 C CNN
+F 3 "" H 7300 3600 50  0001 C CNN
+	1    7300 3600
 	1    0    0    -1  
 $EndComp
 Wire Wire Line
-	8400 1250 8700 1250
-Text GLabel 10000 3550 2    50   Input ~ 0
-ACCEL_EXTI_1
-Text GLabel 10000 3650 2    50   Input ~ 0
-ACCEL_EXTI_2
+	8300 1100 8600 1100
 Text GLabel 5850 6400 2    50   Input ~ 0
 ACCEL_EXTI_1
 Text GLabel 5850 6500 2    50   Input ~ 0
@@ -648,43 +592,35 @@ Wire Notes Line
 	500  5200 11200 5200
 Text Notes 3500 5500 0    129  ~ 0
 BLE AND ACCEL
-Text GLabel 8700 4050 0    50   Input ~ 0
-BT_TX
-Text GLabel 8700 3950 0    50   Input ~ 0
-BT_RX
-Text Notes 8050 4000 0    50   ~ 0
-UART4 TX
-Text Notes 8050 4100 0    50   ~ 0
-UART4 RX
 Wire Wire Line
-	8000 4250 8450 4250
+	7900 4100 8350 4100
 Wire Wire Line
-	7900 4550 8450 4550
+	7800 4400 8350 4400
 Text GLabel 4900 1850 0    60   Input ~ 0
 USART_2_TX
 Text GLabel 4900 2050 0    60   Input ~ 0
 USART_2_RX
-Connection ~ 8450 4250
+Connection ~ 8350 4100
 $Comp
 L Switch:SW_Push SW2
 U 1 1 5F1F7301
-P 8000 1250
-F 0 "SW2" H 8000 1550 50  0000 C CNN
-F 1 "ST_RESET_BUTTON" H 8250 1450 50  0000 C CNN
-F 2 "Button_Switch_SMD:SW_SPST_EVPBF" H 8000 1450 50  0001 C CNN
-F 3 "" H 8000 1450 50  0001 C CNN
-	1    8000 1250
+P 7900 1100
+F 0 "SW2" H 7900 1400 50  0000 C CNN
+F 1 "ST_RESET_BUTTON" H 8150 1300 50  0000 C CNN
+F 2 "Button_Switch_SMD:SW_SPST_EVPBF" H 7900 1300 50  0001 C CNN
+F 3 "" H 7900 1300 50  0001 C CNN
+	1    7900 1100
 	1    0    0    -1  
 $EndComp
 $Comp
 L Switch:SW_Push SW1
 U 1 1 5F1F7389
-P 7800 4250
-F 0 "SW1" H 7800 4450 50  0000 C CNN
-F 1 "ST_USER_BUTTON1" H 7850 4150 50  0000 C CNN
-F 2 "Button_Switch_SMD:SW_SPST_B3U-3000P" H 7800 4450 50  0001 C CNN
-F 3 "" H 7800 4450 50  0001 C CNN
-	1    7800 4250
+P 7700 4100
+F 0 "SW1" H 7700 4300 50  0000 C CNN
+F 1 "ST_USER_BUTTON1" H 7750 4000 50  0000 C CNN
+F 2 "Button_Switch_SMD:SW_SPST_B3U-3000P" H 7700 4300 50  0001 C CNN
+F 3 "" H 7700 4300 50  0001 C CNN
+	1    7700 4100
 	1    0    0    -1  
 $EndComp
 $Comp
@@ -746,8 +682,6 @@ F 3 "~" H 5400 4800 50  0001 C CNN
 	1    5400 4800
 	1    0    0    -1  
 $EndComp
-Text GLabel 10000 1750 2    50   Input ~ 0
-GREEN_LED
 Text GLabel 1050 6600 0    50   Input ~ 0
 BT_RED_LED
 $Comp
@@ -1008,23 +942,6 @@ NoConn ~ 1550 7700
 NoConn ~ 1450 7700
 NoConn ~ 1350 7700
 NoConn ~ 3750 3300
-NoConn ~ 10000 1350
-NoConn ~ 10000 1650
-NoConn ~ 10000 1950
-NoConn ~ 10000 2050
-NoConn ~ 10000 2750
-NoConn ~ 10000 3350
-NoConn ~ 10000 3450
-NoConn ~ 8700 4450
-NoConn ~ 8700 4350
-NoConn ~ 8700 4150
-NoConn ~ 8700 3850
-NoConn ~ 8700 3750
-NoConn ~ 8700 3050
-NoConn ~ 8700 2950
-NoConn ~ 8700 2750
-NoConn ~ 8700 2450
-NoConn ~ 8700 2350
 $Comp
 L power:PWR_FLAG #FLG0101
 U 1 1 5F37471F
@@ -1037,19 +954,6 @@ F 3 "~" H 3700 4750 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 NoConn ~ 4650 7000
-$Comp
-L MCU_ST_STM32L4:STM32L452RETx U5A1
-U 1 1 5EBCCABA
-P 9400 2850
-F 0 "U5A1" H 8800 4600 50  0000 L CNN
-F 1 "STM32L452RETx" H 9050 3700 50  0000 L CNN
-F 2 "Package_QFP:LQFP-64-1EP_10x10mm_P0.5mm_EP6.5x6.5mm" H 8800 1150 50  0001 R CNN
-F 3 "" H 9400 2850 50  0001 C CNN
-	1    9400 2850
-	1    0    0    -1  
-$EndComp
-Text GLabel 10000 1850 2    50   Input ~ 0
-BATT_ADC
 Text GLabel 6600 3550 0    50   Input ~ 0
 BATT_ADC
 $Comp
@@ -1121,61 +1025,6 @@ Wire Wire Line
 	2250 4100 2300 4100
 Wire Wire Line
 	2300 4100 2500 4100
-Wire Wire Line
-	8600 850  8600 750 
-Wire Wire Line
-	9600 1050 9600 850 
-Wire Wire Line
-	8600 850  9100 850 
-Connection ~ 9100 850 
-Wire Wire Line
-	9100 1050 9100 850 
-Wire Wire Line
-	9600 850  9500 850 
-Connection ~ 9500 850 
-Wire Wire Line
-	9500 850  9500 1050
-Wire Wire Line
-	9400 850  9500 850 
-Connection ~ 9400 850 
-Wire Wire Line
-	9400 850  9400 1050
-Wire Wire Line
-	9300 850  9400 850 
-Connection ~ 9300 850 
-Wire Wire Line
-	9300 850  9300 1050
-Wire Wire Line
-	9100 850  9200 850 
-Wire Wire Line
-	9200 850  9300 850 
-Connection ~ 9200 850 
-Wire Wire Line
-	9200 1050 9200 850 
-Wire Wire Line
-	9500 4850 9700 4850
-Connection ~ 9500 4850
-Wire Wire Line
-	9500 4650 9500 4850
-Wire Wire Line
-	9400 4850 9500 4850
-Connection ~ 9400 4850
-Wire Wire Line
-	9400 4650 9400 4850
-Wire Wire Line
-	9300 4850 9400 4850
-Connection ~ 9300 4850
-Wire Wire Line
-	9300 4650 9300 4850
-Wire Wire Line
-	9200 4850 9300 4850
-Wire Wire Line
-	9100 4850 9200 4850
-Connection ~ 9200 4850
-Wire Wire Line
-	9200 4650 9200 4850
-Wire Wire Line
-	9100 4650 9100 4850
 $Comp
 L light_thing_hw-rescue:C_Small C1
 U 1 1 5EE590BE
@@ -1323,14 +1172,6 @@ Text GLabel 3500 6600 2    50   Input ~ 0
 BT_GPIO_2
 Text GLabel 3500 6900 2    50   Input ~ 0
 BT_GPIO_3
-Text GLabel 8700 3150 0    50   Input ~ 0
-BT_GPIO_0
-Text GLabel 8700 3250 0    50   Input ~ 0
-BT_GPIO_1
-Text GLabel 8700 3350 0    50   Input ~ 0
-BT_GPIO_2
-Text GLabel 8700 3450 0    50   Input ~ 0
-BT_GPIO_3
 Wire Wire Line
 	6850 3500 6850 3550
 Wire Wire Line
@@ -1343,14 +1184,12 @@ L Transistor_FET:MMBF170 Q1
 U 1 1 5F11A036
 P 6750 4100
 F 0 "Q1" H 6955 4146 50  0000 L CNN
-F 1 "MMBF170" H 6955 4055 50  0000 L CNN
+F 1 "MMBF170" V 7000 3700 50  0000 L CNN
 F 2 "Package_TO_SOT_SMD:SOT-23" H 6950 4025 50  0001 L CIN
 F 3 "https://www.diodes.com/assets/Datasheets/ds30104.pdf" H 6750 4100 50  0001 L CNN
 	1    6750 4100
 	1    0    0    -1  
 $EndComp
-Text GLabel 8700 3550 0    50   Input ~ 0
-BATT_ADC_ENABLE
 Text GLabel 6550 4100 0    50   Input ~ 0
 BATT_ADC_ENABLE
 Text Notes 7200 6500 0    50   ~ 0
@@ -1491,8 +1330,6 @@ Wire Wire Line
 	650  4100 1100 4100
 Wire Wire Line
 	650  4900 950  4900
-Text GLabel 8700 3650 0    50   Input ~ 0
-BOOST_ENABLE
 Text GLabel 1300 4650 0    50   Input ~ 0
 BOOST_ENABLE
 $Comp
@@ -1639,10 +1476,6 @@ Wire Wire Line
 	3750 2900 3850 2900
 NoConn ~ 2600 1300
 NoConn ~ 1650 1500
-Text GLabel 10000 4350 2    50   Input ~ 0
-CHARGER_STAT1
-Text GLabel 10000 4450 2    50   Input ~ 0
-CHARGER_STAT2
 Text GLabel 2600 1500 2    50   Input ~ 0
 CHARGER_STAT1
 Text GLabel 2600 1400 2    50   Input ~ 0
@@ -1712,15 +1545,8 @@ Wire Wire Line
 	2600 1800 3350 1800
 Wire Wire Line
 	2600 1700 3350 1700
-Text GLabel 10000 3750 2    50   Input ~ 0
-TEST_GPIO0
-Text GLabel 10000 3850 2    50   Input ~ 0
-TEST_GPIO1
-Text GLabel 10000 3950 2    50   Input ~ 0
-TEST_GPIO2
 Text GLabel 5200 4800 0    50   Input ~ 0
 ADDR_LED_BACKUP_PWM
-NoConn ~ 10000 4150
 Text GLabel 5200 4900 0    50   Input ~ 0
 TEST_GPIO0
 Text GLabel 5200 4700 0    50   Input ~ 0
@@ -1815,45 +1641,41 @@ F 3 "" H 5500 3200 50  0001 C CNN
 	1    5500 3200
 	0    1    1    0   
 $EndComp
-Text GLabel 10000 2950 2    50   Input ~ 0
-MIC_IN
 Text GLabel 5500 3000 0    50   Input ~ 0
 MIC_IN
-Text GLabel 6150 4600 2    50   Input ~ 0
+Text GLabel 10500 4550 2    50   Input ~ 0
 MIC_ENABLE
 $Comp
 L power:+3V3 #PWR023
 U 1 1 5F2064E5
-P 5900 4850
-F 0 "#PWR023" H 5900 4700 50  0001 C CNN
-F 1 "+3V3" H 5915 5023 50  0000 C CNN
-F 2 "" H 5900 4850 50  0001 C CNN
-F 3 "" H 5900 4850 50  0001 C CNN
-	1    5900 4850
+P 10250 4800
+F 0 "#PWR023" H 10250 4650 50  0001 C CNN
+F 1 "+3V3" H 10265 4973 50  0000 C CNN
+F 2 "" H 10250 4800 50  0001 C CNN
+F 3 "" H 10250 4800 50  0001 C CNN
+	1    10250 4800
 	1    0    0    -1  
 $EndComp
 $Comp
 L Transistor_FET:BSS83P Q2
 U 1 1 5F3B8D0C
-P 6150 4900
-F 0 "Q2" V 6400 5000 50  0000 L CNN
-F 1 "BSS83P" V 6400 4650 50  0000 L CNN
-F 2 "Package_TO_SOT_SMD:SOT-23" H 6350 4825 50  0001 L CIN
-F 3 "http://www.farnell.com/datasheets/1835997.pdf" H 6150 4900 50  0001 L CNN
-	1    6150 4900
+P 10500 4850
+F 0 "Q2" V 10750 4950 50  0000 L CNN
+F 1 "BSS83P" V 10750 4600 50  0000 L CNN
+F 2 "Package_TO_SOT_SMD:SOT-23" H 10700 4775 50  0001 L CIN
+F 3 "http://www.farnell.com/datasheets/1835997.pdf" H 10500 4850 50  0001 L CNN
+	1    10500 4850
 	0    1    1    0   
 $EndComp
 Wire Wire Line
-	5900 4850 5900 5000
+	10250 4800 10250 4950
 Wire Wire Line
-	5900 5000 5950 5000
+	10250 4950 10300 4950
 Wire Wire Line
-	6150 4600 6150 4700
-Text GLabel 10000 3150 2    50   Input ~ 0
-MIC_ENABLE
+	10500 4550 10500 4650
 Wire Wire Line
-	6350 5000 6400 5000
-Text GLabel 6400 5000 2    50   Input ~ 0
+	10700 4950 10750 4950
+Text GLabel 10750 4950 2    50   Input ~ 0
 MIC_3V3
 Text GLabel 5500 3100 0    50   Input ~ 0
 MIC_3V3
@@ -1902,4 +1724,180 @@ Wire Wire Line
 	4650 3200 4650 3050
 Connection ~ 4650 3200
 Connection ~ 4650 3050
+$Comp
+L MCU_ST_STM32L4:STM32L476RGTx U6
+U 1 1 5F38D810
+P 9300 2700
+F 0 "U6" H 9300 3800 50  0000 C CNN
+F 1 "STM32L476RGTx" H 9300 3650 50  0000 C CNN
+F 2 "Package_QFP:LQFP-64_10x10mm_P0.5mm" H 8700 1000 50  0001 R CNN
+F 3 "http://www.st.com/st-web-ui/static/active/en/resource/technical/document/datasheet/DM00108832.pdf" H 9300 2700 50  0001 C CNN
+	1    9300 2700
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:+3V3 #PWR0116
+U 1 1 5F39CA0A
+P 8750 700
+F 0 "#PWR0116" H 8750 550 50  0001 C CNN
+F 1 "+3V3" H 8750 840 50  0000 C CNN
+F 2 "" H 8750 700 50  0001 C CNN
+F 3 "" H 8750 700 50  0001 C CNN
+	1    8750 700 
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	9600 900  9600 700 
+Connection ~ 9100 700 
+Wire Wire Line
+	9100 900  9100 700 
+Wire Wire Line
+	9600 700  9500 700 
+Connection ~ 9500 700 
+Wire Wire Line
+	9500 700  9500 900 
+Wire Wire Line
+	9400 700  9500 700 
+Connection ~ 9400 700 
+Wire Wire Line
+	9400 700  9400 900 
+Wire Wire Line
+	9300 700  9400 700 
+Connection ~ 9300 700 
+Wire Wire Line
+	9300 700  9300 900 
+Wire Wire Line
+	9100 700  9200 700 
+Wire Wire Line
+	9200 700  9300 700 
+Connection ~ 9200 700 
+Wire Wire Line
+	9200 900  9200 700 
+Text GLabel 10000 1600 2    50   Input ~ 0
+GREEN_LED
+Text GLabel 10000 3700 2    60   Input ~ 0
+I2C1_SDA
+Text GLabel 10000 3600 2    60   Input ~ 0
+I2C1_SCL
+Text GLabel 10000 2200 2    50   Input ~ 0
+D-
+Text GLabel 10000 2300 2    50   Input ~ 0
+D+
+Wire Wire Line
+	9700 4700 9700 4800
+$Comp
+L power:GND #PWR0117
+U 1 1 5F40C1F8
+P 9700 4800
+F 0 "#PWR0117" H 9700 4550 50  0001 C CNN
+F 1 "GND" H 9700 4650 50  0000 C CNN
+F 2 "" H 9700 4800 50  0001 C CNN
+F 3 "" H 9700 4800 50  0001 C CNN
+	1    9700 4800
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	9500 4700 9700 4700
+Connection ~ 9500 4700
+Wire Wire Line
+	9500 4500 9500 4700
+Wire Wire Line
+	9400 4700 9500 4700
+Connection ~ 9400 4700
+Wire Wire Line
+	9400 4500 9400 4700
+Wire Wire Line
+	9300 4700 9400 4700
+Connection ~ 9300 4700
+Wire Wire Line
+	9300 4500 9300 4700
+Wire Wire Line
+	9200 4700 9300 4700
+Wire Wire Line
+	9100 4700 9200 4700
+Connection ~ 9200 4700
+Wire Wire Line
+	9200 4500 9200 4700
+Wire Wire Line
+	9100 4500 9100 4700
+Text GLabel 10000 2900 2    60   Input ~ 0
+ADDR_LED_PANEL_1_PWM
+Text GLabel 10000 2400 2    60   Input ~ 0
+SWDIO
+Text GLabel 10000 2500 2    60   Input ~ 0
+SWCLK
+Text GLabel 10000 3100 2    60   Input ~ 0
+SWO
+Text GLabel 10000 4100 2    50   Input ~ 0
+I2C2_SCL
+Text GLabel 10000 3900 2    50   Input ~ 0
+I2C2_SDA
+Text GLabel 8600 3900 0    50   Input ~ 0
+BT_TX
+Text GLabel 8600 3800 0    50   Input ~ 0
+BT_RX
+Text Notes 7950 3850 0    50   ~ 0
+UART4 TX
+Text Notes 7950 3950 0    50   ~ 0
+UART4 RX
+Text GLabel 8600 3000 0    50   Input ~ 0
+BT_GPIO_0
+Text GLabel 8600 3100 0    50   Input ~ 0
+BT_GPIO_1
+Text GLabel 8600 3200 0    50   Input ~ 0
+BT_GPIO_2
+Text GLabel 8600 3300 0    50   Input ~ 0
+BT_GPIO_3
+Text GLabel 10000 2800 2    50   Input ~ 0
+MIC_IN
+Text GLabel 10000 1700 2    50   Input ~ 0
+BATT_ADC
+Text GLabel 10000 1300 2    60   Input ~ 0
+USART_2_TX
+Text GLabel 10000 1400 2    60   Input ~ 0
+USART_2_RX
+Text GLabel 10000 1100 2    50   Input ~ 0
+ADDR_LED_BACKUP_PWM
+Text GLabel 10000 4200 2    50   Input ~ 0
+CHARGER_STAT1
+Text GLabel 10000 4300 2    50   Input ~ 0
+CHARGER_STAT2
+Text GLabel 10000 3000 2    50   Input ~ 0
+MIC_ENABLE
+Text GLabel 10000 3400 2    50   Input ~ 0
+ACCEL_EXTI_1
+Text GLabel 10000 3500 2    50   Input ~ 0
+ACCEL_EXTI_2
+Text GLabel 8600 3400 0    50   Input ~ 0
+BATT_ADC_ENABLE
+Text GLabel 8600 3500 0    50   Input ~ 0
+BOOST_ENABLE
+NoConn ~ 10000 1200
+NoConn ~ 10000 1500
+NoConn ~ 10000 1800
+NoConn ~ 10000 1900
+NoConn ~ 10000 2000
+NoConn ~ 10000 2100
+NoConn ~ 10000 2600
+NoConn ~ 10000 3800
+NoConn ~ 10000 4000
+NoConn ~ 8600 4300
+NoConn ~ 8600 4200
+NoConn ~ 8600 3700
+NoConn ~ 8600 3600
+NoConn ~ 8600 2900
+NoConn ~ 8600 2800
+NoConn ~ 8600 2600
+NoConn ~ 8600 2400
+NoConn ~ 8600 2300
+Wire Wire Line
+	8600 1300 8600 1500
+Wire Wire Line
+	8750 700  9100 700 
+Text GLabel 10000 3300 2    50   Input ~ 0
+TEST_GPIO1
+Text GLabel 10000 3200 2    50   Input ~ 0
+TEST_GPIO0
+Text GLabel 8600 4000 0    50   Input ~ 0
+TEST_GPIO2
 $EndSCHEMATC
