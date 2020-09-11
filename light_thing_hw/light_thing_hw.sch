@@ -1864,9 +1864,9 @@ Text GLabel 10000 4300 2    50   Input ~ 0
 CHARGER_STAT2
 Text GLabel 10000 3000 2    50   Input ~ 0
 MIC_ENABLE
-Text GLabel 10000 3400 2    50   Input ~ 0
+Text GLabel 8600 3700 0    50   Input ~ 0
 ACCEL_EXTI_1
-Text GLabel 10000 3500 2    50   Input ~ 0
+Text GLabel 8600 3600 0    50   Input ~ 0
 ACCEL_EXTI_2
 Text GLabel 8600 3400 0    50   Input ~ 0
 BATT_ADC_ENABLE
@@ -1883,8 +1883,6 @@ NoConn ~ 10000 3800
 NoConn ~ 10000 4000
 NoConn ~ 8600 4300
 NoConn ~ 8600 4200
-NoConn ~ 8600 3700
-NoConn ~ 8600 3600
 NoConn ~ 8600 2900
 NoConn ~ 8600 2800
 NoConn ~ 8600 2600
@@ -1900,4 +1898,6 @@ Text GLabel 10000 3200 2    50   Input ~ 0
 TEST_GPIO0
 Text GLabel 8600 4000 0    50   Input ~ 0
 TEST_GPIO2
+NoConn ~ 10000 3400
+NoConn ~ 10000 3500
 $EndSCHEMATC

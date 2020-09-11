@@ -1894,9 +1894,9 @@ Wire Wire Line
 	8600 1300 8600 1500
 Wire Wire Line
 	8750 700  9100 700 
-Text GLabel 10000 3200 2    50   Input ~ 0
-TEST_GPIO1
 Text GLabel 10000 3300 2    50   Input ~ 0
+TEST_GPIO1
+Text GLabel 10000 3200 2    50   Input ~ 0
 TEST_GPIO0
 Text GLabel 8600 4000 0    50   Input ~ 0
 TEST_GPIO2
