@@ -1,5 +1,6 @@
 EESchema Schematic File Version 4
-EELAYER 30 0
+LIBS:light_thing_hw-cache
+EELAYER 26 0
 EELAYER END
 $Descr A4 11693 8268
 encoding utf-8
@@ -157,7 +158,7 @@ U 1 1 5EC93EF5
 P 5250 6700
 F 0 "U2" H 4950 7300 50  0000 L CNN
 F 1 "LSM6DS3" H 5150 6700 50  0000 L CNN
-F 2 "Package_LGA:LGA-14_3x2.5mm_P0.5mm_LayoutBorder3x4y" H 4850 6000 50  0001 L CNN
+F 2 "footprints:LGA-14_3x2.5mm_P0.5mm_LayoutBorder3x4y_modded" H 4850 6000 50  0001 L CNN
 F 3 "www.st.com/resource/en/datasheet/lsm6ds3.pdf" H 5350 6050 50  0001 C CNN
 	1    5250 6700
 	1    0    0    -1  
