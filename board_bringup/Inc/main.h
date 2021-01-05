@@ -32,12 +32,19 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include <stdbool.h>
+#include <stdint.h>
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
-
+typedef enum
+{
+  GENERIC_STATUS_OK,
+  GENERIC_STATUS_ERROR,
+  GENERIC_STATUS_BUFFER_OVERFLOW,
+  GENERIC_STATUS_BAD_COMMAND,
+} GENERIC_STATUS_e;
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/

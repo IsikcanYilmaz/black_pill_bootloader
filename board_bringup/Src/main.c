@@ -99,11 +99,8 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  char *report = "ASD";
   while (1)
   {
-    CDC_Transmit_FS(report, strlen(report));
-    HAL_Delay(1000);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
