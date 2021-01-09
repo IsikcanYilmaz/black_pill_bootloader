@@ -3,7 +3,9 @@
 #include "i2c.h"
 #include "stm32l4xx_hal_i2c.h"
 #include "stm32l4xx_hal_def.h"
+#include "stm32l4xx_hal_gpio.h"
 #include "stdio.h"
+#include "adc.h"
 #include <string.h>
 
 /*
@@ -64,30 +66,16 @@ GENERIC_STATUS_e Shell_CdcReceive(uint8_t *Buf, uint32_t Len)
 
 static void BoardBringupTest(void)
 {
-  // LSM6DS3 I2C address 110101xb. i.e. (0x35 << 1)
-  uint16_t devAddr = 0x35 << 1;
-  uint16_t buf = 0;
   char out[256];
 
-/**
-  * @brief  Transmits in master mode an amount of data in blocking mode.
-  * @param  hi2c Pointer to a I2C_HandleTypeDef structure that contains
-  *                the configuration information for the specified I2C.
-  * @param  DevAddress Target device address: The device 7 bits address value
-  *         in datasheet must be shifted to the left before calling the interface
-  * @param  pData Pointer to data buffer
-  * @param  Size Amount of data to be sent
-  * @param  Timeout Timeout duration
-  * @retval HAL status
+  /* ADC 1 TEST
+  HAL_ADC_Start(&hadc1);
+  sprintf(&out, "%d", HAL_ADC_GetValue(&hadc1));
+
+  HAL_GPIO_WritePin(GPIOC, BATT_ADC_EN_Pin, GPIO_PIN_RESET);
+  HAL_ADC_Stop(&hadc1);
   */
-/*HAL_StatusTypeDef HAL_I2C_Master_Transmit(I2C_HandleTypeDef *hi2c, uint16_t DevAddress, uint8_t *pData, uint16_t Size, uint32_t Timeout)*/
-  
-  HAL_StatusTypeDef ret = HAL_I2C_Master_Receive(&hi2c1, devAddr, &buf, 1, 5000);
 
-
-  memset(&out, 0x00, sizeof(out));
-  sprintf(&out, "ret %d buf %d", ret, buf);
-  
   CDC_Transmit_FS(out, strlen(out));
 }
 
