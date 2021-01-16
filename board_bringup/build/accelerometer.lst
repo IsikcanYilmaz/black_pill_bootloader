@@ -1,0 +1,56 @@
+ARM GAS  /tmp/ccs9S2hm.s 			page 1
+
+
+   1              		.cpu cortex-m4
+   2              		.eabi_attribute 27, 1
+   3              		.eabi_attribute 28, 1
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 1
+  11              		.eabi_attribute 34, 1
+  12              		.eabi_attribute 18, 4
+  13              		.file	"accelerometer.c"
+  14              		.text
+  15              	.Ltext0:
+  16              		.cfi_sections	.debug_frame
+  17              		.section	.text.Accelerometer_Init,"ax",%progbits
+  18              		.align	1
+  19              		.global	Accelerometer_Init
+  20              		.syntax unified
+  21              		.thumb
+  22              		.thumb_func
+  23              		.fpu fpv4-sp-d16
+  25              	Accelerometer_Init:
+  26              	.LFB0:
+  27              		.file 1 "Src/accelerometer.c"
+   1:Src/accelerometer.c **** #include "accelerometer.h"
+   2:Src/accelerometer.c **** 
+   3:Src/accelerometer.c **** void Accelerometer_Init(void)
+   4:Src/accelerometer.c **** {
+  28              		.loc 1 4 0
+  29              		.cfi_startproc
+  30              		@ args = 0, pretend = 0, frame = 0
+  31              		@ frame_needed = 0, uses_anonymous_args = 0
+  32              		@ link register save eliminated.
+   5:Src/accelerometer.c ****   
+   6:Src/accelerometer.c **** 
+   7:Src/accelerometer.c **** }
+  33              		.loc 1 7 0
+  34 0000 7047     		bx	lr
+  35              		.cfi_endproc
+  36              	.LFE0:
+  38              		.text
+  39              	.Letext0:
+ARM GAS  /tmp/ccs9S2hm.s 			page 2
+
+
+DEFINED SYMBOLS
+                            *ABS*:0000000000000000 accelerometer.c
+     /tmp/ccs9S2hm.s:18     .text.Accelerometer_Init:0000000000000000 $t
+     /tmp/ccs9S2hm.s:25     .text.Accelerometer_Init:0000000000000000 Accelerometer_Init
+
+NO UNDEFINED SYMBOLS

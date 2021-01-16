@@ -1,0 +1,431 @@
+ARM GAS  /tmp/cc72u2M5.s 			page 1
+
+
+   1              		.cpu cortex-m4
+   2              		.eabi_attribute 27, 1
+   3              		.eabi_attribute 28, 1
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 1
+  11              		.eabi_attribute 34, 1
+  12              		.eabi_attribute 18, 4
+  13              		.file	"color.c"
+  14              		.text
+  15              	.Ltext0:
+  16              		.cfi_sections	.debug_frame
+  17              		.global	__aeabi_dcmpgt
+  18              		.global	__aeabi_dcmpeq
+  19              		.global	__aeabi_ddiv
+  20              		.global	__aeabi_d2iz
+  21              		.global	__aeabi_i2d
+  22              		.global	__aeabi_dsub
+  23              		.global	__aeabi_dmul
+  24              		.section	.text.HsvToRgb,"ax",%progbits
+  25              		.align	1
+  26              		.global	HsvToRgb
+  27              		.syntax unified
+  28              		.thumb
+  29              		.thumb_func
+  30              		.fpu fpv4-sp-d16
+  32              	HsvToRgb:
+  33              	.LFB0:
+  34              		.file 1 "Src/color.c"
+   1:Src/color.c   **** #include "color.h"
+   2:Src/color.c   **** #include <math.h>
+   3:Src/color.c   **** #include <stdlib.h>
+   4:Src/color.c   **** 
+   5:Src/color.c   **** 
+   6:Src/color.c   **** //https://en.wikipedia.org/wiki/HSL_and_HSV
+   7:Src/color.c   **** /*
+   8:Src/color.c   ****  * COLOR
+   9:Src/color.c   ****  *
+  10:Src/color.c   ****  * This file is to provide functionality to handle HSL (Hue Saturation Lightness)
+  11:Src/color.c   ****  * and HSV (Hue Saturation Value) representations of RGB pixels. 
+  12:Src/color.c   ****  *
+  13:Src/color.c   ****  */
+  14:Src/color.c   **** 
+  15:Src/color.c   **** 
+  16:Src/color.c   **** // Convert HSV values to RGB equivalents. 
+  17:Src/color.c   **** // Parameters: double h, a number between 0 and 360 (degrees)
+  18:Src/color.c   **** //             double s, a number between 0 and 100 (percent)
+  19:Src/color.c   **** //             double v, a number between 0 and 100 (percent)
+  20:Src/color.c   **** //             double *r, *g, *b pointers that get populated with rgb values
+  21:Src/color.c   **** void HsvToRgb(double h, double s, double v, double *r, double *g, double *b)
+  22:Src/color.c   **** {
+  35              		.loc 1 22 0
+  36              		.cfi_startproc
+ARM GAS  /tmp/cc72u2M5.s 			page 2
+
+
+  37              		@ args = 0, pretend = 0, frame = 8
+  38              		@ frame_needed = 0, uses_anonymous_args = 0
+  39              	.LVL0:
+  40 0000 2DE9F04F 		push	{r4, r5, r6, r7, r8, r9, r10, fp, lr}
+  41              	.LCFI0:
+  42              		.cfi_def_cfa_offset 36
+  43              		.cfi_offset 4, -36
+  44              		.cfi_offset 5, -32
+  45              		.cfi_offset 6, -28
+  46              		.cfi_offset 7, -24
+  47              		.cfi_offset 8, -20
+  48              		.cfi_offset 9, -16
+  49              		.cfi_offset 10, -12
+  50              		.cfi_offset 11, -8
+  51              		.cfi_offset 14, -4
+  52 0004 2DED049B 		vpush.64	{d9, d10}
+  53              	.LCFI1:
+  54              		.cfi_def_cfa_offset 52
+  55              		.cfi_offset 82, -52
+  56              		.cfi_offset 83, -48
+  57              		.cfi_offset 84, -44
+  58              		.cfi_offset 85, -40
+  59 0008 83B0     		sub	sp, sp, #12
+  60              	.LCFI2:
+  61              		.cfi_def_cfa_offset 64
+  62 000a 55EC104B 		vmov	r4, r5, d0
+  63 000e 8DED001B 		vstr.64	d1, [sp]
+  64 0012 5BEC12AB 		vmov	r10, fp, d2
+  65 0016 8046     		mov	r8, r0
+  66 0018 0F46     		mov	r7, r1
+  67 001a 1646     		mov	r6, r2
+  23:Src/color.c   ****   int i;
+  24:Src/color.c   ****   double f, p, q, t;
+  25:Src/color.c   **** 
+  26:Src/color.c   ****   if (h > 360)
+  68              		.loc 1 26 0
+  69 001c 0022     		movs	r2, #0
+  70              	.LVL1:
+  71 001e 504B     		ldr	r3, .L17+8
+  72 0020 10EE100A 		vmov	r0, s0	@ int
+  73              	.LVL2:
+  74 0024 2946     		mov	r1, r5
+  75              	.LVL3:
+  76 0026 FFF7FEFF 		bl	__aeabi_dcmpgt
+  77              	.LVL4:
+  78 002a 0028     		cmp	r0, #0
+  79 002c 58D1     		bne	.L16
+  80              	.L2:
+  27:Src/color.c   ****     h = fmod(h, 360);
+  28:Src/color.c   **** 
+  29:Src/color.c   ****   if (h == 360)
+  81              		.loc 1 29 0
+  82 002e 0022     		movs	r2, #0
+  83 0030 4B4B     		ldr	r3, .L17+8
+  84 0032 2046     		mov	r0, r4
+  85 0034 2946     		mov	r1, r5
+  86 0036 FFF7FEFF 		bl	__aeabi_dcmpeq
+ARM GAS  /tmp/cc72u2M5.s 			page 3
+
+
+  87              	.LVL5:
+  88 003a 0028     		cmp	r0, #0
+  89 003c 59D1     		bne	.L13
+  30:Src/color.c   ****     h = 0;
+  31:Src/color.c   ****   else
+  32:Src/color.c   ****     h = h / 60.0;
+  90              		.loc 1 32 0
+  91 003e 0022     		movs	r2, #0
+  92 0040 484B     		ldr	r3, .L17+12
+  93 0042 2046     		mov	r0, r4
+  94 0044 2946     		mov	r1, r5
+  95 0046 FFF7FEFF 		bl	__aeabi_ddiv
+  96              	.LVL6:
+  97 004a 0446     		mov	r4, r0
+  98              	.LVL7:
+  99 004c 0D46     		mov	r5, r1
+ 100              	.LVL8:
+ 101              	.L4:
+  33:Src/color.c   **** 
+  34:Src/color.c   ****   i = (int) trunc(h);
+ 102              		.loc 1 34 0
+ 103 004e 2046     		mov	r0, r4
+ 104 0050 2946     		mov	r1, r5
+ 105 0052 FFF7FEFF 		bl	__aeabi_d2iz
+ 106              	.LVL9:
+ 107 0056 8146     		mov	r9, r0
+ 108              	.LVL10:
+  35:Src/color.c   ****   f = h - i;
+ 109              		.loc 1 35 0
+ 110 0058 FFF7FEFF 		bl	__aeabi_i2d
+ 111              	.LVL11:
+ 112 005c 0246     		mov	r2, r0
+ 113 005e 0B46     		mov	r3, r1
+ 114 0060 2046     		mov	r0, r4
+ 115 0062 2946     		mov	r1, r5
+ 116 0064 FFF7FEFF 		bl	__aeabi_dsub
+ 117              	.LVL12:
+ 118 0068 0446     		mov	r4, r0
+ 119              	.LVL13:
+ 120 006a 0D46     		mov	r5, r1
+ 121              	.LVL14:
+  36:Src/color.c   ****   p = v * (1.0 - s);
+ 122              		.loc 1 36 0
+ 123 006c DDE90023 		ldrd	r2, [sp]
+ 124 0070 0020     		movs	r0, #0
+ 125 0072 3D49     		ldr	r1, .L17+16
+ 126 0074 FFF7FEFF 		bl	__aeabi_dsub
+ 127              	.LVL15:
+ 128 0078 5246     		mov	r2, r10
+ 129 007a 5B46     		mov	r3, fp
+ 130 007c FFF7FEFF 		bl	__aeabi_dmul
+ 131              	.LVL16:
+ 132 0080 41EC190B 		vmov	d9, r0, r1
+ 133              	.LVL17:
+  37:Src/color.c   ****   q = v * (1.0 - (s * f));
+ 134              		.loc 1 37 0
+ 135 0084 DDE90023 		ldrd	r2, [sp]
+ARM GAS  /tmp/cc72u2M5.s 			page 4
+
+
+ 136 0088 2046     		mov	r0, r4
+ 137              	.LVL18:
+ 138 008a 2946     		mov	r1, r5
+ 139 008c FFF7FEFF 		bl	__aeabi_dmul
+ 140              	.LVL19:
+ 141 0090 0246     		mov	r2, r0
+ 142 0092 0B46     		mov	r3, r1
+ 143 0094 0020     		movs	r0, #0
+ 144 0096 3449     		ldr	r1, .L17+16
+ 145 0098 FFF7FEFF 		bl	__aeabi_dsub
+ 146              	.LVL20:
+ 147 009c 5246     		mov	r2, r10
+ 148 009e 5B46     		mov	r3, fp
+ 149 00a0 FFF7FEFF 		bl	__aeabi_dmul
+ 150              	.LVL21:
+ 151 00a4 41EC1A0B 		vmov	d10, r0, r1
+ 152              	.LVL22:
+  38:Src/color.c   ****   t = v * (1.0 - (s * (1.0 - f)));
+ 153              		.loc 1 38 0
+ 154 00a8 2246     		mov	r2, r4
+ 155 00aa 2B46     		mov	r3, r5
+ 156 00ac 0020     		movs	r0, #0
+ 157              	.LVL23:
+ 158 00ae 2E49     		ldr	r1, .L17+16
+ 159 00b0 FFF7FEFF 		bl	__aeabi_dsub
+ 160              	.LVL24:
+ 161 00b4 DDE90023 		ldrd	r2, [sp]
+ 162 00b8 FFF7FEFF 		bl	__aeabi_dmul
+ 163              	.LVL25:
+ 164 00bc 0246     		mov	r2, r0
+ 165 00be 0B46     		mov	r3, r1
+ 166 00c0 0020     		movs	r0, #0
+ 167 00c2 2949     		ldr	r1, .L17+16
+ 168 00c4 FFF7FEFF 		bl	__aeabi_dsub
+ 169              	.LVL26:
+ 170 00c8 5246     		mov	r2, r10
+ 171 00ca 5B46     		mov	r3, fp
+ 172 00cc FFF7FEFF 		bl	__aeabi_dmul
+ 173              	.LVL27:
+  39:Src/color.c   **** 
+  40:Src/color.c   ****   switch (i)
+ 174              		.loc 1 40 0
+ 175 00d0 B9F1040F 		cmp	r9, #4
+ 176 00d4 37D8     		bhi	.L5
+ 177 00d6 DFE809F0 		tbb	[pc, r9]
+ 178              	.L7:
+ 179 00da 0F       		.byte	(.L6-.L7)/2
+ 180 00db 1A       		.byte	(.L8-.L7)/2
+ 181 00dc 21       		.byte	(.L9-.L7)/2
+ 182 00dd 28       		.byte	(.L10-.L7)/2
+ 183 00de 2F       		.byte	(.L11-.L7)/2
+ 184              	.LVL28:
+ 185 00df 00       		.p2align 1
+ 186              	.L16:
+  27:Src/color.c   **** 
+ 187              		.loc 1 27 0
+ 188 00e0 9FED1D1B 		vldr.64	d1, .L17
+ARM GAS  /tmp/cc72u2M5.s 			page 5
+
+
+ 189 00e4 45EC104B 		vmov	d0, r4, r5
+ 190 00e8 FFF7FEFF 		bl	fmod
+ 191              	.LVL29:
+ 192 00ec 55EC104B 		vmov	r4, r5, d0
+ 193              	.LVL30:
+ 194 00f0 9DE7     		b	.L2
+ 195              	.L13:
+  30:Src/color.c   ****   else
+ 196              		.loc 1 30 0
+ 197 00f2 0024     		movs	r4, #0
+ 198              	.LVL31:
+ 199 00f4 0025     		movs	r5, #0
+ 200 00f6 AAE7     		b	.L4
+ 201              	.LVL32:
+ 202              	.L6:
+  41:Src/color.c   ****   {
+  42:Src/color.c   **** 		case 0:
+  43:Src/color.c   **** 			*r = v;
+ 203              		.loc 1 43 0
+ 204 00f8 C8E900AB 		strd	r10, [r8]
+  44:Src/color.c   **** 			*g = t;
+ 205              		.loc 1 44 0
+ 206 00fc C7E90001 		strd	r0, [r7]
+  45:Src/color.c   **** 			*b = p;
+ 207              		.loc 1 45 0
+ 208 0100 86ED009B 		vstr.64	d9, [r6]
+ 209              	.L1:
+  46:Src/color.c   **** 			break;
+  47:Src/color.c   **** 
+  48:Src/color.c   **** 		case 1:
+  49:Src/color.c   **** 			*r = q;
+  50:Src/color.c   **** 			*g = v;
+  51:Src/color.c   **** 			*b = p;
+  52:Src/color.c   **** 			break;
+  53:Src/color.c   **** 
+  54:Src/color.c   **** 		case 2:
+  55:Src/color.c   **** 			*r = p;
+  56:Src/color.c   **** 			*g = v;
+  57:Src/color.c   **** 			*b = t;
+  58:Src/color.c   **** 			break;
+  59:Src/color.c   **** 
+  60:Src/color.c   **** 		case 3:
+  61:Src/color.c   **** 			*r = p;
+  62:Src/color.c   **** 			*g = q;
+  63:Src/color.c   **** 			*b = v;
+  64:Src/color.c   **** 			break;
+  65:Src/color.c   **** 
+  66:Src/color.c   **** 		case 4:
+  67:Src/color.c   **** 			*r = t;
+  68:Src/color.c   **** 			*g = p;
+  69:Src/color.c   **** 			*b = v;
+  70:Src/color.c   **** 			break;
+  71:Src/color.c   **** 
+  72:Src/color.c   **** 		default:
+  73:Src/color.c   **** 			*r = v;
+  74:Src/color.c   **** 			*g = p;
+  75:Src/color.c   **** 			*b = q;
+ARM GAS  /tmp/cc72u2M5.s 			page 6
+
+
+  76:Src/color.c   **** 			break;
+  77:Src/color.c   ****   }
+  78:Src/color.c   **** }
+ 210              		.loc 1 78 0
+ 211 0104 03B0     		add	sp, sp, #12
+ 212              	.LCFI3:
+ 213              		.cfi_remember_state
+ 214              		.cfi_def_cfa_offset 52
+ 215              	.LVL33:
+ 216              		@ sp needed
+ 217 0106 BDEC049B 		vldm	sp!, {d9-d10}
+ 218              	.LCFI4:
+ 219              		.cfi_restore 84
+ 220              		.cfi_restore 85
+ 221              		.cfi_restore 82
+ 222              		.cfi_restore 83
+ 223              		.cfi_def_cfa_offset 36
+ 224              	.LVL34:
+ 225 010a BDE8F08F 		pop	{r4, r5, r6, r7, r8, r9, r10, fp, pc}
+ 226              	.LVL35:
+ 227              	.L8:
+ 228              	.LCFI5:
+ 229              		.cfi_restore_state
+  49:Src/color.c   **** 			*g = v;
+ 230              		.loc 1 49 0
+ 231 010e 88ED00AB 		vstr.64	d10, [r8]
+  50:Src/color.c   **** 			*b = p;
+ 232              		.loc 1 50 0
+ 233 0112 C7E900AB 		strd	r10, [r7]
+  51:Src/color.c   **** 			break;
+ 234              		.loc 1 51 0
+ 235 0116 86ED009B 		vstr.64	d9, [r6]
+  52:Src/color.c   **** 
+ 236              		.loc 1 52 0
+ 237 011a F3E7     		b	.L1
+ 238              	.L9:
+  55:Src/color.c   **** 			*g = v;
+ 239              		.loc 1 55 0
+ 240 011c 88ED009B 		vstr.64	d9, [r8]
+  56:Src/color.c   **** 			*b = t;
+ 241              		.loc 1 56 0
+ 242 0120 C7E900AB 		strd	r10, [r7]
+  57:Src/color.c   **** 			break;
+ 243              		.loc 1 57 0
+ 244 0124 C6E90001 		strd	r0, [r6]
+  58:Src/color.c   **** 
+ 245              		.loc 1 58 0
+ 246 0128 ECE7     		b	.L1
+ 247              	.L10:
+  61:Src/color.c   **** 			*g = q;
+ 248              		.loc 1 61 0
+ 249 012a 88ED009B 		vstr.64	d9, [r8]
+  62:Src/color.c   **** 			*b = v;
+ 250              		.loc 1 62 0
+ 251 012e 87ED00AB 		vstr.64	d10, [r7]
+  63:Src/color.c   **** 			break;
+ 252              		.loc 1 63 0
+ARM GAS  /tmp/cc72u2M5.s 			page 7
+
+
+ 253 0132 C6E900AB 		strd	r10, [r6]
+  64:Src/color.c   **** 
+ 254              		.loc 1 64 0
+ 255 0136 E5E7     		b	.L1
+ 256              	.L11:
+  67:Src/color.c   **** 			*g = p;
+ 257              		.loc 1 67 0
+ 258 0138 C8E90001 		strd	r0, [r8]
+  68:Src/color.c   **** 			*b = v;
+ 259              		.loc 1 68 0
+ 260 013c 87ED009B 		vstr.64	d9, [r7]
+  69:Src/color.c   **** 			break;
+ 261              		.loc 1 69 0
+ 262 0140 C6E900AB 		strd	r10, [r6]
+  70:Src/color.c   **** 
+ 263              		.loc 1 70 0
+ 264 0144 DEE7     		b	.L1
+ 265              	.L5:
+  73:Src/color.c   **** 			*g = p;
+ 266              		.loc 1 73 0
+ 267 0146 C8E900AB 		strd	r10, [r8]
+  74:Src/color.c   **** 			*b = q;
+ 268              		.loc 1 74 0
+ 269 014a 87ED009B 		vstr.64	d9, [r7]
+  75:Src/color.c   **** 			break;
+ 270              		.loc 1 75 0
+ 271 014e 86ED00AB 		vstr.64	d10, [r6]
+ 272              		.loc 1 78 0
+ 273 0152 D7E7     		b	.L1
+ 274              	.L18:
+ 275 0154 AFF30080 		.align	3
+ 276              	.L17:
+ 277 0158 00000000 		.word	0
+ 278 015c 00807640 		.word	1081507840
+ 279 0160 00807640 		.word	1081507840
+ 280 0164 00004E40 		.word	1078853632
+ 281 0168 0000F03F 		.word	1072693248
+ 282              		.cfi_endproc
+ 283              	.LFE0:
+ 285              		.text
+ 286              	.Letext0:
+ 287              		.file 2 "/home/jon/KODMOD/EMBEDDED_TOOLCHAINS/gcc-arm-none-eabi-7-2018-q2-update/arm-none-eabi/inc
+ 288              		.file 3 "/home/jon/KODMOD/EMBEDDED_TOOLCHAINS/gcc-arm-none-eabi-7-2018-q2-update/arm-none-eabi/inc
+ 289              		.file 4 "/home/jon/KODMOD/EMBEDDED_TOOLCHAINS/gcc-arm-none-eabi-7-2018-q2-update/lib/gcc/arm-none-
+ 290              		.file 5 "/home/jon/KODMOD/EMBEDDED_TOOLCHAINS/gcc-arm-none-eabi-7-2018-q2-update/arm-none-eabi/inc
+ 291              		.file 6 "/home/jon/KODMOD/EMBEDDED_TOOLCHAINS/gcc-arm-none-eabi-7-2018-q2-update/arm-none-eabi/inc
+ 292              		.file 7 "/home/jon/KODMOD/EMBEDDED_TOOLCHAINS/gcc-arm-none-eabi-7-2018-q2-update/arm-none-eabi/inc
+ARM GAS  /tmp/cc72u2M5.s 			page 8
+
+
+DEFINED SYMBOLS
+                            *ABS*:0000000000000000 color.c
+     /tmp/cc72u2M5.s:25     .text.HsvToRgb:0000000000000000 $t
+     /tmp/cc72u2M5.s:32     .text.HsvToRgb:0000000000000000 HsvToRgb
+     /tmp/cc72u2M5.s:179    .text.HsvToRgb:00000000000000da $d
+     /tmp/cc72u2M5.s:277    .text.HsvToRgb:0000000000000158 $d
+     /tmp/cc72u2M5.s:185    .text.HsvToRgb:00000000000000df $d
+     /tmp/cc72u2M5.s:185    .text.HsvToRgb:00000000000000e0 $t
+
+UNDEFINED SYMBOLS
+__aeabi_dcmpgt
+__aeabi_dcmpeq
+__aeabi_ddiv
+__aeabi_d2iz
+__aeabi_i2d
+__aeabi_dsub
+__aeabi_dmul
+fmod

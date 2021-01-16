@@ -1,0 +1,656 @@
+ARM GAS  /tmp/cc70ITW0.s 			page 1
+
+
+   1              		.cpu cortex-m4
+   2              		.eabi_attribute 27, 1
+   3              		.eabi_attribute 28, 1
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 1
+  11              		.eabi_attribute 34, 1
+  12              		.eabi_attribute 18, 4
+  13              		.file	"shell.c"
+  14              		.text
+  15              	.Ltext0:
+  16              		.cfi_sections	.debug_frame
+  17              		.section	.text.testFn,"ax",%progbits
+  18              		.align	1
+  19              		.syntax unified
+  20              		.thumb
+  21              		.thumb_func
+  22              		.fpu fpv4-sp-d16
+  24              	testFn:
+  25              	.LFB318:
+  26              		.file 1 "Src/shell.c"
+   1:Src/shell.c   **** 
+   2:Src/shell.c   **** #include "shell.h"
+   3:Src/shell.c   **** #include "i2c.h"
+   4:Src/shell.c   **** #include "stm32l4xx_hal_i2c.h"
+   5:Src/shell.c   **** #include "stm32l4xx_hal_def.h"
+   6:Src/shell.c   **** #include "stm32l4xx_hal_gpio.h"
+   7:Src/shell.c   **** #include "stdio.h"
+   8:Src/shell.c   **** #include "adc.h"
+   9:Src/shell.c   **** #include "addressable_led_manager.h"
+  10:Src/shell.c   **** #include "stm32l4xx_hal_flash.h"
+  11:Src/shell.c   **** #include <string.h>
+  12:Src/shell.c   **** 
+  13:Src/shell.c   **** /*
+  14:Src/shell.c   ****  * Simple shell
+  15:Src/shell.c   ****  * - Pressing Enter issues the command
+  16:Src/shell.c   ****  */
+  17:Src/shell.c   **** 
+  18:Src/shell.c   **** uint8_t ShellRxBuffer[SHELL_RX_BUFFER_SIZE];
+  19:Src/shell.c   **** uint32_t ShellRxBufferHead = 0;
+  20:Src/shell.c   **** bool ShellCommandStarted = false;
+  21:Src/shell.c   **** 
+  22:Src/shell.c   **** const char *ShellNewline = "\r\n";
+  23:Src/shell.c   **** 
+  24:Src/shell.c   **** static void testFn(void){
+  27              		.loc 1 24 0
+  28              		.cfi_startproc
+  29              		@ args = 0, pretend = 0, frame = 0
+  30              		@ frame_needed = 0, uses_anonymous_args = 0
+  31 0000 08B5     		push	{r3, lr}
+  32              	.LCFI0:
+  33              		.cfi_def_cfa_offset 8
+  34              		.cfi_offset 3, -8
+ARM GAS  /tmp/cc70ITW0.s 			page 2
+
+
+  35              		.cfi_offset 14, -4
+  25:Src/shell.c   ****   CDC_Transmit_FS("TEST", strlen("test"));
+  36              		.loc 1 25 0
+  37 0002 0421     		movs	r1, #4
+  38 0004 0148     		ldr	r0, .L3
+  39 0006 FFF7FEFF 		bl	CDC_Transmit_FS
+  40              	.LVL0:
+  26:Src/shell.c   **** }
+  41              		.loc 1 26 0
+  42 000a 08BD     		pop	{r3, pc}
+  43              	.L4:
+  44              		.align	2
+  45              	.L3:
+  46 000c 00000000 		.word	.LC0
+  47              		.cfi_endproc
+  48              	.LFE318:
+  50              		.section	.text.BoardBringupTest,"ax",%progbits
+  51              		.align	1
+  52              		.syntax unified
+  53              		.thumb
+  54              		.thumb_func
+  55              		.fpu fpv4-sp-d16
+  57              	BoardBringupTest:
+  58              	.LFB321:
+  27:Src/shell.c   **** 
+  28:Src/shell.c   **** const Shell_Command_Entry_t ShellCommands[] = {
+  29:Src/shell.c   ****   { "test" , &testFn , false }
+  30:Src/shell.c   **** };
+  31:Src/shell.c   **** 
+  32:Src/shell.c   **** GENERIC_STATUS_e Shell_Init(void)
+  33:Src/shell.c   **** {
+  34:Src/shell.c   **** 
+  35:Src/shell.c   **** }
+  36:Src/shell.c   **** 
+  37:Src/shell.c   **** GENERIC_STATUS_e Shell_CdcReceive(uint8_t *Buf, uint32_t Len)
+  38:Src/shell.c   **** {
+  39:Src/shell.c   ****   GENERIC_STATUS_e ret = GENERIC_STATUS_OK;
+  40:Src/shell.c   **** 
+  41:Src/shell.c   ****   // Check if there's enough space in our buffer. if not, reset buffer
+  42:Src/shell.c   ****   if (Len + ShellRxBufferHead > SHELL_RX_BUFFER_SIZE)
+  43:Src/shell.c   ****   {
+  44:Src/shell.c   ****     ShellRxBufferHead = 0;
+  45:Src/shell.c   ****     return GENERIC_STATUS_BUFFER_OVERFLOW;
+  46:Src/shell.c   ****   }
+  47:Src/shell.c   **** 
+  48:Src/shell.c   ****   // Copy over the entire buffer. Check if there's a newline to signify
+  49:Src/shell.c   ****   // a command being terminated/entered.
+  50:Src/shell.c   ****   for (uint32_t i = 0; i < Len; i++)
+  51:Src/shell.c   ****   {
+  52:Src/shell.c   ****     if (Buf[i] == SHELL_CMD_TERMINATOR_CHAR)
+  53:Src/shell.c   ****     {
+  54:Src/shell.c   ****       Shell_ProcessCommand();
+  55:Src/shell.c   ****       ShellRxBufferHead = 0;
+  56:Src/shell.c   ****     }
+  57:Src/shell.c   ****     else
+  58:Src/shell.c   ****     {
+  59:Src/shell.c   ****       ShellRxBuffer[ShellRxBufferHead] = Buf[i];
+ARM GAS  /tmp/cc70ITW0.s 			page 3
+
+
+  60:Src/shell.c   ****       ShellRxBufferHead++;
+  61:Src/shell.c   ****     }
+  62:Src/shell.c   ****   }
+  63:Src/shell.c   **** 
+  64:Src/shell.c   **** #if SHELL_ECHO
+  65:Src/shell.c   ****   CDC_Transmit_FS(Buf, Len);
+  66:Src/shell.c   **** #endif
+  67:Src/shell.c   **** }
+  68:Src/shell.c   **** 
+  69:Src/shell.c   **** static void BoardBringupTest(void)
+  70:Src/shell.c   **** {
+  59              		.loc 1 70 0
+  60              		.cfi_startproc
+  61              		@ args = 0, pretend = 0, frame = 256
+  62              		@ frame_needed = 0, uses_anonymous_args = 0
+  63 0000 30B5     		push	{r4, r5, lr}
+  64              	.LCFI1:
+  65              		.cfi_def_cfa_offset 12
+  66              		.cfi_offset 4, -12
+  67              		.cfi_offset 5, -8
+  68              		.cfi_offset 14, -4
+  69 0002 C1B0     		sub	sp, sp, #260
+  70              	.LCFI2:
+  71              		.cfi_def_cfa_offset 272
+  71:Src/shell.c   ****   char out[256];
+  72:Src/shell.c   **** 
+  73:Src/shell.c   ****    /*ADC 1 TEST*/
+  74:Src/shell.c   **** 
+  75:Src/shell.c   ****   HAL_GPIO_WritePin(GPIOC, BATT_ADC_EN_Pin, GPIO_PIN_SET);
+  72              		.loc 1 75 0
+  73 0004 134D     		ldr	r5, .L7
+  74 0006 0122     		movs	r2, #1
+  75 0008 4021     		movs	r1, #64
+  76 000a 2846     		mov	r0, r5
+  77 000c FFF7FEFF 		bl	HAL_GPIO_WritePin
+  78              	.LVL1:
+  76:Src/shell.c   ****   HAL_ADC_Start(&hadc1);
+  79              		.loc 1 76 0
+  80 0010 114C     		ldr	r4, .L7+4
+  81 0012 2046     		mov	r0, r4
+  82 0014 FFF7FEFF 		bl	HAL_ADC_Start
+  83              	.LVL2:
+  77:Src/shell.c   ****   HAL_ADC_PollForConversion(&hadc1, 0xffffffff);
+  84              		.loc 1 77 0
+  85 0018 4FF0FF31 		mov	r1, #-1
+  86 001c 2046     		mov	r0, r4
+  87 001e FFF7FEFF 		bl	HAL_ADC_PollForConversion
+  88              	.LVL3:
+  78:Src/shell.c   ****   sprintf(&out, "%d", HAL_ADC_GetValue(&hadc1));
+  89              		.loc 1 78 0
+  90 0022 2046     		mov	r0, r4
+  91 0024 FFF7FEFF 		bl	HAL_ADC_GetValue
+  92              	.LVL4:
+  93 0028 0246     		mov	r2, r0
+  94 002a 0C49     		ldr	r1, .L7+8
+  95 002c 6846     		mov	r0, sp
+  96 002e FFF7FEFF 		bl	sprintf
+ARM GAS  /tmp/cc70ITW0.s 			page 4
+
+
+  97              	.LVL5:
+  79:Src/shell.c   ****   HAL_ADC_Stop(&hadc1);
+  98              		.loc 1 79 0
+  99 0032 2046     		mov	r0, r4
+ 100 0034 FFF7FEFF 		bl	HAL_ADC_Stop
+ 101              	.LVL6:
+  80:Src/shell.c   ****   HAL_GPIO_WritePin(GPIOC, BATT_ADC_EN_Pin, GPIO_PIN_RESET);
+ 102              		.loc 1 80 0
+ 103 0038 0022     		movs	r2, #0
+ 104 003a 4021     		movs	r1, #64
+ 105 003c 2846     		mov	r0, r5
+ 106 003e FFF7FEFF 		bl	HAL_GPIO_WritePin
+ 107              	.LVL7:
+  81:Src/shell.c   **** 
+  82:Src/shell.c   ****   /*HAL_GPIO_TogglePin(BOOST_EN_GPIO_Port, BOOST_EN_Pin);*/
+  83:Src/shell.c   **** 
+  84:Src/shell.c   ****   /*sprintf(&out, "ASDQWE");*/
+  85:Src/shell.c   ****   CDC_Transmit_FS(out, strlen(out));
+ 108              		.loc 1 85 0
+ 109 0042 6846     		mov	r0, sp
+ 110 0044 FFF7FEFF 		bl	strlen
+ 111              	.LVL8:
+ 112 0048 0146     		mov	r1, r0
+ 113 004a 6846     		mov	r0, sp
+ 114 004c FFF7FEFF 		bl	CDC_Transmit_FS
+ 115              	.LVL9:
+  86:Src/shell.c   **** }
+ 116              		.loc 1 86 0
+ 117 0050 41B0     		add	sp, sp, #260
+ 118              	.LCFI3:
+ 119              		.cfi_def_cfa_offset 12
+ 120              		@ sp needed
+ 121 0052 30BD     		pop	{r4, r5, pc}
+ 122              	.L8:
+ 123              		.align	2
+ 124              	.L7:
+ 125 0054 00080048 		.word	1207961600
+ 126 0058 00000000 		.word	hadc1
+ 127 005c 00000000 		.word	.LC1
+ 128              		.cfi_endproc
+ 129              	.LFE321:
+ 131              		.section	.text.BoardBringupChangeAnimation,"ax",%progbits
+ 132              		.align	1
+ 133              		.syntax unified
+ 134              		.thumb
+ 135              		.thumb_func
+ 136              		.fpu fpv4-sp-d16
+ 138              	BoardBringupChangeAnimation:
+ 139              	.LFB322:
+  87:Src/shell.c   **** 
+  88:Src/shell.c   **** static void BoardBringupChangeAnimation(void)
+  89:Src/shell.c   **** {
+ 140              		.loc 1 89 0
+ 141              		.cfi_startproc
+ 142              		@ args = 0, pretend = 0, frame = 0
+ 143              		@ frame_needed = 0, uses_anonymous_args = 0
+ 144 0000 08B5     		push	{r3, lr}
+ARM GAS  /tmp/cc70ITW0.s 			page 5
+
+
+ 145              	.LCFI4:
+ 146              		.cfi_def_cfa_offset 8
+ 147              		.cfi_offset 3, -8
+ 148              		.cfi_offset 14, -4
+  90:Src/shell.c   ****   AddrLEDManager_PlayNextAnimation();
+ 149              		.loc 1 90 0
+ 150 0002 FFF7FEFF 		bl	AddrLEDManager_PlayNextAnimation
+ 151              	.LVL10:
+  91:Src/shell.c   **** }
+ 152              		.loc 1 91 0
+ 153 0006 08BD     		pop	{r3, pc}
+ 154              		.cfi_endproc
+ 155              	.LFE322:
+ 157              		.section	.text.Shell_Init,"ax",%progbits
+ 158              		.align	1
+ 159              		.global	Shell_Init
+ 160              		.syntax unified
+ 161              		.thumb
+ 162              		.thumb_func
+ 163              		.fpu fpv4-sp-d16
+ 165              	Shell_Init:
+ 166              	.LFB319:
+  33:Src/shell.c   **** 
+ 167              		.loc 1 33 0
+ 168              		.cfi_startproc
+ 169              		@ args = 0, pretend = 0, frame = 0
+ 170              		@ frame_needed = 0, uses_anonymous_args = 0
+ 171              		@ link register save eliminated.
+  35:Src/shell.c   **** 
+ 172              		.loc 1 35 0
+ 173 0000 7047     		bx	lr
+ 174              		.cfi_endproc
+ 175              	.LFE319:
+ 177              		.section	.text.Shell_ProcessCommand,"ax",%progbits
+ 178              		.align	1
+ 179              		.global	Shell_ProcessCommand
+ 180              		.syntax unified
+ 181              		.thumb
+ 182              		.thumb_func
+ 183              		.fpu fpv4-sp-d16
+ 185              	Shell_ProcessCommand:
+ 186              	.LFB324:
+  92:Src/shell.c   **** 
+  93:Src/shell.c   **** static void BoardBringupFlashTest(void)
+  94:Src/shell.c   **** {
+  95:Src/shell.c   ****   /*FLASH_Program_DoubleWord(*/
+  96:Src/shell.c   **** }
+  97:Src/shell.c   **** 
+  98:Src/shell.c   **** // Process the command string that populates our RxBuffer
+  99:Src/shell.c   **** GENERIC_STATUS_e Shell_ProcessCommand(void)
+ 100:Src/shell.c   **** {
+ 187              		.loc 1 100 0
+ 188              		.cfi_startproc
+ 189              		@ args = 0, pretend = 0, frame = 0
+ 190              		@ frame_needed = 0, uses_anonymous_args = 0
+ 191 0000 38B5     		push	{r3, r4, r5, lr}
+ 192              	.LCFI5:
+ARM GAS  /tmp/cc70ITW0.s 			page 6
+
+
+ 193              		.cfi_def_cfa_offset 16
+ 194              		.cfi_offset 3, -16
+ 195              		.cfi_offset 4, -12
+ 196              		.cfi_offset 5, -8
+ 197              		.cfi_offset 14, -4
+ 101:Src/shell.c   ****   // For now, just take the command "doit" and use this command to do stuff. we'll look into comman
+ 102:Src/shell.c   ****   //int strcmp(const char *s1, const char *s2);
+ 103:Src/shell.c   ****   if (ShellRxBufferHead > 0 && strncmp("doit", ShellRxBuffer, ShellRxBufferHead) == 0)
+ 198              		.loc 1 103 0
+ 199 0002 124B     		ldr	r3, .L18
+ 200 0004 1C68     		ldr	r4, [r3]
+ 201 0006 2CB1     		cbz	r4, .L13
+ 202              		.loc 1 103 0 is_stmt 0 discriminator 1
+ 203 0008 2246     		mov	r2, r4
+ 204 000a 1149     		ldr	r1, .L18+4
+ 205 000c 1148     		ldr	r0, .L18+8
+ 206 000e FFF7FEFF 		bl	strncmp
+ 207              	.LVL11:
+ 208 0012 A0B1     		cbz	r0, .L16
+ 209              	.L13:
+ 104:Src/shell.c   ****   {
+ 105:Src/shell.c   ****     BoardBringupTest();
+ 106:Src/shell.c   ****   }
+ 107:Src/shell.c   ****   else if (ShellRxBufferHead > 0 && strncmp("change", ShellRxBuffer, ShellRxBufferHead) == 0)
+ 210              		.loc 1 107 0 is_stmt 1
+ 211 0014 2CB1     		cbz	r4, .L14
+ 212              		.loc 1 107 0 is_stmt 0 discriminator 1
+ 213 0016 2246     		mov	r2, r4
+ 214 0018 0D49     		ldr	r1, .L18+4
+ 215 001a 0F48     		ldr	r0, .L18+12
+ 216 001c FFF7FEFF 		bl	strncmp
+ 217              	.LVL12:
+ 218 0020 80B1     		cbz	r0, .L17
+ 219              	.L14:
+ 108:Src/shell.c   ****   {
+ 109:Src/shell.c   ****     BoardBringupChangeAnimation();
+ 110:Src/shell.c   ****   }
+ 111:Src/shell.c   ****   ShellRxBufferHead = 0;
+ 220              		.loc 1 111 0 is_stmt 1
+ 221 0022 0024     		movs	r4, #0
+ 222 0024 094B     		ldr	r3, .L18
+ 223 0026 1C60     		str	r4, [r3]
+ 112:Src/shell.c   **** 
+ 113:Src/shell.c   ****   /*// First find what command this is. So find the first occurance of "space"*/
+ 114:Src/shell.c   ****   /*uint16_t spaceIdx = 0;*/
+ 115:Src/shell.c   ****   /*for (uint16_t i = 0; i < ShellRxBufferHead; i++)*/
+ 116:Src/shell.c   ****   /*{*/
+ 117:Src/shell.c   ****     /*if (ShellRxBuffer[i] == ' ')*/
+ 118:Src/shell.c   ****     /*{*/
+ 119:Src/shell.c   ****       /*spaceIdx = i;*/
+ 120:Src/shell.c   ****       /*break;*/
+ 121:Src/shell.c   ****     /*}*/
+ 122:Src/shell.c   ****   /*}*/
+ 123:Src/shell.c   **** 
+ 124:Src/shell.c   ****   /*// Go thru all registered commands, command strings. */
+ 125:Src/shell.c   ****   /*// Call the matching command callback function*/
+ 126:Src/shell.c   ****   /*for (int i = 0; i < ShellRxBufferHead; i++)*/
+ARM GAS  /tmp/cc70ITW0.s 			page 7
+
+
+ 127:Src/shell.c   ****   /*{*/
+ 128:Src/shell.c   ****     /*for (int c = 0; c < sizeof(ShellCommands); c++)*/
+ 129:Src/shell.c   ****     /*{*/
+ 130:Src/shell.c   ****     /*// TODO*/
+ 131:Src/shell.c   ****     /*}*/
+ 132:Src/shell.c   ****   /*}*/
+ 133:Src/shell.c   **** 
+ 134:Src/shell.c   ****   // Print newline
+ 135:Src/shell.c   ****   CDC_Transmit_FS(ShellNewline, strlen(ShellNewline));
+ 224              		.loc 1 135 0
+ 225 0028 0C4B     		ldr	r3, .L18+16
+ 226 002a 1D68     		ldr	r5, [r3]
+ 227 002c 2846     		mov	r0, r5
+ 228 002e FFF7FEFF 		bl	strlen
+ 229              	.LVL13:
+ 230 0032 0146     		mov	r1, r0
+ 231 0034 2846     		mov	r0, r5
+ 232 0036 FFF7FEFF 		bl	CDC_Transmit_FS
+ 233              	.LVL14:
+ 136:Src/shell.c   ****   return GENERIC_STATUS_OK;
+ 137:Src/shell.c   **** }
+ 234              		.loc 1 137 0
+ 235 003a 2046     		mov	r0, r4
+ 236 003c 38BD     		pop	{r3, r4, r5, pc}
+ 237              	.L16:
+ 105:Src/shell.c   ****   }
+ 238              		.loc 1 105 0
+ 239 003e FFF7FEFF 		bl	BoardBringupTest
+ 240              	.LVL15:
+ 241 0042 EEE7     		b	.L14
+ 242              	.L17:
+ 109:Src/shell.c   ****   }
+ 243              		.loc 1 109 0
+ 244 0044 FFF7FEFF 		bl	BoardBringupChangeAnimation
+ 245              	.LVL16:
+ 246 0048 EBE7     		b	.L14
+ 247              	.L19:
+ 248 004a 00BF     		.align	2
+ 249              	.L18:
+ 250 004c 00000000 		.word	.LANCHOR0
+ 251 0050 00000000 		.word	ShellRxBuffer
+ 252 0054 00000000 		.word	.LC2
+ 253 0058 08000000 		.word	.LC3
+ 254 005c 00000000 		.word	.LANCHOR1
+ 255              		.cfi_endproc
+ 256              	.LFE324:
+ 258              		.section	.text.Shell_CdcReceive,"ax",%progbits
+ 259              		.align	1
+ 260              		.global	Shell_CdcReceive
+ 261              		.syntax unified
+ 262              		.thumb
+ 263              		.thumb_func
+ 264              		.fpu fpv4-sp-d16
+ 266              	Shell_CdcReceive:
+ 267              	.LFB320:
+  38:Src/shell.c   ****   GENERIC_STATUS_e ret = GENERIC_STATUS_OK;
+ 268              		.loc 1 38 0
+ARM GAS  /tmp/cc70ITW0.s 			page 8
+
+
+ 269              		.cfi_startproc
+ 270              		@ args = 0, pretend = 0, frame = 0
+ 271              		@ frame_needed = 0, uses_anonymous_args = 0
+ 272              	.LVL17:
+ 273 0000 F8B5     		push	{r3, r4, r5, r6, r7, lr}
+ 274              	.LCFI6:
+ 275              		.cfi_def_cfa_offset 24
+ 276              		.cfi_offset 3, -24
+ 277              		.cfi_offset 4, -20
+ 278              		.cfi_offset 5, -16
+ 279              		.cfi_offset 6, -12
+ 280              		.cfi_offset 7, -8
+ 281              		.cfi_offset 14, -4
+ 282              	.LVL18:
+  42:Src/shell.c   ****   {
+ 283              		.loc 1 42 0
+ 284 0002 134B     		ldr	r3, .L30
+ 285 0004 1B68     		ldr	r3, [r3]
+ 286 0006 0B44     		add	r3, r3, r1
+ 287 0008 B3F5007F 		cmp	r3, #512
+ 288 000c 03D8     		bhi	.L27
+ 289 000e 0E46     		mov	r6, r1
+ 290 0010 0746     		mov	r7, r0
+ 291              	.LBB2:
+  50:Src/shell.c   ****   {
+ 292              		.loc 1 50 0
+ 293 0012 0024     		movs	r4, #0
+ 294 0014 0AE0     		b	.L21
+ 295              	.L27:
+ 296              	.LBE2:
+  44:Src/shell.c   ****     return GENERIC_STATUS_BUFFER_OVERFLOW;
+ 297              		.loc 1 44 0
+ 298 0016 0E4B     		ldr	r3, .L30
+ 299 0018 0022     		movs	r2, #0
+ 300 001a 1A60     		str	r2, [r3]
+  45:Src/shell.c   ****   }
+ 301              		.loc 1 45 0
+ 302 001c 0220     		movs	r0, #2
+ 303              	.LVL19:
+ 304 001e 15E0     		b	.L20
+ 305              	.LVL20:
+ 306              	.L29:
+ 307              	.LBB3:
+  54:Src/shell.c   ****       ShellRxBufferHead = 0;
+ 308              		.loc 1 54 0
+ 309 0020 FFF7FEFF 		bl	Shell_ProcessCommand
+ 310              	.LVL21:
+  55:Src/shell.c   ****     }
+ 311              		.loc 1 55 0
+ 312 0024 0A4B     		ldr	r3, .L30
+ 313 0026 0022     		movs	r2, #0
+ 314 0028 1A60     		str	r2, [r3]
+ 315              	.L23:
+  50:Src/shell.c   ****   {
+ 316              		.loc 1 50 0 discriminator 2
+ 317 002a 0134     		adds	r4, r4, #1
+ 318              	.LVL22:
+ARM GAS  /tmp/cc70ITW0.s 			page 9
+
+
+ 319              	.L21:
+  50:Src/shell.c   ****   {
+ 320              		.loc 1 50 0 is_stmt 0 discriminator 1
+ 321 002c B442     		cmp	r4, r6
+ 322 002e 09D2     		bcs	.L28
+  52:Src/shell.c   ****     {
+ 323              		.loc 1 52 0 is_stmt 1
+ 324 0030 3A5D     		ldrb	r2, [r7, r4]	@ zero_extendqisi2
+ 325 0032 0D2A     		cmp	r2, #13
+ 326 0034 F4D0     		beq	.L29
+  59:Src/shell.c   ****       ShellRxBufferHead++;
+ 327              		.loc 1 59 0
+ 328 0036 064D     		ldr	r5, .L30
+ 329 0038 2B68     		ldr	r3, [r5]
+ 330 003a 0649     		ldr	r1, .L30+4
+ 331 003c CA54     		strb	r2, [r1, r3]
+  60:Src/shell.c   ****     }
+ 332              		.loc 1 60 0
+ 333 003e 0133     		adds	r3, r3, #1
+ 334 0040 2B60     		str	r3, [r5]
+ 335 0042 F2E7     		b	.L23
+ 336              	.L28:
+ 337              	.LBE3:
+  65:Src/shell.c   **** #endif
+ 338              		.loc 1 65 0
+ 339 0044 3146     		mov	r1, r6
+ 340 0046 3846     		mov	r0, r7
+ 341 0048 FFF7FEFF 		bl	CDC_Transmit_FS
+ 342              	.LVL23:
+ 343              	.LVL24:
+ 344              	.L20:
+  67:Src/shell.c   **** 
+ 345              		.loc 1 67 0
+ 346 004c F8BD     		pop	{r3, r4, r5, r6, r7, pc}
+ 347              	.L31:
+ 348 004e 00BF     		.align	2
+ 349              	.L30:
+ 350 0050 00000000 		.word	.LANCHOR0
+ 351 0054 00000000 		.word	ShellRxBuffer
+ 352              		.cfi_endproc
+ 353              	.LFE320:
+ 355              		.global	ShellCommands
+ 356              		.global	ShellNewline
+ 357              		.global	ShellCommandStarted
+ 358              		.global	ShellRxBufferHead
+ 359              		.comm	ShellRxBuffer,512,4
+ 360              		.section	.bss.ShellCommandStarted,"aw",%nobits
+ 363              	ShellCommandStarted:
+ 364 0000 00       		.space	1
+ 365              		.section	.bss.ShellRxBufferHead,"aw",%nobits
+ 366              		.align	2
+ 367              		.set	.LANCHOR0,. + 0
+ 370              	ShellRxBufferHead:
+ 371 0000 00000000 		.space	4
+ 372              		.section	.data.ShellNewline,"aw",%progbits
+ 373              		.align	2
+ 374              		.set	.LANCHOR1,. + 0
+ARM GAS  /tmp/cc70ITW0.s 			page 10
+
+
+ 377              	ShellNewline:
+ 378 0000 08000000 		.word	.LC5
+ 379              		.section	.rodata.BoardBringupTest.str1.4,"aMS",%progbits,1
+ 380              		.align	2
+ 381              	.LC1:
+ 382 0000 256400   		.ascii	"%d\000"
+ 383              		.section	.rodata.ShellCommands,"a",%progbits
+ 384              		.align	2
+ 387              	ShellCommands:
+ 388 0000 00000000 		.word	.LC4
+ 389 0004 00000000 		.word	testFn
+ 390 0008 00       		.byte	0
+ 391 0009 000000   		.space	3
+ 392              		.section	.rodata.Shell_ProcessCommand.str1.4,"aMS",%progbits,1
+ 393              		.align	2
+ 394              	.LC2:
+ 395 0000 646F6974 		.ascii	"doit\000"
+ 395      00
+ 396 0005 000000   		.space	3
+ 397              	.LC3:
+ 398 0008 6368616E 		.ascii	"change\000"
+ 398      676500
+ 399              		.section	.rodata.str1.4,"aMS",%progbits,1
+ 400              		.align	2
+ 401              	.LC4:
+ 402 0000 74657374 		.ascii	"test\000"
+ 402      00
+ 403 0005 000000   		.space	3
+ 404              	.LC5:
+ 405 0008 0D0A00   		.ascii	"\015\012\000"
+ 406              		.section	.rodata.testFn.str1.4,"aMS",%progbits,1
+ 407              		.align	2
+ 408              	.LC0:
+ 409 0000 54455354 		.ascii	"TEST\000"
+ 409      00
+ 410              		.text
+ 411              	.Letext0:
+ 412              		.file 2 "/home/jon/KODMOD/EMBEDDED_TOOLCHAINS/gcc-arm-none-eabi-7-2018-q2-update/arm-none-eabi/inc
+ 413              		.file 3 "/home/jon/KODMOD/EMBEDDED_TOOLCHAINS/gcc-arm-none-eabi-7-2018-q2-update/arm-none-eabi/inc
+ 414              		.file 4 "Drivers/CMSIS/Include/core_cm4.h"
+ 415              		.file 5 "Drivers/CMSIS/Device/ST/STM32L4xx/Include/system_stm32l4xx.h"
+ 416              		.file 6 "Drivers/CMSIS/Device/ST/STM32L4xx/Include/stm32l476xx.h"
+ 417              		.file 7 "Drivers/CMSIS/Device/ST/STM32L4xx/Include/stm32l4xx.h"
+ 418              		.file 8 "Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_def.h"
+ 419              		.file 9 "Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_gpio.h"
+ 420              		.file 10 "Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_dma.h"
+ 421              		.file 11 "Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_adc.h"
+ 422              		.file 12 "Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_flash.h"
+ 423              		.file 13 "Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_i2c.h"
+ 424              		.file 14 "Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_tim.h"
+ 425              		.file 15 "Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal.h"
+ 426              		.file 16 "Inc/main.h"
+ 427              		.file 17 "Inc/shell.h"
+ 428              		.file 18 "Inc/i2c.h"
+ 429              		.file 19 "/home/jon/KODMOD/EMBEDDED_TOOLCHAINS/gcc-arm-none-eabi-7-2018-q2-update/arm-none-eabi/in
+ 430              		.file 20 "/home/jon/KODMOD/EMBEDDED_TOOLCHAINS/gcc-arm-none-eabi-7-2018-q2-update/arm-none-eabi/in
+ 431              		.file 21 "/home/jon/KODMOD/EMBEDDED_TOOLCHAINS/gcc-arm-none-eabi-7-2018-q2-update/lib/gcc/arm-none
+ARM GAS  /tmp/cc70ITW0.s 			page 11
+
+
+ 432              		.file 22 "/home/jon/KODMOD/EMBEDDED_TOOLCHAINS/gcc-arm-none-eabi-7-2018-q2-update/arm-none-eabi/in
+ 433              		.file 23 "Inc/adc.h"
+ 434              		.file 24 "Inc/tim.h"
+ 435              		.file 25 "Inc/addressable_led_manager.h"
+ 436              		.file 26 "/home/jon/KODMOD/EMBEDDED_TOOLCHAINS/gcc-arm-none-eabi-7-2018-q2-update/arm-none-eabi/in
+ 437              		.file 27 "/home/jon/KODMOD/EMBEDDED_TOOLCHAINS/gcc-arm-none-eabi-7-2018-q2-update/arm-none-eabi/in
+ARM GAS  /tmp/cc70ITW0.s 			page 12
+
+
+DEFINED SYMBOLS
+                            *ABS*:0000000000000000 shell.c
+     /tmp/cc70ITW0.s:18     .text.testFn:0000000000000000 $t
+     /tmp/cc70ITW0.s:24     .text.testFn:0000000000000000 testFn
+     /tmp/cc70ITW0.s:46     .text.testFn:000000000000000c $d
+     /tmp/cc70ITW0.s:51     .text.BoardBringupTest:0000000000000000 $t
+     /tmp/cc70ITW0.s:57     .text.BoardBringupTest:0000000000000000 BoardBringupTest
+     /tmp/cc70ITW0.s:125    .text.BoardBringupTest:0000000000000054 $d
+     /tmp/cc70ITW0.s:132    .text.BoardBringupChangeAnimation:0000000000000000 $t
+     /tmp/cc70ITW0.s:138    .text.BoardBringupChangeAnimation:0000000000000000 BoardBringupChangeAnimation
+     /tmp/cc70ITW0.s:158    .text.Shell_Init:0000000000000000 $t
+     /tmp/cc70ITW0.s:165    .text.Shell_Init:0000000000000000 Shell_Init
+     /tmp/cc70ITW0.s:178    .text.Shell_ProcessCommand:0000000000000000 $t
+     /tmp/cc70ITW0.s:185    .text.Shell_ProcessCommand:0000000000000000 Shell_ProcessCommand
+     /tmp/cc70ITW0.s:250    .text.Shell_ProcessCommand:000000000000004c $d
+                            *COM*:0000000000000200 ShellRxBuffer
+     /tmp/cc70ITW0.s:259    .text.Shell_CdcReceive:0000000000000000 $t
+     /tmp/cc70ITW0.s:266    .text.Shell_CdcReceive:0000000000000000 Shell_CdcReceive
+     /tmp/cc70ITW0.s:350    .text.Shell_CdcReceive:0000000000000050 $d
+     /tmp/cc70ITW0.s:387    .rodata.ShellCommands:0000000000000000 ShellCommands
+     /tmp/cc70ITW0.s:377    .data.ShellNewline:0000000000000000 ShellNewline
+     /tmp/cc70ITW0.s:363    .bss.ShellCommandStarted:0000000000000000 ShellCommandStarted
+     /tmp/cc70ITW0.s:370    .bss.ShellRxBufferHead:0000000000000000 ShellRxBufferHead
+     /tmp/cc70ITW0.s:364    .bss.ShellCommandStarted:0000000000000000 $d
+     /tmp/cc70ITW0.s:366    .bss.ShellRxBufferHead:0000000000000000 $d
+     /tmp/cc70ITW0.s:373    .data.ShellNewline:0000000000000000 $d
+     /tmp/cc70ITW0.s:380    .rodata.BoardBringupTest.str1.4:0000000000000000 $d
+     /tmp/cc70ITW0.s:384    .rodata.ShellCommands:0000000000000000 $d
+     /tmp/cc70ITW0.s:393    .rodata.Shell_ProcessCommand.str1.4:0000000000000000 $d
+     /tmp/cc70ITW0.s:400    .rodata.str1.4:0000000000000000 $d
+     /tmp/cc70ITW0.s:407    .rodata.testFn.str1.4:0000000000000000 $d
+
+UNDEFINED SYMBOLS
+CDC_Transmit_FS
+HAL_GPIO_WritePin
+HAL_ADC_Start
+HAL_ADC_PollForConversion
+HAL_ADC_GetValue
+sprintf
+HAL_ADC_Stop
+strlen
+hadc1
+AddrLEDManager_PlayNextAnimation
+strncmp

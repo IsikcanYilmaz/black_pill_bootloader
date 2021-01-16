@@ -1,0 +1,1098 @@
+ARM GAS  /tmp/ccprU03G.s 			page 1
+
+
+   1              		.cpu cortex-m4
+   2              		.eabi_attribute 27, 1
+   3              		.eabi_attribute 28, 1
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 1
+  11              		.eabi_attribute 34, 1
+  12              		.eabi_attribute 18, 4
+  13              		.file	"sw_timers.c"
+  14              		.text
+  15              	.Ltext0:
+  16              		.cfi_sections	.debug_frame
+  17              		.section	.text.SwTimer_Unlist,"ax",%progbits
+  18              		.align	1
+  19              		.syntax unified
+  20              		.thumb
+  21              		.thumb_func
+  22              		.fpu fpv4-sp-d16
+  24              	SwTimer_Unlist:
+  25              	.LFB315:
+  26              		.file 1 "Src/sw_timers.c"
+   1:Src/sw_timers.c **** #include "sw_timers.h"
+   2:Src/sw_timers.c **** #include "stm32l4xx.h"
+   3:Src/sw_timers.c **** #include "stm32l4xx_hal_cortex.h"
+   4:Src/sw_timers.c **** #include "stm32l4xx_hal.h"
+   5:Src/sw_timers.c **** 
+   6:Src/sw_timers.c **** /*
+   7:Src/sw_timers.c ****  * SOFTWARE TIMERS
+   8:Src/sw_timers.c ****  * Api that allows for the execution of arbitrary functions at specified time
+   9:Src/sw_timers.c ****  * A user is to create an instance of SwTimer_t, and populate the fn field 
+  10:Src/sw_timers.c ****  * with the desired callback function. 
+  11:Src/sw_timers.c ****  * How to use it:
+  12:Src/sw_timers.c ****  * - Create SwTimer_t object. Set its .fn member to the desired callback 
+  13:Src/sw_timers.c ****  *   function. set the Ms field to the millisecond value after which you want
+  14:Src/sw_timers.c ****  *   the callback to be called.
+  15:Src/sw_timers.c ****  * - Start timer with SwTimer_Start(&timer)
+  16:Src/sw_timers.c ****  * How it works:
+  17:Src/sw_timers.c ****  * - $counter is incremented every millisecond.
+  18:Src/sw_timers.c ****  * - We have a "timer" structure that has a function pointer that gets called
+  19:Src/sw_timers.c ****  *   upon the structure's timeout_ms field reaching 0. This structure is 
+  20:Src/sw_timers.c ****  *   "link listable". 
+  21:Src/sw_timers.c ****  */
+  22:Src/sw_timers.c **** 
+  23:Src/sw_timers.c **** volatile uint32_t counterMs = 0;
+  24:Src/sw_timers.c **** SwTimer_t *timerListHead = NULL; 
+  25:Src/sw_timers.c **** SwTimer_t *timerListTail = NULL;
+  26:Src/sw_timers.c **** 
+  27:Src/sw_timers.c **** 
+  28:Src/sw_timers.c **** // Upon timeout or stop, remove $timer from the linked list.
+  29:Src/sw_timers.c **** static void SwTimer_Unlist(SwTimer_t *timer)
+  30:Src/sw_timers.c **** {
+  27              		.loc 1 30 0
+  28              		.cfi_startproc
+ARM GAS  /tmp/ccprU03G.s 			page 2
+
+
+  29              		@ args = 0, pretend = 0, frame = 0
+  30              		@ frame_needed = 0, uses_anonymous_args = 0
+  31              		@ link register save eliminated.
+  32              	.LVL0:
+  33 0000 30B4     		push	{r4, r5}
+  34              	.LCFI0:
+  35              		.cfi_def_cfa_offset 8
+  36              		.cfi_offset 4, -8
+  37              		.cfi_offset 5, -4
+  38              	.LBB14:
+  39              	.LBB15:
+  40              		.file 2 "Drivers/CMSIS/Include/cmsis_gcc.h"
+   1:Drivers/CMSIS/Include/cmsis_gcc.h **** /**************************************************************************//**
+   2:Drivers/CMSIS/Include/cmsis_gcc.h ****  * @file     cmsis_gcc.h
+   3:Drivers/CMSIS/Include/cmsis_gcc.h ****  * @brief    CMSIS compiler GCC header file
+   4:Drivers/CMSIS/Include/cmsis_gcc.h ****  * @version  V5.0.4
+   5:Drivers/CMSIS/Include/cmsis_gcc.h ****  * @date     09. April 2018
+   6:Drivers/CMSIS/Include/cmsis_gcc.h ****  ******************************************************************************/
+   7:Drivers/CMSIS/Include/cmsis_gcc.h **** /*
+   8:Drivers/CMSIS/Include/cmsis_gcc.h ****  * Copyright (c) 2009-2018 Arm Limited. All rights reserved.
+   9:Drivers/CMSIS/Include/cmsis_gcc.h ****  *
+  10:Drivers/CMSIS/Include/cmsis_gcc.h ****  * SPDX-License-Identifier: Apache-2.0
+  11:Drivers/CMSIS/Include/cmsis_gcc.h ****  *
+  12:Drivers/CMSIS/Include/cmsis_gcc.h ****  * Licensed under the Apache License, Version 2.0 (the License); you may
+  13:Drivers/CMSIS/Include/cmsis_gcc.h ****  * not use this file except in compliance with the License.
+  14:Drivers/CMSIS/Include/cmsis_gcc.h ****  * You may obtain a copy of the License at
+  15:Drivers/CMSIS/Include/cmsis_gcc.h ****  *
+  16:Drivers/CMSIS/Include/cmsis_gcc.h ****  * www.apache.org/licenses/LICENSE-2.0
+  17:Drivers/CMSIS/Include/cmsis_gcc.h ****  *
+  18:Drivers/CMSIS/Include/cmsis_gcc.h ****  * Unless required by applicable law or agreed to in writing, software
+  19:Drivers/CMSIS/Include/cmsis_gcc.h ****  * distributed under the License is distributed on an AS IS BASIS, WITHOUT
+  20:Drivers/CMSIS/Include/cmsis_gcc.h ****  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  21:Drivers/CMSIS/Include/cmsis_gcc.h ****  * See the License for the specific language governing permissions and
+  22:Drivers/CMSIS/Include/cmsis_gcc.h ****  * limitations under the License.
+  23:Drivers/CMSIS/Include/cmsis_gcc.h ****  */
+  24:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+  25:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef __CMSIS_GCC_H
+  26:Drivers/CMSIS/Include/cmsis_gcc.h **** #define __CMSIS_GCC_H
+  27:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+  28:Drivers/CMSIS/Include/cmsis_gcc.h **** /* ignore some GCC warnings */
+  29:Drivers/CMSIS/Include/cmsis_gcc.h **** #pragma GCC diagnostic push
+  30:Drivers/CMSIS/Include/cmsis_gcc.h **** #pragma GCC diagnostic ignored "-Wsign-conversion"
+  31:Drivers/CMSIS/Include/cmsis_gcc.h **** #pragma GCC diagnostic ignored "-Wconversion"
+  32:Drivers/CMSIS/Include/cmsis_gcc.h **** #pragma GCC diagnostic ignored "-Wunused-parameter"
+  33:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+  34:Drivers/CMSIS/Include/cmsis_gcc.h **** /* Fallback for __has_builtin */
+  35:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef __has_builtin
+  36:Drivers/CMSIS/Include/cmsis_gcc.h ****   #define __has_builtin(x) (0)
+  37:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
+  38:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+  39:Drivers/CMSIS/Include/cmsis_gcc.h **** /* CMSIS compiler specific defines */
+  40:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef   __ASM
+  41:Drivers/CMSIS/Include/cmsis_gcc.h ****   #define __ASM                                  __asm
+  42:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
+  43:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef   __INLINE
+  44:Drivers/CMSIS/Include/cmsis_gcc.h ****   #define __INLINE                               inline
+  45:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
+ARM GAS  /tmp/ccprU03G.s 			page 3
+
+
+  46:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef   __STATIC_INLINE
+  47:Drivers/CMSIS/Include/cmsis_gcc.h ****   #define __STATIC_INLINE                        static inline
+  48:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
+  49:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef   __STATIC_FORCEINLINE                 
+  50:Drivers/CMSIS/Include/cmsis_gcc.h ****   #define __STATIC_FORCEINLINE                   __attribute__((always_inline)) static inline
+  51:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif                                           
+  52:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef   __NO_RETURN
+  53:Drivers/CMSIS/Include/cmsis_gcc.h ****   #define __NO_RETURN                            __attribute__((__noreturn__))
+  54:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
+  55:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef   __USED
+  56:Drivers/CMSIS/Include/cmsis_gcc.h ****   #define __USED                                 __attribute__((used))
+  57:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
+  58:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef   __WEAK
+  59:Drivers/CMSIS/Include/cmsis_gcc.h ****   #define __WEAK                                 __attribute__((weak))
+  60:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
+  61:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef   __PACKED
+  62:Drivers/CMSIS/Include/cmsis_gcc.h ****   #define __PACKED                               __attribute__((packed, aligned(1)))
+  63:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
+  64:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef   __PACKED_STRUCT
+  65:Drivers/CMSIS/Include/cmsis_gcc.h ****   #define __PACKED_STRUCT                        struct __attribute__((packed, aligned(1)))
+  66:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
+  67:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef   __PACKED_UNION
+  68:Drivers/CMSIS/Include/cmsis_gcc.h ****   #define __PACKED_UNION                         union __attribute__((packed, aligned(1)))
+  69:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
+  70:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef   __UNALIGNED_UINT32        /* deprecated */
+  71:Drivers/CMSIS/Include/cmsis_gcc.h ****   #pragma GCC diagnostic push
+  72:Drivers/CMSIS/Include/cmsis_gcc.h ****   #pragma GCC diagnostic ignored "-Wpacked"
+  73:Drivers/CMSIS/Include/cmsis_gcc.h ****   #pragma GCC diagnostic ignored "-Wattributes"
+  74:Drivers/CMSIS/Include/cmsis_gcc.h ****   struct __attribute__((packed)) T_UINT32 { uint32_t v; };
+  75:Drivers/CMSIS/Include/cmsis_gcc.h ****   #pragma GCC diagnostic pop
+  76:Drivers/CMSIS/Include/cmsis_gcc.h ****   #define __UNALIGNED_UINT32(x)                  (((struct T_UINT32 *)(x))->v)
+  77:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
+  78:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef   __UNALIGNED_UINT16_WRITE
+  79:Drivers/CMSIS/Include/cmsis_gcc.h ****   #pragma GCC diagnostic push
+  80:Drivers/CMSIS/Include/cmsis_gcc.h ****   #pragma GCC diagnostic ignored "-Wpacked"
+  81:Drivers/CMSIS/Include/cmsis_gcc.h ****   #pragma GCC diagnostic ignored "-Wattributes"
+  82:Drivers/CMSIS/Include/cmsis_gcc.h ****   __PACKED_STRUCT T_UINT16_WRITE { uint16_t v; };
+  83:Drivers/CMSIS/Include/cmsis_gcc.h ****   #pragma GCC diagnostic pop
+  84:Drivers/CMSIS/Include/cmsis_gcc.h ****   #define __UNALIGNED_UINT16_WRITE(addr, val)    (void)((((struct T_UINT16_WRITE *)(void *)(addr))-
+  85:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
+  86:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef   __UNALIGNED_UINT16_READ
+  87:Drivers/CMSIS/Include/cmsis_gcc.h ****   #pragma GCC diagnostic push
+  88:Drivers/CMSIS/Include/cmsis_gcc.h ****   #pragma GCC diagnostic ignored "-Wpacked"
+  89:Drivers/CMSIS/Include/cmsis_gcc.h ****   #pragma GCC diagnostic ignored "-Wattributes"
+  90:Drivers/CMSIS/Include/cmsis_gcc.h ****   __PACKED_STRUCT T_UINT16_READ { uint16_t v; };
+  91:Drivers/CMSIS/Include/cmsis_gcc.h ****   #pragma GCC diagnostic pop
+  92:Drivers/CMSIS/Include/cmsis_gcc.h ****   #define __UNALIGNED_UINT16_READ(addr)          (((const struct T_UINT16_READ *)(const void *)(add
+  93:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
+  94:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef   __UNALIGNED_UINT32_WRITE
+  95:Drivers/CMSIS/Include/cmsis_gcc.h ****   #pragma GCC diagnostic push
+  96:Drivers/CMSIS/Include/cmsis_gcc.h ****   #pragma GCC diagnostic ignored "-Wpacked"
+  97:Drivers/CMSIS/Include/cmsis_gcc.h ****   #pragma GCC diagnostic ignored "-Wattributes"
+  98:Drivers/CMSIS/Include/cmsis_gcc.h ****   __PACKED_STRUCT T_UINT32_WRITE { uint32_t v; };
+  99:Drivers/CMSIS/Include/cmsis_gcc.h ****   #pragma GCC diagnostic pop
+ 100:Drivers/CMSIS/Include/cmsis_gcc.h ****   #define __UNALIGNED_UINT32_WRITE(addr, val)    (void)((((struct T_UINT32_WRITE *)(void *)(addr))-
+ 101:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
+ 102:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef   __UNALIGNED_UINT32_READ
+ARM GAS  /tmp/ccprU03G.s 			page 4
+
+
+ 103:Drivers/CMSIS/Include/cmsis_gcc.h ****   #pragma GCC diagnostic push
+ 104:Drivers/CMSIS/Include/cmsis_gcc.h ****   #pragma GCC diagnostic ignored "-Wpacked"
+ 105:Drivers/CMSIS/Include/cmsis_gcc.h ****   #pragma GCC diagnostic ignored "-Wattributes"
+ 106:Drivers/CMSIS/Include/cmsis_gcc.h ****   __PACKED_STRUCT T_UINT32_READ { uint32_t v; };
+ 107:Drivers/CMSIS/Include/cmsis_gcc.h ****   #pragma GCC diagnostic pop
+ 108:Drivers/CMSIS/Include/cmsis_gcc.h ****   #define __UNALIGNED_UINT32_READ(addr)          (((const struct T_UINT32_READ *)(const void *)(add
+ 109:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
+ 110:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef   __ALIGNED
+ 111:Drivers/CMSIS/Include/cmsis_gcc.h ****   #define __ALIGNED(x)                           __attribute__((aligned(x)))
+ 112:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
+ 113:Drivers/CMSIS/Include/cmsis_gcc.h **** #ifndef   __RESTRICT
+ 114:Drivers/CMSIS/Include/cmsis_gcc.h ****   #define __RESTRICT                             __restrict
+ 115:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
+ 116:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 117:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 118:Drivers/CMSIS/Include/cmsis_gcc.h **** /* ###########################  Core Function Access  ########################### */
+ 119:Drivers/CMSIS/Include/cmsis_gcc.h **** /** \ingroup  CMSIS_Core_FunctionInterface
+ 120:Drivers/CMSIS/Include/cmsis_gcc.h ****     \defgroup CMSIS_Core_RegAccFunctions CMSIS Core Register Access Functions
+ 121:Drivers/CMSIS/Include/cmsis_gcc.h ****   @{
+ 122:Drivers/CMSIS/Include/cmsis_gcc.h ****  */
+ 123:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 124:Drivers/CMSIS/Include/cmsis_gcc.h **** /**
+ 125:Drivers/CMSIS/Include/cmsis_gcc.h ****   \brief   Enable IRQ Interrupts
+ 126:Drivers/CMSIS/Include/cmsis_gcc.h ****   \details Enables IRQ interrupts by clearing the I-bit in the CPSR.
+ 127:Drivers/CMSIS/Include/cmsis_gcc.h ****            Can only be executed in Privileged modes.
+ 128:Drivers/CMSIS/Include/cmsis_gcc.h ****  */
+ 129:Drivers/CMSIS/Include/cmsis_gcc.h **** __STATIC_FORCEINLINE void __enable_irq(void)
+ 130:Drivers/CMSIS/Include/cmsis_gcc.h **** {
+ 131:Drivers/CMSIS/Include/cmsis_gcc.h ****   __ASM volatile ("cpsie i" : : : "memory");
+ 132:Drivers/CMSIS/Include/cmsis_gcc.h **** }
+ 133:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 134:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 135:Drivers/CMSIS/Include/cmsis_gcc.h **** /**
+ 136:Drivers/CMSIS/Include/cmsis_gcc.h ****   \brief   Disable IRQ Interrupts
+ 137:Drivers/CMSIS/Include/cmsis_gcc.h ****   \details Disables IRQ interrupts by setting the I-bit in the CPSR.
+ 138:Drivers/CMSIS/Include/cmsis_gcc.h ****            Can only be executed in Privileged modes.
+ 139:Drivers/CMSIS/Include/cmsis_gcc.h ****  */
+ 140:Drivers/CMSIS/Include/cmsis_gcc.h **** __STATIC_FORCEINLINE void __disable_irq(void)
+ 141:Drivers/CMSIS/Include/cmsis_gcc.h **** {
+ 142:Drivers/CMSIS/Include/cmsis_gcc.h ****   __ASM volatile ("cpsid i" : : : "memory");
+ 143:Drivers/CMSIS/Include/cmsis_gcc.h **** }
+ 144:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 145:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 146:Drivers/CMSIS/Include/cmsis_gcc.h **** /**
+ 147:Drivers/CMSIS/Include/cmsis_gcc.h ****   \brief   Get Control Register
+ 148:Drivers/CMSIS/Include/cmsis_gcc.h ****   \details Returns the content of the Control Register.
+ 149:Drivers/CMSIS/Include/cmsis_gcc.h ****   \return               Control Register value
+ 150:Drivers/CMSIS/Include/cmsis_gcc.h ****  */
+ 151:Drivers/CMSIS/Include/cmsis_gcc.h **** __STATIC_FORCEINLINE uint32_t __get_CONTROL(void)
+ 152:Drivers/CMSIS/Include/cmsis_gcc.h **** {
+ 153:Drivers/CMSIS/Include/cmsis_gcc.h ****   uint32_t result;
+ 154:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 155:Drivers/CMSIS/Include/cmsis_gcc.h ****   __ASM volatile ("MRS %0, control" : "=r" (result) );
+ 156:Drivers/CMSIS/Include/cmsis_gcc.h ****   return(result);
+ 157:Drivers/CMSIS/Include/cmsis_gcc.h **** }
+ 158:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 159:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ARM GAS  /tmp/ccprU03G.s 			page 5
+
+
+ 160:Drivers/CMSIS/Include/cmsis_gcc.h **** #if (defined (__ARM_FEATURE_CMSE ) && (__ARM_FEATURE_CMSE == 3))
+ 161:Drivers/CMSIS/Include/cmsis_gcc.h **** /**
+ 162:Drivers/CMSIS/Include/cmsis_gcc.h ****   \brief   Get Control Register (non-secure)
+ 163:Drivers/CMSIS/Include/cmsis_gcc.h ****   \details Returns the content of the non-secure Control Register when in secure mode.
+ 164:Drivers/CMSIS/Include/cmsis_gcc.h ****   \return               non-secure Control Register value
+ 165:Drivers/CMSIS/Include/cmsis_gcc.h ****  */
+ 166:Drivers/CMSIS/Include/cmsis_gcc.h **** __STATIC_FORCEINLINE uint32_t __TZ_get_CONTROL_NS(void)
+ 167:Drivers/CMSIS/Include/cmsis_gcc.h **** {
+ 168:Drivers/CMSIS/Include/cmsis_gcc.h ****   uint32_t result;
+ 169:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 170:Drivers/CMSIS/Include/cmsis_gcc.h ****   __ASM volatile ("MRS %0, control_ns" : "=r" (result) );
+ 171:Drivers/CMSIS/Include/cmsis_gcc.h ****   return(result);
+ 172:Drivers/CMSIS/Include/cmsis_gcc.h **** }
+ 173:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
+ 174:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 175:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 176:Drivers/CMSIS/Include/cmsis_gcc.h **** /**
+ 177:Drivers/CMSIS/Include/cmsis_gcc.h ****   \brief   Set Control Register
+ 178:Drivers/CMSIS/Include/cmsis_gcc.h ****   \details Writes the given value to the Control Register.
+ 179:Drivers/CMSIS/Include/cmsis_gcc.h ****   \param [in]    control  Control Register value to set
+ 180:Drivers/CMSIS/Include/cmsis_gcc.h ****  */
+ 181:Drivers/CMSIS/Include/cmsis_gcc.h **** __STATIC_FORCEINLINE void __set_CONTROL(uint32_t control)
+ 182:Drivers/CMSIS/Include/cmsis_gcc.h **** {
+ 183:Drivers/CMSIS/Include/cmsis_gcc.h ****   __ASM volatile ("MSR control, %0" : : "r" (control) : "memory");
+ 184:Drivers/CMSIS/Include/cmsis_gcc.h **** }
+ 185:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 186:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 187:Drivers/CMSIS/Include/cmsis_gcc.h **** #if (defined (__ARM_FEATURE_CMSE ) && (__ARM_FEATURE_CMSE == 3))
+ 188:Drivers/CMSIS/Include/cmsis_gcc.h **** /**
+ 189:Drivers/CMSIS/Include/cmsis_gcc.h ****   \brief   Set Control Register (non-secure)
+ 190:Drivers/CMSIS/Include/cmsis_gcc.h ****   \details Writes the given value to the non-secure Control Register when in secure state.
+ 191:Drivers/CMSIS/Include/cmsis_gcc.h ****   \param [in]    control  Control Register value to set
+ 192:Drivers/CMSIS/Include/cmsis_gcc.h ****  */
+ 193:Drivers/CMSIS/Include/cmsis_gcc.h **** __STATIC_FORCEINLINE void __TZ_set_CONTROL_NS(uint32_t control)
+ 194:Drivers/CMSIS/Include/cmsis_gcc.h **** {
+ 195:Drivers/CMSIS/Include/cmsis_gcc.h ****   __ASM volatile ("MSR control_ns, %0" : : "r" (control) : "memory");
+ 196:Drivers/CMSIS/Include/cmsis_gcc.h **** }
+ 197:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
+ 198:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 199:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 200:Drivers/CMSIS/Include/cmsis_gcc.h **** /**
+ 201:Drivers/CMSIS/Include/cmsis_gcc.h ****   \brief   Get IPSR Register
+ 202:Drivers/CMSIS/Include/cmsis_gcc.h ****   \details Returns the content of the IPSR Register.
+ 203:Drivers/CMSIS/Include/cmsis_gcc.h ****   \return               IPSR Register value
+ 204:Drivers/CMSIS/Include/cmsis_gcc.h ****  */
+ 205:Drivers/CMSIS/Include/cmsis_gcc.h **** __STATIC_FORCEINLINE uint32_t __get_IPSR(void)
+ 206:Drivers/CMSIS/Include/cmsis_gcc.h **** {
+ 207:Drivers/CMSIS/Include/cmsis_gcc.h ****   uint32_t result;
+ 208:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 209:Drivers/CMSIS/Include/cmsis_gcc.h ****   __ASM volatile ("MRS %0, ipsr" : "=r" (result) );
+ 210:Drivers/CMSIS/Include/cmsis_gcc.h ****   return(result);
+ 211:Drivers/CMSIS/Include/cmsis_gcc.h **** }
+ 212:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 213:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 214:Drivers/CMSIS/Include/cmsis_gcc.h **** /**
+ 215:Drivers/CMSIS/Include/cmsis_gcc.h ****   \brief   Get APSR Register
+ 216:Drivers/CMSIS/Include/cmsis_gcc.h ****   \details Returns the content of the APSR Register.
+ARM GAS  /tmp/ccprU03G.s 			page 6
+
+
+ 217:Drivers/CMSIS/Include/cmsis_gcc.h ****   \return               APSR Register value
+ 218:Drivers/CMSIS/Include/cmsis_gcc.h ****  */
+ 219:Drivers/CMSIS/Include/cmsis_gcc.h **** __STATIC_FORCEINLINE uint32_t __get_APSR(void)
+ 220:Drivers/CMSIS/Include/cmsis_gcc.h **** {
+ 221:Drivers/CMSIS/Include/cmsis_gcc.h ****   uint32_t result;
+ 222:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 223:Drivers/CMSIS/Include/cmsis_gcc.h ****   __ASM volatile ("MRS %0, apsr" : "=r" (result) );
+ 224:Drivers/CMSIS/Include/cmsis_gcc.h ****   return(result);
+ 225:Drivers/CMSIS/Include/cmsis_gcc.h **** }
+ 226:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 227:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 228:Drivers/CMSIS/Include/cmsis_gcc.h **** /**
+ 229:Drivers/CMSIS/Include/cmsis_gcc.h ****   \brief   Get xPSR Register
+ 230:Drivers/CMSIS/Include/cmsis_gcc.h ****   \details Returns the content of the xPSR Register.
+ 231:Drivers/CMSIS/Include/cmsis_gcc.h ****   \return               xPSR Register value
+ 232:Drivers/CMSIS/Include/cmsis_gcc.h ****  */
+ 233:Drivers/CMSIS/Include/cmsis_gcc.h **** __STATIC_FORCEINLINE uint32_t __get_xPSR(void)
+ 234:Drivers/CMSIS/Include/cmsis_gcc.h **** {
+ 235:Drivers/CMSIS/Include/cmsis_gcc.h ****   uint32_t result;
+ 236:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 237:Drivers/CMSIS/Include/cmsis_gcc.h ****   __ASM volatile ("MRS %0, xpsr" : "=r" (result) );
+ 238:Drivers/CMSIS/Include/cmsis_gcc.h ****   return(result);
+ 239:Drivers/CMSIS/Include/cmsis_gcc.h **** }
+ 240:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 241:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 242:Drivers/CMSIS/Include/cmsis_gcc.h **** /**
+ 243:Drivers/CMSIS/Include/cmsis_gcc.h ****   \brief   Get Process Stack Pointer
+ 244:Drivers/CMSIS/Include/cmsis_gcc.h ****   \details Returns the current value of the Process Stack Pointer (PSP).
+ 245:Drivers/CMSIS/Include/cmsis_gcc.h ****   \return               PSP Register value
+ 246:Drivers/CMSIS/Include/cmsis_gcc.h ****  */
+ 247:Drivers/CMSIS/Include/cmsis_gcc.h **** __STATIC_FORCEINLINE uint32_t __get_PSP(void)
+ 248:Drivers/CMSIS/Include/cmsis_gcc.h **** {
+ 249:Drivers/CMSIS/Include/cmsis_gcc.h ****   uint32_t result;
+ 250:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 251:Drivers/CMSIS/Include/cmsis_gcc.h ****   __ASM volatile ("MRS %0, psp"  : "=r" (result) );
+ 252:Drivers/CMSIS/Include/cmsis_gcc.h ****   return(result);
+ 253:Drivers/CMSIS/Include/cmsis_gcc.h **** }
+ 254:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 255:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 256:Drivers/CMSIS/Include/cmsis_gcc.h **** #if (defined (__ARM_FEATURE_CMSE ) && (__ARM_FEATURE_CMSE == 3))
+ 257:Drivers/CMSIS/Include/cmsis_gcc.h **** /**
+ 258:Drivers/CMSIS/Include/cmsis_gcc.h ****   \brief   Get Process Stack Pointer (non-secure)
+ 259:Drivers/CMSIS/Include/cmsis_gcc.h ****   \details Returns the current value of the non-secure Process Stack Pointer (PSP) when in secure s
+ 260:Drivers/CMSIS/Include/cmsis_gcc.h ****   \return               PSP Register value
+ 261:Drivers/CMSIS/Include/cmsis_gcc.h ****  */
+ 262:Drivers/CMSIS/Include/cmsis_gcc.h **** __STATIC_FORCEINLINE uint32_t __TZ_get_PSP_NS(void)
+ 263:Drivers/CMSIS/Include/cmsis_gcc.h **** {
+ 264:Drivers/CMSIS/Include/cmsis_gcc.h ****   uint32_t result;
+ 265:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 266:Drivers/CMSIS/Include/cmsis_gcc.h ****   __ASM volatile ("MRS %0, psp_ns"  : "=r" (result) );
+ 267:Drivers/CMSIS/Include/cmsis_gcc.h ****   return(result);
+ 268:Drivers/CMSIS/Include/cmsis_gcc.h **** }
+ 269:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
+ 270:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 271:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 272:Drivers/CMSIS/Include/cmsis_gcc.h **** /**
+ 273:Drivers/CMSIS/Include/cmsis_gcc.h ****   \brief   Set Process Stack Pointer
+ARM GAS  /tmp/ccprU03G.s 			page 7
+
+
+ 274:Drivers/CMSIS/Include/cmsis_gcc.h ****   \details Assigns the given value to the Process Stack Pointer (PSP).
+ 275:Drivers/CMSIS/Include/cmsis_gcc.h ****   \param [in]    topOfProcStack  Process Stack Pointer value to set
+ 276:Drivers/CMSIS/Include/cmsis_gcc.h ****  */
+ 277:Drivers/CMSIS/Include/cmsis_gcc.h **** __STATIC_FORCEINLINE void __set_PSP(uint32_t topOfProcStack)
+ 278:Drivers/CMSIS/Include/cmsis_gcc.h **** {
+ 279:Drivers/CMSIS/Include/cmsis_gcc.h ****   __ASM volatile ("MSR psp, %0" : : "r" (topOfProcStack) : );
+ 280:Drivers/CMSIS/Include/cmsis_gcc.h **** }
+ 281:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 282:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 283:Drivers/CMSIS/Include/cmsis_gcc.h **** #if (defined (__ARM_FEATURE_CMSE ) && (__ARM_FEATURE_CMSE == 3))
+ 284:Drivers/CMSIS/Include/cmsis_gcc.h **** /**
+ 285:Drivers/CMSIS/Include/cmsis_gcc.h ****   \brief   Set Process Stack Pointer (non-secure)
+ 286:Drivers/CMSIS/Include/cmsis_gcc.h ****   \details Assigns the given value to the non-secure Process Stack Pointer (PSP) when in secure sta
+ 287:Drivers/CMSIS/Include/cmsis_gcc.h ****   \param [in]    topOfProcStack  Process Stack Pointer value to set
+ 288:Drivers/CMSIS/Include/cmsis_gcc.h ****  */
+ 289:Drivers/CMSIS/Include/cmsis_gcc.h **** __STATIC_FORCEINLINE void __TZ_set_PSP_NS(uint32_t topOfProcStack)
+ 290:Drivers/CMSIS/Include/cmsis_gcc.h **** {
+ 291:Drivers/CMSIS/Include/cmsis_gcc.h ****   __ASM volatile ("MSR psp_ns, %0" : : "r" (topOfProcStack) : );
+ 292:Drivers/CMSIS/Include/cmsis_gcc.h **** }
+ 293:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
+ 294:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 295:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 296:Drivers/CMSIS/Include/cmsis_gcc.h **** /**
+ 297:Drivers/CMSIS/Include/cmsis_gcc.h ****   \brief   Get Main Stack Pointer
+ 298:Drivers/CMSIS/Include/cmsis_gcc.h ****   \details Returns the current value of the Main Stack Pointer (MSP).
+ 299:Drivers/CMSIS/Include/cmsis_gcc.h ****   \return               MSP Register value
+ 300:Drivers/CMSIS/Include/cmsis_gcc.h ****  */
+ 301:Drivers/CMSIS/Include/cmsis_gcc.h **** __STATIC_FORCEINLINE uint32_t __get_MSP(void)
+ 302:Drivers/CMSIS/Include/cmsis_gcc.h **** {
+ 303:Drivers/CMSIS/Include/cmsis_gcc.h ****   uint32_t result;
+ 304:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 305:Drivers/CMSIS/Include/cmsis_gcc.h ****   __ASM volatile ("MRS %0, msp" : "=r" (result) );
+ 306:Drivers/CMSIS/Include/cmsis_gcc.h ****   return(result);
+ 307:Drivers/CMSIS/Include/cmsis_gcc.h **** }
+ 308:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 309:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 310:Drivers/CMSIS/Include/cmsis_gcc.h **** #if (defined (__ARM_FEATURE_CMSE ) && (__ARM_FEATURE_CMSE == 3))
+ 311:Drivers/CMSIS/Include/cmsis_gcc.h **** /**
+ 312:Drivers/CMSIS/Include/cmsis_gcc.h ****   \brief   Get Main Stack Pointer (non-secure)
+ 313:Drivers/CMSIS/Include/cmsis_gcc.h ****   \details Returns the current value of the non-secure Main Stack Pointer (MSP) when in secure stat
+ 314:Drivers/CMSIS/Include/cmsis_gcc.h ****   \return               MSP Register value
+ 315:Drivers/CMSIS/Include/cmsis_gcc.h ****  */
+ 316:Drivers/CMSIS/Include/cmsis_gcc.h **** __STATIC_FORCEINLINE uint32_t __TZ_get_MSP_NS(void)
+ 317:Drivers/CMSIS/Include/cmsis_gcc.h **** {
+ 318:Drivers/CMSIS/Include/cmsis_gcc.h ****   uint32_t result;
+ 319:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 320:Drivers/CMSIS/Include/cmsis_gcc.h ****   __ASM volatile ("MRS %0, msp_ns" : "=r" (result) );
+ 321:Drivers/CMSIS/Include/cmsis_gcc.h ****   return(result);
+ 322:Drivers/CMSIS/Include/cmsis_gcc.h **** }
+ 323:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
+ 324:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 325:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 326:Drivers/CMSIS/Include/cmsis_gcc.h **** /**
+ 327:Drivers/CMSIS/Include/cmsis_gcc.h ****   \brief   Set Main Stack Pointer
+ 328:Drivers/CMSIS/Include/cmsis_gcc.h ****   \details Assigns the given value to the Main Stack Pointer (MSP).
+ 329:Drivers/CMSIS/Include/cmsis_gcc.h ****   \param [in]    topOfMainStack  Main Stack Pointer value to set
+ 330:Drivers/CMSIS/Include/cmsis_gcc.h ****  */
+ARM GAS  /tmp/ccprU03G.s 			page 8
+
+
+ 331:Drivers/CMSIS/Include/cmsis_gcc.h **** __STATIC_FORCEINLINE void __set_MSP(uint32_t topOfMainStack)
+ 332:Drivers/CMSIS/Include/cmsis_gcc.h **** {
+ 333:Drivers/CMSIS/Include/cmsis_gcc.h ****   __ASM volatile ("MSR msp, %0" : : "r" (topOfMainStack) : );
+ 334:Drivers/CMSIS/Include/cmsis_gcc.h **** }
+ 335:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 336:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 337:Drivers/CMSIS/Include/cmsis_gcc.h **** #if (defined (__ARM_FEATURE_CMSE ) && (__ARM_FEATURE_CMSE == 3))
+ 338:Drivers/CMSIS/Include/cmsis_gcc.h **** /**
+ 339:Drivers/CMSIS/Include/cmsis_gcc.h ****   \brief   Set Main Stack Pointer (non-secure)
+ 340:Drivers/CMSIS/Include/cmsis_gcc.h ****   \details Assigns the given value to the non-secure Main Stack Pointer (MSP) when in secure state.
+ 341:Drivers/CMSIS/Include/cmsis_gcc.h ****   \param [in]    topOfMainStack  Main Stack Pointer value to set
+ 342:Drivers/CMSIS/Include/cmsis_gcc.h ****  */
+ 343:Drivers/CMSIS/Include/cmsis_gcc.h **** __STATIC_FORCEINLINE void __TZ_set_MSP_NS(uint32_t topOfMainStack)
+ 344:Drivers/CMSIS/Include/cmsis_gcc.h **** {
+ 345:Drivers/CMSIS/Include/cmsis_gcc.h ****   __ASM volatile ("MSR msp_ns, %0" : : "r" (topOfMainStack) : );
+ 346:Drivers/CMSIS/Include/cmsis_gcc.h **** }
+ 347:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
+ 348:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 349:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 350:Drivers/CMSIS/Include/cmsis_gcc.h **** #if (defined (__ARM_FEATURE_CMSE ) && (__ARM_FEATURE_CMSE == 3))
+ 351:Drivers/CMSIS/Include/cmsis_gcc.h **** /**
+ 352:Drivers/CMSIS/Include/cmsis_gcc.h ****   \brief   Get Stack Pointer (non-secure)
+ 353:Drivers/CMSIS/Include/cmsis_gcc.h ****   \details Returns the current value of the non-secure Stack Pointer (SP) when in secure state.
+ 354:Drivers/CMSIS/Include/cmsis_gcc.h ****   \return               SP Register value
+ 355:Drivers/CMSIS/Include/cmsis_gcc.h ****  */
+ 356:Drivers/CMSIS/Include/cmsis_gcc.h **** __STATIC_FORCEINLINE uint32_t __TZ_get_SP_NS(void)
+ 357:Drivers/CMSIS/Include/cmsis_gcc.h **** {
+ 358:Drivers/CMSIS/Include/cmsis_gcc.h ****   uint32_t result;
+ 359:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 360:Drivers/CMSIS/Include/cmsis_gcc.h ****   __ASM volatile ("MRS %0, sp_ns" : "=r" (result) );
+ 361:Drivers/CMSIS/Include/cmsis_gcc.h ****   return(result);
+ 362:Drivers/CMSIS/Include/cmsis_gcc.h **** }
+ 363:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 364:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 365:Drivers/CMSIS/Include/cmsis_gcc.h **** /**
+ 366:Drivers/CMSIS/Include/cmsis_gcc.h ****   \brief   Set Stack Pointer (non-secure)
+ 367:Drivers/CMSIS/Include/cmsis_gcc.h ****   \details Assigns the given value to the non-secure Stack Pointer (SP) when in secure state.
+ 368:Drivers/CMSIS/Include/cmsis_gcc.h ****   \param [in]    topOfStack  Stack Pointer value to set
+ 369:Drivers/CMSIS/Include/cmsis_gcc.h ****  */
+ 370:Drivers/CMSIS/Include/cmsis_gcc.h **** __STATIC_FORCEINLINE void __TZ_set_SP_NS(uint32_t topOfStack)
+ 371:Drivers/CMSIS/Include/cmsis_gcc.h **** {
+ 372:Drivers/CMSIS/Include/cmsis_gcc.h ****   __ASM volatile ("MSR sp_ns, %0" : : "r" (topOfStack) : );
+ 373:Drivers/CMSIS/Include/cmsis_gcc.h **** }
+ 374:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
+ 375:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 376:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 377:Drivers/CMSIS/Include/cmsis_gcc.h **** /**
+ 378:Drivers/CMSIS/Include/cmsis_gcc.h ****   \brief   Get Priority Mask
+ 379:Drivers/CMSIS/Include/cmsis_gcc.h ****   \details Returns the current state of the priority mask bit from the Priority Mask Register.
+ 380:Drivers/CMSIS/Include/cmsis_gcc.h ****   \return               Priority Mask value
+ 381:Drivers/CMSIS/Include/cmsis_gcc.h ****  */
+ 382:Drivers/CMSIS/Include/cmsis_gcc.h **** __STATIC_FORCEINLINE uint32_t __get_PRIMASK(void)
+ 383:Drivers/CMSIS/Include/cmsis_gcc.h **** {
+ 384:Drivers/CMSIS/Include/cmsis_gcc.h ****   uint32_t result;
+ 385:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 386:Drivers/CMSIS/Include/cmsis_gcc.h ****   __ASM volatile ("MRS %0, primask" : "=r" (result) :: "memory");
+  41              		.loc 2 386 0
+ARM GAS  /tmp/ccprU03G.s 			page 9
+
+
+  42              		.syntax unified
+  43              	@ 386 "Drivers/CMSIS/Include/cmsis_gcc.h" 1
+  44 0002 EFF31081 		MRS r1, primask
+  45              	@ 0 "" 2
+  46              		.thumb
+  47              		.syntax unified
+  48              	.LBE15:
+  49              	.LBE14:
+  50              	.LBB16:
+  51              	.LBB17:
+ 142:Drivers/CMSIS/Include/cmsis_gcc.h **** }
+  52              		.loc 2 142 0
+  53              		.syntax unified
+  54              	@ 142 "Drivers/CMSIS/Include/cmsis_gcc.h" 1
+  55 0006 72B6     		cpsid i
+  56              	@ 0 "" 2
+  57              		.thumb
+  58              		.syntax unified
+  59              	.LBE17:
+  60              	.LBE16:
+  31:Src/sw_timers.c ****   // One of three things may happen at unlisting a timer
+  32:Src/sw_timers.c ****   // - the timer at the head is to be unlisted
+  33:Src/sw_timers.c ****   // - the timer at the tail
+  34:Src/sw_timers.c ****   // - a timer in between
+  35:Src/sw_timers.c **** 
+  36:Src/sw_timers.c ****   CRITICAL_SECTION_BEGIN;
+  37:Src/sw_timers.c **** 
+  38:Src/sw_timers.c ****   SwTimer_t *originalPrev = timer->prev;
+  61              		.loc 1 38 0
+  62 0008 4369     		ldr	r3, [r0, #20]
+  63              	.LVL1:
+  39:Src/sw_timers.c ****   SwTimer_t *originalNext = timer->next;
+  64              		.loc 1 39 0
+  65 000a 0269     		ldr	r2, [r0, #16]
+  66              	.LVL2:
+  40:Src/sw_timers.c **** 
+  41:Src/sw_timers.c ****   // this is the head of the list update our head
+  42:Src/sw_timers.c ****   if (timer == timerListHead)
+  67              		.loc 1 42 0
+  68 000c 104C     		ldr	r4, .L11
+  69 000e 2468     		ldr	r4, [r4]
+  70 0010 8442     		cmp	r4, r0
+  71 0012 0DD0     		beq	.L9
+  72              	.L2:
+  43:Src/sw_timers.c ****   {
+  44:Src/sw_timers.c ****     if (timer->next)
+  45:Src/sw_timers.c ****       timerListHead = timer->next;
+  46:Src/sw_timers.c ****     else
+  47:Src/sw_timers.c ****       timerListHead = NULL;
+  48:Src/sw_timers.c ****   }
+  49:Src/sw_timers.c **** 
+  50:Src/sw_timers.c ****   // this is the tail of the list update our tail
+  51:Src/sw_timers.c ****   if (timer == timerListTail)
+  73              		.loc 1 51 0
+  74 0014 0F4C     		ldr	r4, .L11+4
+  75 0016 2468     		ldr	r4, [r4]
+  76 0018 8442     		cmp	r4, r0
+ARM GAS  /tmp/ccprU03G.s 			page 10
+
+
+  77 001a 11D0     		beq	.L10
+  78              	.LVL3:
+  79              	.L4:
+  52:Src/sw_timers.c ****   {
+  53:Src/sw_timers.c ****     if (timer->prev)
+  54:Src/sw_timers.c ****       timerListTail = timer->prev;
+  55:Src/sw_timers.c ****     else
+  56:Src/sw_timers.c ****       timerListTail = NULL;
+  57:Src/sw_timers.c ****   }
+  58:Src/sw_timers.c **** 
+  59:Src/sw_timers.c ****   // this is a timer in the middle
+  60:Src/sw_timers.c ****   if (originalPrev)
+  80              		.loc 1 60 0
+  81 001c 0BB1     		cbz	r3, .L6
+  61:Src/sw_timers.c ****   {
+  62:Src/sw_timers.c ****     if (originalNext)
+  82              		.loc 1 62 0
+  83 001e 02B1     		cbz	r2, .L6
+  63:Src/sw_timers.c ****       originalPrev->next = originalNext;
+  84              		.loc 1 63 0
+  85 0020 1A61     		str	r2, [r3, #16]
+  86              	.L6:
+  64:Src/sw_timers.c ****   }
+  65:Src/sw_timers.c **** 
+  66:Src/sw_timers.c ****   if (originalNext)
+  87              		.loc 1 66 0
+  88 0022 0AB1     		cbz	r2, .L7
+  67:Src/sw_timers.c ****   {
+  68:Src/sw_timers.c ****     if (originalPrev)
+  89              		.loc 1 68 0
+  90 0024 03B1     		cbz	r3, .L7
+  69:Src/sw_timers.c ****       originalNext->prev = originalPrev;
+  91              		.loc 1 69 0
+  92 0026 5361     		str	r3, [r2, #20]
+  93              	.L7:
+  94              	.LVL4:
+  95              	.LBB18:
+  96              	.LBB19:
+ 387:Drivers/CMSIS/Include/cmsis_gcc.h ****   return(result);
+ 388:Drivers/CMSIS/Include/cmsis_gcc.h **** }
+ 389:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 390:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 391:Drivers/CMSIS/Include/cmsis_gcc.h **** #if (defined (__ARM_FEATURE_CMSE ) && (__ARM_FEATURE_CMSE == 3))
+ 392:Drivers/CMSIS/Include/cmsis_gcc.h **** /**
+ 393:Drivers/CMSIS/Include/cmsis_gcc.h ****   \brief   Get Priority Mask (non-secure)
+ 394:Drivers/CMSIS/Include/cmsis_gcc.h ****   \details Returns the current state of the non-secure priority mask bit from the Priority Mask Reg
+ 395:Drivers/CMSIS/Include/cmsis_gcc.h ****   \return               Priority Mask value
+ 396:Drivers/CMSIS/Include/cmsis_gcc.h ****  */
+ 397:Drivers/CMSIS/Include/cmsis_gcc.h **** __STATIC_FORCEINLINE uint32_t __TZ_get_PRIMASK_NS(void)
+ 398:Drivers/CMSIS/Include/cmsis_gcc.h **** {
+ 399:Drivers/CMSIS/Include/cmsis_gcc.h ****   uint32_t result;
+ 400:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 401:Drivers/CMSIS/Include/cmsis_gcc.h ****   __ASM volatile ("MRS %0, primask_ns" : "=r" (result) :: "memory");
+ 402:Drivers/CMSIS/Include/cmsis_gcc.h ****   return(result);
+ 403:Drivers/CMSIS/Include/cmsis_gcc.h **** }
+ 404:Drivers/CMSIS/Include/cmsis_gcc.h **** #endif
+ 405:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ARM GAS  /tmp/ccprU03G.s 			page 11
+
+
+ 406:Drivers/CMSIS/Include/cmsis_gcc.h **** 
+ 407:Drivers/CMSIS/Include/cmsis_gcc.h **** /**
+ 408:Drivers/CMSIS/Include/cmsis_gcc.h ****   \brief   Set Priority Mask
+ 409:Drivers/CMSIS/Include/cmsis_gcc.h ****   \details Assigns the given value to the Priority Mask Register.
+ 410:Drivers/CMSIS/Include/cmsis_gcc.h ****   \param [in]    priMask  Priority Mask
+ 411:Drivers/CMSIS/Include/cmsis_gcc.h ****  */
+ 412:Drivers/CMSIS/Include/cmsis_gcc.h **** __STATIC_FORCEINLINE void __set_PRIMASK(uint32_t priMask)
+ 413:Drivers/CMSIS/Include/cmsis_gcc.h **** {
+ 414:Drivers/CMSIS/Include/cmsis_gcc.h ****   __ASM volatile ("MSR primask, %0" : : "r" (priMask) : "memory");
+  97              		.loc 2 414 0
+  98              		.syntax unified
+  99              	@ 414 "Drivers/CMSIS/Include/cmsis_gcc.h" 1
+ 100 0028 81F31088 		MSR primask, r1
+ 101              	@ 0 "" 2
+ 102              	.LVL5:
+ 103              		.thumb
+ 104              		.syntax unified
+ 105              	.LBE19:
+ 106              	.LBE18:
+  70:Src/sw_timers.c ****   }
+  71:Src/sw_timers.c **** 
+  72:Src/sw_timers.c ****   CRITICAL_SECTION_END;
+  73:Src/sw_timers.c **** }
+ 107              		.loc 1 73 0
+ 108 002c 30BC     		pop	{r4, r5}
+ 109              	.LCFI1:
+ 110              		.cfi_remember_state
+ 111              		.cfi_restore 5
+ 112              		.cfi_restore 4
+ 113              		.cfi_def_cfa_offset 0
+ 114 002e 7047     		bx	lr
+ 115              	.LVL6:
+ 116              	.L9:
+ 117              	.LCFI2:
+ 118              		.cfi_restore_state
+  44:Src/sw_timers.c ****       timerListHead = timer->next;
+ 119              		.loc 1 44 0
+ 120 0030 12B1     		cbz	r2, .L3
+  45:Src/sw_timers.c ****     else
+ 121              		.loc 1 45 0
+ 122 0032 074C     		ldr	r4, .L11
+ 123 0034 2260     		str	r2, [r4]
+ 124 0036 EDE7     		b	.L2
+ 125              	.L3:
+  47:Src/sw_timers.c ****   }
+ 126              		.loc 1 47 0
+ 127 0038 054C     		ldr	r4, .L11
+ 128 003a 0025     		movs	r5, #0
+ 129 003c 2560     		str	r5, [r4]
+ 130 003e E9E7     		b	.L2
+ 131              	.L10:
+  53:Src/sw_timers.c ****       timerListTail = timer->prev;
+ 132              		.loc 1 53 0
+ 133 0040 13B1     		cbz	r3, .L5
+  54:Src/sw_timers.c ****     else
+ 134              		.loc 1 54 0
+ 135 0042 0448     		ldr	r0, .L11+4
+ARM GAS  /tmp/ccprU03G.s 			page 12
+
+
+ 136              	.LVL7:
+ 137 0044 0360     		str	r3, [r0]
+ 138 0046 E9E7     		b	.L4
+ 139              	.LVL8:
+ 140              	.L5:
+  56:Src/sw_timers.c ****   }
+ 141              		.loc 1 56 0
+ 142 0048 0248     		ldr	r0, .L11+4
+ 143              	.LVL9:
+ 144 004a 0024     		movs	r4, #0
+ 145 004c 0460     		str	r4, [r0]
+ 146 004e E5E7     		b	.L4
+ 147              	.L12:
+ 148              		.align	2
+ 149              	.L11:
+ 150 0050 00000000 		.word	.LANCHOR0
+ 151 0054 00000000 		.word	.LANCHOR1
+ 152              		.cfi_endproc
+ 153              	.LFE315:
+ 155              		.section	.text.SwTimer_ProcessTimers,"ax",%progbits
+ 156              		.align	1
+ 157              		.syntax unified
+ 158              		.thumb
+ 159              		.thumb_func
+ 160              		.fpu fpv4-sp-d16
+ 162              	SwTimer_ProcessTimers:
+ 163              	.LFB316:
+  74:Src/sw_timers.c **** 
+  75:Src/sw_timers.c **** // Go through all registered timers and call their functions if they timeout
+  76:Src/sw_timers.c **** static void SwTimer_ProcessTimers(void)
+  77:Src/sw_timers.c **** {
+ 164              		.loc 1 77 0
+ 165              		.cfi_startproc
+ 166              		@ args = 0, pretend = 0, frame = 0
+ 167              		@ frame_needed = 0, uses_anonymous_args = 0
+ 168 0000 38B5     		push	{r3, r4, r5, lr}
+ 169              	.LCFI3:
+ 170              		.cfi_def_cfa_offset 16
+ 171              		.cfi_offset 3, -16
+ 172              		.cfi_offset 4, -12
+ 173              		.cfi_offset 5, -8
+ 174              		.cfi_offset 14, -4
+  78:Src/sw_timers.c ****   if (timerListHead == NULL)
+ 175              		.loc 1 78 0
+ 176 0002 0D4B     		ldr	r3, .L21
+ 177 0004 1D68     		ldr	r5, [r3]
+ 178 0006 B5B1     		cbz	r5, .L13
+ 179              	.LVL10:
+  79:Src/sw_timers.c ****   {
+  80:Src/sw_timers.c ****     return;
+  81:Src/sw_timers.c ****   }
+  82:Src/sw_timers.c ****   
+  83:Src/sw_timers.c ****   // Traverse thru the linked list of sw timer objects
+  84:Src/sw_timers.c ****   // Decrement their remaining times
+  85:Src/sw_timers.c ****   SwTimer_t *t = timerListHead;
+  86:Src/sw_timers.c ****   SwTimer_t *tNext = timerListHead->next;
+ 180              		.loc 1 86 0
+ARM GAS  /tmp/ccprU03G.s 			page 13
+
+
+ 181 0008 2C69     		ldr	r4, [r5, #16]
+ 182              	.LVL11:
+ 183 000a 06E0     		b	.L18
+ 184              	.LVL12:
+ 185              	.L17:
+ 186              	.LBB20:
+  87:Src/sw_timers.c ****   while(true)
+  88:Src/sw_timers.c ****   {
+  89:Src/sw_timers.c ****     if (t->running)
+  90:Src/sw_timers.c ****     {
+  91:Src/sw_timers.c ****       // Check if this timer timed out. if not decrement its remaining ms
+  92:Src/sw_timers.c ****       if (t->remainingMs == 0)
+  93:Src/sw_timers.c ****       {
+  94:Src/sw_timers.c ****         // This timer timed out. Call its function and set the timers 
+  95:Src/sw_timers.c ****         // new timeout based on what the function returns.
+  96:Src/sw_timers.c ****         // If the function returns 0, remove this timer from the linked list.
+  97:Src/sw_timers.c ****         uint32_t newTimeout = t->fn(); 
+  98:Src/sw_timers.c ****         if (newTimeout)
+  99:Src/sw_timers.c ****         {
+ 100:Src/sw_timers.c ****           t->remainingMs = newTimeout;
+ 101:Src/sw_timers.c ****         }
+ 102:Src/sw_timers.c ****         else
+ 103:Src/sw_timers.c ****         {
+ 104:Src/sw_timers.c ****           SwTimer_Unlist(t);
+ 187              		.loc 1 104 0
+ 188 000c 2846     		mov	r0, r5
+ 189              	.LVL13:
+ 190 000e FFF7FEFF 		bl	SwTimer_Unlist
+ 191              	.LVL14:
+ 192              	.L15:
+ 193              	.LBE20:
+ 105:Src/sw_timers.c ****         }
+ 106:Src/sw_timers.c ****       }
+ 107:Src/sw_timers.c ****       else
+ 108:Src/sw_timers.c ****       {
+ 109:Src/sw_timers.c ****         t->remainingMs--;
+ 110:Src/sw_timers.c ****       }
+ 111:Src/sw_timers.c ****     }
+ 112:Src/sw_timers.c **** 
+ 113:Src/sw_timers.c ****     t = tNext;
+ 114:Src/sw_timers.c ****     tNext = t->next;
+ 194              		.loc 1 114 0
+ 195 0012 2369     		ldr	r3, [r4, #16]
+ 196              	.LVL15:
+ 113:Src/sw_timers.c ****     tNext = t->next;
+ 197              		.loc 1 113 0
+ 198 0014 2546     		mov	r5, r4
+ 115:Src/sw_timers.c **** 
+ 116:Src/sw_timers.c ****     if (t == NULL)
+ 199              		.loc 1 116 0
+ 200 0016 74B1     		cbz	r4, .L13
+ 114:Src/sw_timers.c **** 
+ 201              		.loc 1 114 0
+ 202 0018 1C46     		mov	r4, r3
+ 203              	.LVL16:
+ 204              	.L18:
+  89:Src/sw_timers.c ****     {
+ARM GAS  /tmp/ccprU03G.s 			page 14
+
+
+ 205              		.loc 1 89 0
+ 206 001a 2B78     		ldrb	r3, [r5]	@ zero_extendqisi2
+ 207 001c 002B     		cmp	r3, #0
+ 208 001e F8D0     		beq	.L15
+  92:Src/sw_timers.c ****       {
+ 209              		.loc 1 92 0
+ 210 0020 AB68     		ldr	r3, [r5, #8]
+ 211 0022 2BB9     		cbnz	r3, .L16
+ 212              	.LBB21:
+  97:Src/sw_timers.c ****         if (newTimeout)
+ 213              		.loc 1 97 0
+ 214 0024 EB68     		ldr	r3, [r5, #12]
+ 215 0026 9847     		blx	r3
+ 216              	.LVL17:
+  98:Src/sw_timers.c ****         {
+ 217              		.loc 1 98 0
+ 218 0028 0028     		cmp	r0, #0
+ 219 002a EFD0     		beq	.L17
+ 100:Src/sw_timers.c ****         }
+ 220              		.loc 1 100 0
+ 221 002c A860     		str	r0, [r5, #8]
+ 222 002e F0E7     		b	.L15
+ 223              	.LVL18:
+ 224              	.L16:
+ 225              	.LBE21:
+ 109:Src/sw_timers.c ****       }
+ 226              		.loc 1 109 0
+ 227 0030 013B     		subs	r3, r3, #1
+ 228 0032 AB60     		str	r3, [r5, #8]
+ 229 0034 EDE7     		b	.L15
+ 230              	.LVL19:
+ 231              	.L13:
+ 117:Src/sw_timers.c ****     {
+ 118:Src/sw_timers.c ****       break;
+ 119:Src/sw_timers.c ****     }
+ 120:Src/sw_timers.c ****   }
+ 121:Src/sw_timers.c **** 
+ 122:Src/sw_timers.c **** }
+ 232              		.loc 1 122 0
+ 233 0036 38BD     		pop	{r3, r4, r5, pc}
+ 234              	.L22:
+ 235              		.align	2
+ 236              	.L21:
+ 237 0038 00000000 		.word	.LANCHOR0
+ 238              		.cfi_endproc
+ 239              	.LFE316:
+ 241              		.section	.text.SwTimer_Start,"ax",%progbits
+ 242              		.align	1
+ 243              		.global	SwTimer_Start
+ 244              		.syntax unified
+ 245              		.thumb
+ 246              		.thumb_func
+ 247              		.fpu fpv4-sp-d16
+ 249              	SwTimer_Start:
+ 250              	.LFB317:
+ 123:Src/sw_timers.c **** 
+ 124:Src/sw_timers.c **** // Starting the timer means linking it to the overall timer linked list
+ARM GAS  /tmp/ccprU03G.s 			page 15
+
+
+ 125:Src/sw_timers.c **** // and or flipping its $running field to true. Disable IRQs while doing so.
+ 126:Src/sw_timers.c **** void SwTimer_Start(SwTimer_t *timer)
+ 127:Src/sw_timers.c **** {
+ 251              		.loc 1 127 0
+ 252              		.cfi_startproc
+ 253              		@ args = 0, pretend = 0, frame = 0
+ 254              		@ frame_needed = 0, uses_anonymous_args = 0
+ 255              		@ link register save eliminated.
+ 256              	.LVL20:
+ 257              	.LBB22:
+ 258              	.LBB23:
+ 386:Drivers/CMSIS/Include/cmsis_gcc.h ****   return(result);
+ 259              		.loc 2 386 0
+ 260              		.syntax unified
+ 261              	@ 386 "Drivers/CMSIS/Include/cmsis_gcc.h" 1
+ 262 0000 EFF31081 		MRS r1, primask
+ 263              	@ 0 "" 2
+ 264              		.thumb
+ 265              		.syntax unified
+ 266              	.LBE23:
+ 267              	.LBE22:
+ 268              	.LBB24:
+ 269              	.LBB25:
+ 142:Drivers/CMSIS/Include/cmsis_gcc.h **** }
+ 270              		.loc 2 142 0
+ 271              		.syntax unified
+ 272              	@ 142 "Drivers/CMSIS/Include/cmsis_gcc.h" 1
+ 273 0004 72B6     		cpsid i
+ 274              	@ 0 "" 2
+ 275              		.thumb
+ 276              		.syntax unified
+ 277              	.LBE25:
+ 278              	.LBE24:
+ 128:Src/sw_timers.c ****   CRITICAL_SECTION_BEGIN;
+ 129:Src/sw_timers.c **** 
+ 130:Src/sw_timers.c ****   if (timerListHead == NULL) // this is the first timer that's registered
+ 279              		.loc 1 130 0
+ 280 0006 0B4B     		ldr	r3, .L27
+ 281 0008 1B68     		ldr	r3, [r3]
+ 282 000a 5BB1     		cbz	r3, .L26
+ 131:Src/sw_timers.c ****   {
+ 132:Src/sw_timers.c ****     timerListHead = timer;
+ 133:Src/sw_timers.c ****     timerListTail = timer;
+ 134:Src/sw_timers.c ****     timer->next = NULL;
+ 135:Src/sw_timers.c ****     timer->prev = NULL;
+ 136:Src/sw_timers.c ****   }
+ 137:Src/sw_timers.c ****   else // not the first timer. add it to the end of the list
+ 138:Src/sw_timers.c ****   {
+ 139:Src/sw_timers.c ****     timer->prev = timerListTail;
+ 283              		.loc 1 139 0
+ 284 000c 0A4B     		ldr	r3, .L27+4
+ 285 000e 1A68     		ldr	r2, [r3]
+ 286 0010 4261     		str	r2, [r0, #20]
+ 140:Src/sw_timers.c ****     timerListTail->next = timer;
+ 287              		.loc 1 140 0
+ 288 0012 1061     		str	r0, [r2, #16]
+ 141:Src/sw_timers.c ****     timerListTail = timer;
+ARM GAS  /tmp/ccprU03G.s 			page 16
+
+
+ 289              		.loc 1 141 0
+ 290 0014 1860     		str	r0, [r3]
+ 291              	.L25:
+ 142:Src/sw_timers.c ****   }
+ 143:Src/sw_timers.c ****   timer->running = true;
+ 292              		.loc 1 143 0
+ 293 0016 0123     		movs	r3, #1
+ 294 0018 0370     		strb	r3, [r0]
+ 144:Src/sw_timers.c ****   timer->remainingMs = timer->Ms;
+ 295              		.loc 1 144 0
+ 296 001a 4368     		ldr	r3, [r0, #4]
+ 297 001c 8360     		str	r3, [r0, #8]
+ 298              	.LVL21:
+ 299              	.LBB26:
+ 300              	.LBB27:
+ 301              		.loc 2 414 0
+ 302              		.syntax unified
+ 303              	@ 414 "Drivers/CMSIS/Include/cmsis_gcc.h" 1
+ 304 001e 81F31088 		MSR primask, r1
+ 305              	@ 0 "" 2
+ 306              	.LVL22:
+ 307              		.thumb
+ 308              		.syntax unified
+ 309              	.LBE27:
+ 310              	.LBE26:
+ 145:Src/sw_timers.c **** 
+ 146:Src/sw_timers.c ****   CRITICAL_SECTION_END;
+ 147:Src/sw_timers.c **** }
+ 311              		.loc 1 147 0
+ 312 0022 7047     		bx	lr
+ 313              	.L26:
+ 132:Src/sw_timers.c ****     timerListTail = timer;
+ 314              		.loc 1 132 0
+ 315 0024 034B     		ldr	r3, .L27
+ 316 0026 1860     		str	r0, [r3]
+ 133:Src/sw_timers.c ****     timer->next = NULL;
+ 317              		.loc 1 133 0
+ 318 0028 034B     		ldr	r3, .L27+4
+ 319 002a 1860     		str	r0, [r3]
+ 134:Src/sw_timers.c ****     timer->prev = NULL;
+ 320              		.loc 1 134 0
+ 321 002c 0023     		movs	r3, #0
+ 322 002e 0361     		str	r3, [r0, #16]
+ 135:Src/sw_timers.c ****   }
+ 323              		.loc 1 135 0
+ 324 0030 4361     		str	r3, [r0, #20]
+ 325 0032 F0E7     		b	.L25
+ 326              	.L28:
+ 327              		.align	2
+ 328              	.L27:
+ 329 0034 00000000 		.word	.LANCHOR0
+ 330 0038 00000000 		.word	.LANCHOR1
+ 331              		.cfi_endproc
+ 332              	.LFE317:
+ 334              		.section	.text.SwTimer_Stop,"ax",%progbits
+ 335              		.align	1
+ 336              		.global	SwTimer_Stop
+ARM GAS  /tmp/ccprU03G.s 			page 17
+
+
+ 337              		.syntax unified
+ 338              		.thumb
+ 339              		.thumb_func
+ 340              		.fpu fpv4-sp-d16
+ 342              	SwTimer_Stop:
+ 343              	.LFB318:
+ 148:Src/sw_timers.c **** 
+ 149:Src/sw_timers.c **** // Stop timer. 
+ 150:Src/sw_timers.c **** // TODO theres no way of pausing and resuming available in this
+ 151:Src/sw_timers.c **** // thing yet. you can reset the timer but cant pause and continue.
+ 152:Src/sw_timers.c **** void SwTimer_Stop(SwTimer_t *timer)
+ 153:Src/sw_timers.c **** {
+ 344              		.loc 1 153 0
+ 345              		.cfi_startproc
+ 346              		@ args = 0, pretend = 0, frame = 0
+ 347              		@ frame_needed = 0, uses_anonymous_args = 0
+ 348              	.LVL23:
+ 349 0000 08B5     		push	{r3, lr}
+ 350              	.LCFI4:
+ 351              		.cfi_def_cfa_offset 8
+ 352              		.cfi_offset 3, -8
+ 353              		.cfi_offset 14, -4
+ 154:Src/sw_timers.c ****   timer->running = false;
+ 354              		.loc 1 154 0
+ 355 0002 0022     		movs	r2, #0
+ 356 0004 0270     		strb	r2, [r0]
+ 155:Src/sw_timers.c ****   SwTimer_Unlist(timer);
+ 357              		.loc 1 155 0
+ 358 0006 FFF7FEFF 		bl	SwTimer_Unlist
+ 359              	.LVL24:
+ 156:Src/sw_timers.c **** }
+ 360              		.loc 1 156 0
+ 361 000a 08BD     		pop	{r3, pc}
+ 362              		.cfi_endproc
+ 363              	.LFE318:
+ 365              		.section	.text.SwTimer_ISR,"ax",%progbits
+ 366              		.align	1
+ 367              		.global	SwTimer_ISR
+ 368              		.syntax unified
+ 369              		.thumb
+ 370              		.thumb_func
+ 371              		.fpu fpv4-sp-d16
+ 373              	SwTimer_ISR:
+ 374              	.LFB319:
+ 157:Src/sw_timers.c **** 
+ 158:Src/sw_timers.c **** // This is called upon the SysTick IRQ. It will increment our Ms counter and
+ 159:Src/sw_timers.c **** // process all timers. 
+ 160:Src/sw_timers.c **** void SwTimer_ISR(void)
+ 161:Src/sw_timers.c **** {
+ 375              		.loc 1 161 0
+ 376              		.cfi_startproc
+ 377              		@ args = 0, pretend = 0, frame = 0
+ 378              		@ frame_needed = 0, uses_anonymous_args = 0
+ 379 0000 08B5     		push	{r3, lr}
+ 380              	.LCFI5:
+ 381              		.cfi_def_cfa_offset 8
+ 382              		.cfi_offset 3, -8
+ARM GAS  /tmp/ccprU03G.s 			page 18
+
+
+ 383              		.cfi_offset 14, -4
+ 162:Src/sw_timers.c ****   counterMs++;
+ 384              		.loc 1 162 0
+ 385 0002 034A     		ldr	r2, .L33
+ 386 0004 1368     		ldr	r3, [r2]
+ 387 0006 0133     		adds	r3, r3, #1
+ 388 0008 1360     		str	r3, [r2]
+ 163:Src/sw_timers.c ****   SwTimer_ProcessTimers();
+ 389              		.loc 1 163 0
+ 390 000a FFF7FEFF 		bl	SwTimer_ProcessTimers
+ 391              	.LVL25:
+ 164:Src/sw_timers.c **** }
+ 392              		.loc 1 164 0
+ 393 000e 08BD     		pop	{r3, pc}
+ 394              	.L34:
+ 395              		.align	2
+ 396              	.L33:
+ 397 0010 00000000 		.word	.LANCHOR2
+ 398              		.cfi_endproc
+ 399              	.LFE319:
+ 401              		.global	timerListTail
+ 402              		.global	timerListHead
+ 403              		.global	counterMs
+ 404              		.section	.bss.counterMs,"aw",%nobits
+ 405              		.align	2
+ 406              		.set	.LANCHOR2,. + 0
+ 409              	counterMs:
+ 410 0000 00000000 		.space	4
+ 411              		.section	.bss.timerListHead,"aw",%nobits
+ 412              		.align	2
+ 413              		.set	.LANCHOR0,. + 0
+ 416              	timerListHead:
+ 417 0000 00000000 		.space	4
+ 418              		.section	.bss.timerListTail,"aw",%nobits
+ 419              		.align	2
+ 420              		.set	.LANCHOR1,. + 0
+ 423              	timerListTail:
+ 424 0000 00000000 		.space	4
+ 425              		.text
+ 426              	.Letext0:
+ 427              		.file 3 "/home/jon/KODMOD/EMBEDDED_TOOLCHAINS/gcc-arm-none-eabi-7-2018-q2-update/arm-none-eabi/inc
+ 428              		.file 4 "/home/jon/KODMOD/EMBEDDED_TOOLCHAINS/gcc-arm-none-eabi-7-2018-q2-update/arm-none-eabi/inc
+ 429              		.file 5 "Drivers/CMSIS/Include/core_cm4.h"
+ 430              		.file 6 "Drivers/CMSIS/Device/ST/STM32L4xx/Include/system_stm32l4xx.h"
+ 431              		.file 7 "Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_def.h"
+ 432              		.file 8 "Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_flash.h"
+ 433              		.file 9 "Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal.h"
+ 434              		.file 10 "Inc/sw_timers.h"
+ARM GAS  /tmp/ccprU03G.s 			page 19
+
+
+DEFINED SYMBOLS
+                            *ABS*:0000000000000000 sw_timers.c
+     /tmp/ccprU03G.s:18     .text.SwTimer_Unlist:0000000000000000 $t
+     /tmp/ccprU03G.s:24     .text.SwTimer_Unlist:0000000000000000 SwTimer_Unlist
+     /tmp/ccprU03G.s:150    .text.SwTimer_Unlist:0000000000000050 $d
+     /tmp/ccprU03G.s:156    .text.SwTimer_ProcessTimers:0000000000000000 $t
+     /tmp/ccprU03G.s:162    .text.SwTimer_ProcessTimers:0000000000000000 SwTimer_ProcessTimers
+     /tmp/ccprU03G.s:237    .text.SwTimer_ProcessTimers:0000000000000038 $d
+     /tmp/ccprU03G.s:242    .text.SwTimer_Start:0000000000000000 $t
+     /tmp/ccprU03G.s:249    .text.SwTimer_Start:0000000000000000 SwTimer_Start
+     /tmp/ccprU03G.s:329    .text.SwTimer_Start:0000000000000034 $d
+     /tmp/ccprU03G.s:335    .text.SwTimer_Stop:0000000000000000 $t
+     /tmp/ccprU03G.s:342    .text.SwTimer_Stop:0000000000000000 SwTimer_Stop
+     /tmp/ccprU03G.s:366    .text.SwTimer_ISR:0000000000000000 $t
+     /tmp/ccprU03G.s:373    .text.SwTimer_ISR:0000000000000000 SwTimer_ISR
+     /tmp/ccprU03G.s:397    .text.SwTimer_ISR:0000000000000010 $d
+     /tmp/ccprU03G.s:423    .bss.timerListTail:0000000000000000 timerListTail
+     /tmp/ccprU03G.s:416    .bss.timerListHead:0000000000000000 timerListHead
+     /tmp/ccprU03G.s:409    .bss.counterMs:0000000000000000 counterMs
+     /tmp/ccprU03G.s:405    .bss.counterMs:0000000000000000 $d
+     /tmp/ccprU03G.s:412    .bss.timerListHead:0000000000000000 $d
+     /tmp/ccprU03G.s:419    .bss.timerListTail:0000000000000000 $d
+
+NO UNDEFINED SYMBOLS

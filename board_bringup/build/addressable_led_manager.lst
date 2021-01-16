@@ -1,0 +1,937 @@
+ARM GAS  /tmp/ccItjmBn.s 			page 1
+
+
+   1              		.cpu cortex-m4
+   2              		.eabi_attribute 27, 1
+   3              		.eabi_attribute 28, 1
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 1
+  11              		.eabi_attribute 34, 1
+  12              		.eabi_attribute 18, 4
+  13              		.file	"addressable_led_manager.c"
+  14              		.text
+  15              	.Ltext0:
+  16              		.cfi_sections	.debug_frame
+  17              		.section	.text.InitPanel,"ax",%progbits
+  18              		.align	1
+  19              		.syntax unified
+  20              		.thumb
+  21              		.thumb_func
+  22              		.fpu fpv4-sp-d16
+  24              	InitPanel:
+  25              	.LFB315:
+  26              		.file 1 "Src/addressable_led_manager.c"
+   1:Src/addressable_led_manager.c **** #include "main.h"
+   2:Src/addressable_led_manager.c **** #include "addressable_led_manager.h"
+   3:Src/addressable_led_manager.c **** #include "tim.h"
+   4:Src/addressable_led_manager.c **** #include "utils.h"
+   5:Src/addressable_led_manager.c **** #include "random_fade_animation.h"
+   6:Src/addressable_led_manager.c **** #include "random_triangles_animation.h"
+   7:Src/addressable_led_manager.c **** #include "sw_timers.h"
+   8:Src/addressable_led_manager.c **** #include <string.h>
+   9:Src/addressable_led_manager.c **** #include <stdlib.h>
+  10:Src/addressable_led_manager.c **** 
+  11:Src/addressable_led_manager.c **** #define LEDS_BEGIN_AT_BOTTOM    1
+  12:Src/addressable_led_manager.c **** 
+  13:Src/addressable_led_manager.c **** /*
+  14:Src/addressable_led_manager.c ****  * ADDRESSABLE LED MANAGER
+  15:Src/addressable_led_manager.c ****  *
+  16:Src/addressable_led_manager.c ****  * This module is to handle abstract neopixel usage. It will handle the initialization of the AddrL
+  17:Src/addressable_led_manager.c ****  * the AddrLEDStrip_t abstractions, initialize Pixel_ts with their coordinate data, etc. The neopix
+  18:Src/addressable_led_manager.c ****  * not aware of the overall shape and structure of the strips. The manger module has awareness of t
+  19:Src/addressable_led_manager.c ****  * purposes is to provide functions to make addressing the pixels easier.
+  20:Src/addressable_led_manager.c ****  *
+  21:Src/addressable_led_manager.c ****  * The manager module also initializes and plays "Animation" modules. 
+  22:Src/addressable_led_manager.c ****  *
+  23:Src/addressable_led_manager.c ****  */
+  24:Src/addressable_led_manager.c **** 
+  25:Src/addressable_led_manager.c **** // PRIVATE VARIBLES -------------------------------------------------
+  26:Src/addressable_led_manager.c **** 
+  27:Src/addressable_led_manager.c **** const uint16_t ledStrip1Size = NUM_LEDS_TOTAL;
+  28:Src/addressable_led_manager.c **** AddrLEDStrip_t ledStrip1;
+  29:Src/addressable_led_manager.c **** Pixel_t ledStrip1Pixels[sizeof(PixelPacket_t) * NUM_LEDS_PER_PANEL * NUM_PANELS];
+  30:Src/addressable_led_manager.c **** uint8_t ledStrip1PacketBuffer[sizeof(PixelPacket_t) * NUM_LEDS_PER_PANEL * NUM_PANELS + 1]; // (3 *
+  31:Src/addressable_led_manager.c **** SwTimer_t refreshTimer;
+  32:Src/addressable_led_manager.c **** 
+ARM GAS  /tmp/ccItjmBn.s 			page 2
+
+
+  33:Src/addressable_led_manager.c **** volatile bool animationSkipInProgress = false;
+  34:Src/addressable_led_manager.c **** volatile uint8_t animationIndex = 0; // TODO // this is a temporary gimmick. 
+  35:Src/addressable_led_manager.c **** 
+  36:Src/addressable_led_manager.c **** AddrLEDPanel_t panels[5];
+  37:Src/addressable_led_manager.c **** 
+  38:Src/addressable_led_manager.c **** // PixelData_t arrays are for animation modules to hold misc data about every pixel.
+  39:Src/addressable_led_manager.c **** // They are to be instantiated here and a pointer of them to be passed to aniation
+  40:Src/addressable_led_manager.c **** // modules during their inits.
+  41:Src/addressable_led_manager.c **** RandomFadePixelData_t randomFadePixelData[NUM_LEDS_TOTAL];
+  42:Src/addressable_led_manager.c **** RandomTrianglesPixelData_t randomTrianglesPixelData[NUM_LEDS_TOTAL];
+  43:Src/addressable_led_manager.c **** 
+  44:Src/addressable_led_manager.c **** AnimationInterface_t animations[NUM_ANIMATIONS] = 
+  45:Src/addressable_led_manager.c **** {
+  46:Src/addressable_led_manager.c ****   [ANIMATION_RANDOMFADE] = {
+  47:Src/addressable_led_manager.c ****                             .init = Animation_RandomFade_Init, 
+  48:Src/addressable_led_manager.c ****                             .update = Animation_RandomFade_Update,  
+  49:Src/addressable_led_manager.c ****                             .getState = Animation_RandomFade_GetState,
+  50:Src/addressable_led_manager.c ****                             .sendMessage = Animation_RandomFade_SendMessage
+  51:Src/addressable_led_manager.c ****                            },
+  52:Src/addressable_led_manager.c ****   [ANIMATION_RANDOMTRIANGLES] = {
+  53:Src/addressable_led_manager.c ****                             .init = Animation_RandomTriangles_Init, 
+  54:Src/addressable_led_manager.c ****                             .update = Animation_RandomTriangles_Update,  
+  55:Src/addressable_led_manager.c ****                             .getState = Animation_RandomTriangles_GetState,
+  56:Src/addressable_led_manager.c ****                             .sendMessage = Animation_RandomTriangles_SendMessage
+  57:Src/addressable_led_manager.c ****                            },
+  58:Src/addressable_led_manager.c **** 
+  59:Src/addressable_led_manager.c **** };
+  60:Src/addressable_led_manager.c **** 
+  61:Src/addressable_led_manager.c **** // PRIVATE FUNCTIONS -------------------------------------------------
+  62:Src/addressable_led_manager.c **** 
+  63:Src/addressable_led_manager.c **** static void InitPanel(AddrLEDPanel_t *p)
+  64:Src/addressable_led_manager.c **** {
+  27              		.loc 1 64 0
+  28              		.cfi_startproc
+  29              		@ args = 0, pretend = 0, frame = 0
+  30              		@ frame_needed = 0, uses_anonymous_args = 0
+  31              		@ link register save eliminated.
+  32              	.LVL0:
+  33 0000 30B4     		push	{r4, r5}
+  34              	.LCFI0:
+  35              		.cfi_def_cfa_offset 8
+  36              		.cfi_offset 4, -8
+  37              		.cfi_offset 5, -4
+  65:Src/addressable_led_manager.c ****   // Set local coordinates of this panel
+  66:Src/addressable_led_manager.c ****   Pixel_t *pixels = p->strip->pixels;
+  38              		.loc 1 66 0
+  39 0002 0368     		ldr	r3, [r0]
+  40 0004 5D68     		ldr	r5, [r3, #4]
+  41              	.LVL1:
+  42              	.LBB2:
+  67:Src/addressable_led_manager.c ****   for (int i = 0; i < p->numLeds; i++)
+  43              		.loc 1 67 0
+  44 0006 0023     		movs	r3, #0
+  45 0008 0EE0     		b	.L2
+  46              	.LVL2:
+  47              	.L3:
+  48              	.LBB3:
+ARM GAS  /tmp/ccItjmBn.s 			page 3
+
+
+  68:Src/addressable_led_manager.c ****   {
+  69:Src/addressable_led_manager.c ****     Pixel_t *pixel = &pixels[p->stripRange[0] + i];
+  70:Src/addressable_led_manager.c ****     pixel->localX = NUM_LEDS_PER_PANEL_SIDE - (i / NUM_LEDS_PER_PANEL_SIDE);
+  49              		.loc 1 70 0 discriminator 3
+  50 000a 8910     		asrs	r1, r1, #2
+  51 000c C1F10401 		rsb	r1, r1, #4
+  52 0010 D170     		strb	r1, [r2, #3]
+  71:Src/addressable_led_manager.c ****     pixel->localY = NUM_LEDS_PER_PANEL_SIDE - (i % NUM_LEDS_PER_PANEL_SIDE);
+  53              		.loc 1 71 0 discriminator 3
+  54 0012 5C42     		rsbs	r4, r3, #0
+  55 0014 03F00301 		and	r1, r3, #3
+  56 0018 04F00304 		and	r4, r4, #3
+  57 001c 58BF     		it	pl
+  58 001e 6142     		rsbpl	r1, r4, #0
+  59 0020 C1F10401 		rsb	r1, r1, #4
+  60 0024 1171     		strb	r1, [r2, #4]
+  61              	.LBE3:
+  67:Src/addressable_led_manager.c ****   for (int i = 0; i < p->numLeds; i++)
+  62              		.loc 1 67 0 discriminator 3
+  63 0026 0133     		adds	r3, r3, #1
+  64              	.LVL3:
+  65              	.L2:
+  67:Src/addressable_led_manager.c ****   for (int i = 0; i < p->numLeds; i++)
+  66              		.loc 1 67 0 is_stmt 0 discriminator 1
+  67 0028 0289     		ldrh	r2, [r0, #8]
+  68 002a 9A42     		cmp	r2, r3
+  69 002c 08DD     		ble	.L6
+  70              	.LBB4:
+  69:Src/addressable_led_manager.c ****     pixel->localX = NUM_LEDS_PER_PANEL_SIDE - (i / NUM_LEDS_PER_PANEL_SIDE);
+  71              		.loc 1 69 0 is_stmt 1 discriminator 3
+  72 002e 4289     		ldrh	r2, [r0, #10]
+  73 0030 1A44     		add	r2, r2, r3
+  74 0032 05EBC202 		add	r2, r5, r2, lsl #3
+  75              	.LVL4:
+  70:Src/addressable_led_manager.c ****     pixel->localY = NUM_LEDS_PER_PANEL_SIDE - (i % NUM_LEDS_PER_PANEL_SIDE);
+  76              		.loc 1 70 0 discriminator 3
+  77 0036 1946     		mov	r1, r3
+  78 0038 002B     		cmp	r3, #0
+  79 003a E6DA     		bge	.L3
+  80 003c D91C     		adds	r1, r3, #3
+  81 003e E4E7     		b	.L3
+  82              	.LVL5:
+  83              	.L6:
+  84              	.LBE4:
+  85              	.LBE2:
+  72:Src/addressable_led_manager.c ****     
+  73:Src/addressable_led_manager.c ****     // TODO // HANDLE GLOBAL COORDINATES
+  74:Src/addressable_led_manager.c ****   }
+  75:Src/addressable_led_manager.c **** 
+  76:Src/addressable_led_manager.c ****   // Set global coordinates of this panel
+  77:Src/addressable_led_manager.c **** 
+  78:Src/addressable_led_manager.c **** }
+  86              		.loc 1 78 0
+  87 0040 30BC     		pop	{r4, r5}
+  88              	.LCFI1:
+  89              		.cfi_restore 5
+  90              		.cfi_restore 4
+ARM GAS  /tmp/ccItjmBn.s 			page 4
+
+
+  91              		.cfi_def_cfa_offset 0
+  92              	.LVL6:
+  93 0042 7047     		bx	lr
+  94              		.cfi_endproc
+  95              	.LFE315:
+  97              		.section	.text.AddrLEDManager_RefreshCallback,"ax",%progbits
+  98              		.align	1
+  99              		.syntax unified
+ 100              		.thumb
+ 101              		.thumb_func
+ 102              		.fpu fpv4-sp-d16
+ 104              	AddrLEDManager_RefreshCallback:
+ 105              	.LFB316:
+  79:Src/addressable_led_manager.c **** 
+  80:Src/addressable_led_manager.c **** static uint32_t AddrLEDManager_RefreshCallback(void)
+  81:Src/addressable_led_manager.c **** {
+ 106              		.loc 1 81 0
+ 107              		.cfi_startproc
+ 108              		@ args = 0, pretend = 0, frame = 0
+ 109              		@ frame_needed = 0, uses_anonymous_args = 0
+ 110 0000 08B5     		push	{r3, lr}
+ 111              	.LCFI2:
+ 112              		.cfi_def_cfa_offset 8
+ 113              		.cfi_offset 3, -8
+ 114              		.cfi_offset 14, -4
+  82:Src/addressable_led_manager.c ****   TOGGLE_ONBOARD_LED();
+  83:Src/addressable_led_manager.c ****   switch (animationIndex % 2)
+ 115              		.loc 1 83 0
+ 116 0002 084B     		ldr	r3, .L12
+ 117 0004 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 118 0006 13F00103 		ands	r3, r3, #1
+ 119 000a 05D0     		beq	.L9
+ 120 000c 3BB9     		cbnz	r3, .L10
+ 121              	.L8:
+  84:Src/addressable_led_manager.c ****   {
+  85:Src/addressable_led_manager.c ****     case 0:
+  86:Src/addressable_led_manager.c ****       {
+  87:Src/addressable_led_manager.c ****         Animation_RandomTriangles_Update();
+  88:Src/addressable_led_manager.c ****         break;
+  89:Src/addressable_led_manager.c ****       }
+  90:Src/addressable_led_manager.c ****     case 1:
+  91:Src/addressable_led_manager.c ****       {
+  92:Src/addressable_led_manager.c ****         Animation_RandomFade_Update();
+  93:Src/addressable_led_manager.c ****         break;
+  94:Src/addressable_led_manager.c ****       }
+  95:Src/addressable_led_manager.c ****   }
+  96:Src/addressable_led_manager.c ****   HAL_Delay(1);
+ 122              		.loc 1 96 0
+ 123 000e 0120     		movs	r0, #1
+ 124 0010 FFF7FEFF 		bl	HAL_Delay
+ 125              	.LVL7:
+  97:Src/addressable_led_manager.c ****   //AddrLED_DisplayStrip(&ledStrip1);
+  98:Src/addressable_led_manager.c ****   return 100;
+  99:Src/addressable_led_manager.c **** }
+ 126              		.loc 1 99 0
+ 127 0014 6420     		movs	r0, #100
+ 128 0016 08BD     		pop	{r3, pc}
+ARM GAS  /tmp/ccItjmBn.s 			page 5
+
+
+ 129              	.L9:
+  87:Src/addressable_led_manager.c ****         break;
+ 130              		.loc 1 87 0
+ 131 0018 FFF7FEFF 		bl	Animation_RandomTriangles_Update
+ 132              	.LVL8:
+  88:Src/addressable_led_manager.c ****       }
+ 133              		.loc 1 88 0
+ 134 001c F7E7     		b	.L8
+ 135              	.L10:
+  92:Src/addressable_led_manager.c ****         break;
+ 136              		.loc 1 92 0
+ 137 001e FFF7FEFF 		bl	Animation_RandomFade_Update
+ 138              	.LVL9:
+  93:Src/addressable_led_manager.c ****       }
+ 139              		.loc 1 93 0
+ 140 0022 F4E7     		b	.L8
+ 141              	.L13:
+ 142              		.align	2
+ 143              	.L12:
+ 144 0024 00000000 		.word	.LANCHOR0
+ 145              		.cfi_endproc
+ 146              	.LFE316:
+ 148              		.section	.text.AddrLEDManager_Init,"ax",%progbits
+ 149              		.align	1
+ 150              		.global	AddrLEDManager_Init
+ 151              		.syntax unified
+ 152              		.thumb
+ 153              		.thumb_func
+ 154              		.fpu fpv4-sp-d16
+ 156              	AddrLEDManager_Init:
+ 157              	.LFB317:
+ 100:Src/addressable_led_manager.c **** 
+ 101:Src/addressable_led_manager.c **** // PUBLIC FUNCTIONS -------------------------------------------------
+ 102:Src/addressable_led_manager.c **** 
+ 103:Src/addressable_led_manager.c **** void AddrLEDManager_Init(void)
+ 104:Src/addressable_led_manager.c **** {
+ 158              		.loc 1 104 0
+ 159              		.cfi_startproc
+ 160              		@ args = 0, pretend = 0, frame = 32
+ 161              		@ frame_needed = 0, uses_anonymous_args = 0
+ 162 0000 70B5     		push	{r4, r5, r6, lr}
+ 163              	.LCFI3:
+ 164              		.cfi_def_cfa_offset 16
+ 165              		.cfi_offset 4, -16
+ 166              		.cfi_offset 5, -12
+ 167              		.cfi_offset 6, -8
+ 168              		.cfi_offset 14, -4
+ 169 0002 88B0     		sub	sp, sp, #32
+ 170              	.LCFI4:
+ 171              		.cfi_def_cfa_offset 48
+ 105:Src/addressable_led_manager.c ****   // Initialize the strip(s). This initialize one continuous strip. 
+ 106:Src/addressable_led_manager.c ****   // If multiple panels are daisychained, that counts as one strip.
+ 107:Src/addressable_led_manager.c ****   ledStrip1 = (AddrLEDStrip_t) {
+ 172              		.loc 1 107 0
+ 173 0004 294E     		ldr	r6, .L18
+ 174 0006 3446     		mov	r4, r6
+ 175 0008 294D     		ldr	r5, .L18+4
+ARM GAS  /tmp/ccItjmBn.s 			page 6
+
+
+ 176 000a 0FCD     		ldmia	r5!, {r0, r1, r2, r3}
+ 177 000c 0FC4     		stmia	r4!, {r0, r1, r2, r3}
+ 178 000e 2B68     		ldr	r3, [r5]
+ 179 0010 2360     		str	r3, [r4]
+ 108:Src/addressable_led_manager.c ****     .numLeds                 = ledStrip1Size,
+ 109:Src/addressable_led_manager.c ****       .pwmTimerHandle        = &LED_PANEL_1_PWM_TIMER_HANDLE,
+ 110:Src/addressable_led_manager.c ****       .pwmTimerHandleChannel = LED_PANEL_1_PWM_TIMER_CHANNEL,
+ 111:Src/addressable_led_manager.c ****       .pixels                = (Pixel_t *) &ledStrip1Pixels,
+ 112:Src/addressable_led_manager.c ****       .pixelPacketBuffer     = (uint8_t *) &ledStrip1PacketBuffer,
+ 113:Src/addressable_led_manager.c ****   };
+ 114:Src/addressable_led_manager.c ****   memset(&ledStrip1PacketBuffer, 0x0, sizeof(ledStrip1PacketBuffer));
+ 180              		.loc 1 114 0
+ 181 0012 40F28172 		movw	r2, #1921
+ 182 0016 0021     		movs	r1, #0
+ 183 0018 2648     		ldr	r0, .L18+8
+ 184 001a FFF7FEFF 		bl	memset
+ 185              	.LVL10:
+ 115:Src/addressable_led_manager.c ****   AddrLED_Init(&ledStrip1);
+ 186              		.loc 1 115 0
+ 187 001e 3046     		mov	r0, r6
+ 188 0020 FFF7FEFF 		bl	AddrLED_Init
+ 189              	.LVL11:
+ 190              	.LBB5:
+ 116:Src/addressable_led_manager.c **** 
+ 117:Src/addressable_led_manager.c ****   // Initialize the panel structures
+ 118:Src/addressable_led_manager.c ****   for (int panelIdx = 0; panelIdx < NUM_PANELS; panelIdx++)
+ 191              		.loc 1 118 0
+ 192 0024 0023     		movs	r3, #0
+ 193 0026 2DE0     		b	.L15
+ 194              	.LVL12:
+ 195              	.L16:
+ 196              	.LBB6:
+ 119:Src/addressable_led_manager.c ****   {
+ 120:Src/addressable_led_manager.c ****     Position_e pos = (Position_e) panelIdx;
+ 197              		.loc 1 120 0 discriminator 3
+ 198 0028 DCB2     		uxtb	r4, r3
+ 199              	.LVL13:
+ 121:Src/addressable_led_manager.c ****     AddrLEDPanel_t p = {
+ 200              		.loc 1 121 0 discriminator 3
+ 201 002a 0022     		movs	r2, #0
+ 202 002c CDF80E20 		str	r2, [sp, #14]	@ unaligned
+ 203 0030 CDF81220 		str	r2, [sp, #18]	@ unaligned
+ 204 0034 CDF81620 		str	r2, [sp, #22]	@ unaligned
+ 205 0038 CDF81A20 		str	r2, [sp, #26]	@ unaligned
+ 206 003c ADF81E20 		strh	r2, [sp, #30]	@ movhi
+ 207 0040 1A49     		ldr	r1, .L18
+ 208 0042 0091     		str	r1, [sp]
+ 209 0044 1022     		movs	r2, #16
+ 210 0046 ADF80820 		strh	r2, [sp, #8]	@ movhi
+ 211 004a 1A01     		lsls	r2, r3, #4
+ 212 004c 92B2     		uxth	r2, r2
+ 213 004e ADF80A20 		strh	r2, [sp, #10]	@ movhi
+ 122:Src/addressable_led_manager.c ****       .strip = &ledStrip1,
+ 123:Src/addressable_led_manager.c ****       .numLeds = NUM_LEDS_PER_PANEL,
+ 124:Src/addressable_led_manager.c ****       .stripRange = {(panelIdx * NUM_LEDS_PER_PANEL), ((panelIdx + 1)* NUM_LEDS_PER_PANEL - 1)},
+ 214              		.loc 1 124 0 discriminator 3
+ 215 0052 5E1C     		adds	r6, r3, #1
+ARM GAS  /tmp/ccItjmBn.s 			page 7
+
+
+ 216 0054 3301     		lsls	r3, r6, #4
+ 217              	.LVL14:
+ 218 0056 013B     		subs	r3, r3, #1
+ 121:Src/addressable_led_manager.c ****     AddrLEDPanel_t p = {
+ 219              		.loc 1 121 0 discriminator 3
+ 220 0058 ADF80C30 		strh	r3, [sp, #12]	@ movhi
+ 221 005c 8DF80E40 		strb	r4, [sp, #14]
+ 125:Src/addressable_led_manager.c ****       .position = pos,
+ 126:Src/addressable_led_manager.c ****       .neighborPanels = {NULL, NULL, NULL, NULL},
+ 127:Src/addressable_led_manager.c ****     };
+ 128:Src/addressable_led_manager.c ****     p.stripFirstPixel = &(p.strip->pixels[p.stripRange[0]]);
+ 222              		.loc 1 128 0 discriminator 3
+ 223 0060 4B68     		ldr	r3, [r1, #4]
+ 224 0062 03EBC202 		add	r2, r3, r2, lsl #3
+ 225 0066 0192     		str	r2, [sp, #4]
+ 129:Src/addressable_led_manager.c ****     InitPanel(&p);
+ 226              		.loc 1 129 0 discriminator 3
+ 227 0068 6846     		mov	r0, sp
+ 228 006a FFF7FEFF 		bl	InitPanel
+ 229              	.LVL15:
+ 130:Src/addressable_led_manager.c ****     panels[pos] = p;
+ 230              		.loc 1 130 0 discriminator 3
+ 231 006e 124D     		ldr	r5, .L18+12
+ 232 0070 05EB4415 		add	r5, r5, r4, lsl #5
+ 233 0074 6C46     		mov	r4, sp
+ 234              	.LVL16:
+ 235 0076 0FCC     		ldmia	r4!, {r0, r1, r2, r3}
+ 236 0078 0FC5     		stmia	r5!, {r0, r1, r2, r3}
+ 237 007a 94E80F00 		ldm	r4, {r0, r1, r2, r3}
+ 238 007e 85E80F00 		stm	r5, {r0, r1, r2, r3}
+ 239              	.LVL17:
+ 240              	.LBE6:
+ 118:Src/addressable_led_manager.c ****   {
+ 241              		.loc 1 118 0 discriminator 3
+ 242 0082 3346     		mov	r3, r6
+ 243              	.LVL18:
+ 244              	.L15:
+ 118:Src/addressable_led_manager.c ****   {
+ 245              		.loc 1 118 0 is_stmt 0 discriminator 1
+ 246 0084 042B     		cmp	r3, #4
+ 247 0086 CFDD     		ble	.L16
+ 248              	.LBE5:
+ 131:Src/addressable_led_manager.c ****   }
+ 132:Src/addressable_led_manager.c **** 
+ 133:Src/addressable_led_manager.c ****   // Initialize our animations
+ 134:Src/addressable_led_manager.c ****   Animation_RandomFade_Init((AddrLEDPanel_t *) &panels, NUM_PANELS, (RandomFadePixelData_t *) &rand
+ 249              		.loc 1 134 0 is_stmt 1
+ 250 0088 0B4C     		ldr	r4, .L18+12
+ 251 008a 0C4A     		ldr	r2, .L18+16
+ 252 008c 0521     		movs	r1, #5
+ 253 008e 2046     		mov	r0, r4
+ 254 0090 FFF7FEFF 		bl	Animation_RandomFade_Init
+ 255              	.LVL19:
+ 135:Src/addressable_led_manager.c ****   Animation_RandomTriangles_Init((AddrLEDPanel_t *) &panels, NUM_PANELS, (RandomTrianglesPixelData_
+ 256              		.loc 1 135 0
+ 257 0094 0A4A     		ldr	r2, .L18+20
+ 258 0096 0521     		movs	r1, #5
+ARM GAS  /tmp/ccItjmBn.s 			page 8
+
+
+ 259 0098 2046     		mov	r0, r4
+ 260 009a FFF7FEFF 		bl	Animation_RandomTriangles_Init
+ 261              	.LVL20:
+ 136:Src/addressable_led_manager.c **** 
+ 137:Src/addressable_led_manager.c ****   // Initialize refresh timer
+ 138:Src/addressable_led_manager.c ****   refreshTimer.fn = AddrLEDManager_RefreshCallback;
+ 262              		.loc 1 138 0
+ 263 009e 094B     		ldr	r3, .L18+24
+ 264 00a0 094A     		ldr	r2, .L18+28
+ 265 00a2 DA60     		str	r2, [r3, #12]
+ 139:Src/addressable_led_manager.c ****   refreshTimer.Ms = 100;
+ 266              		.loc 1 139 0
+ 267 00a4 6422     		movs	r2, #100
+ 268 00a6 5A60     		str	r2, [r3, #4]
+ 140:Src/addressable_led_manager.c **** }
+ 269              		.loc 1 140 0
+ 270 00a8 08B0     		add	sp, sp, #32
+ 271              	.LCFI5:
+ 272              		.cfi_def_cfa_offset 16
+ 273              		@ sp needed
+ 274 00aa 70BD     		pop	{r4, r5, r6, pc}
+ 275              	.L19:
+ 276              		.align	2
+ 277              	.L18:
+ 278 00ac 00000000 		.word	ledStrip1
+ 279 00b0 00000000 		.word	.LANCHOR1
+ 280 00b4 00000000 		.word	ledStrip1PacketBuffer
+ 281 00b8 00000000 		.word	panels
+ 282 00bc 00000000 		.word	randomFadePixelData
+ 283 00c0 00000000 		.word	randomTrianglesPixelData
+ 284 00c4 00000000 		.word	refreshTimer
+ 285 00c8 00000000 		.word	AddrLEDManager_RefreshCallback
+ 286              		.cfi_endproc
+ 287              	.LFE317:
+ 289              		.section	.text.GetPixelByLocalCoordinate,"ax",%progbits
+ 290              		.align	1
+ 291              		.global	GetPixelByLocalCoordinate
+ 292              		.syntax unified
+ 293              		.thumb
+ 294              		.thumb_func
+ 295              		.fpu fpv4-sp-d16
+ 297              	GetPixelByLocalCoordinate:
+ 298              	.LFB318:
+ 141:Src/addressable_led_manager.c **** 
+ 142:Src/addressable_led_manager.c **** Pixel_t* GetPixelByLocalCoordinate(Position_e pos, uint8_t x, uint8_t y)
+ 143:Src/addressable_led_manager.c **** {
+ 299              		.loc 1 143 0
+ 300              		.cfi_startproc
+ 301              		@ args = 0, pretend = 0, frame = 0
+ 302              		@ frame_needed = 0, uses_anonymous_args = 0
+ 303              		@ link register save eliminated.
+ 304              	.LVL21:
+ 144:Src/addressable_led_manager.c ****   AddrLEDPanel_t *panel = &panels[pos];
+ 145:Src/addressable_led_manager.c ****   AddrLEDStrip_t *strip = panel->strip;
+ 146:Src/addressable_led_manager.c ****   uint8_t ledIdx;
+ 147:Src/addressable_led_manager.c **** #if LEDS_BEGIN_AT_BOTTOM
+ 148:Src/addressable_led_manager.c ****   y = NUM_LEDS_PER_PANEL_SIDE - y - 1;
+ARM GAS  /tmp/ccItjmBn.s 			page 9
+
+
+ 305              		.loc 1 148 0
+ 306 0000 C2F10302 		rsb	r2, r2, #3
+ 307              	.LVL22:
+ 308 0004 D2B2     		uxtb	r2, r2
+ 309              	.LVL23:
+ 149:Src/addressable_led_manager.c **** #endif
+ 150:Src/addressable_led_manager.c ****   if (y % 2 == 0)
+ 310              		.loc 1 150 0
+ 311 0006 12F0010F 		tst	r2, #1
+ 312 000a 0BD0     		beq	.L23
+ 151:Src/addressable_led_manager.c ****   {
+ 152:Src/addressable_led_manager.c ****     ledIdx = x + (NUM_LEDS_PER_PANEL_SIDE * y);
+ 153:Src/addressable_led_manager.c ****   }
+ 154:Src/addressable_led_manager.c ****   else
+ 155:Src/addressable_led_manager.c ****   {
+ 156:Src/addressable_led_manager.c ****     ledIdx = (NUM_LEDS_PER_PANEL_SIDE - 1 - x) + (NUM_LEDS_PER_PANEL_SIDE * y);
+ 313              		.loc 1 156 0
+ 314 000c C1EB8201 		rsb	r1, r1, r2, lsl #2
+ 315              	.LVL24:
+ 316 0010 C9B2     		uxtb	r1, r1
+ 317 0012 0331     		adds	r1, r1, #3
+ 318 0014 C9B2     		uxtb	r1, r1
+ 319              	.LVL25:
+ 320              	.L22:
+ 157:Src/addressable_led_manager.c ****   }
+ 158:Src/addressable_led_manager.c ****   return &(panel->stripFirstPixel[ledIdx]);
+ 321              		.loc 1 158 0
+ 322 0016 064B     		ldr	r3, .L24
+ 323 0018 03EB4010 		add	r0, r3, r0, lsl #5
+ 324              	.LVL26:
+ 325 001c 4068     		ldr	r0, [r0, #4]
+ 159:Src/addressable_led_manager.c **** }
+ 326              		.loc 1 159 0
+ 327 001e 00EBC100 		add	r0, r0, r1, lsl #3
+ 328 0022 7047     		bx	lr
+ 329              	.LVL27:
+ 330              	.L23:
+ 152:Src/addressable_led_manager.c ****   }
+ 331              		.loc 1 152 0
+ 332 0024 9200     		lsls	r2, r2, #2
+ 333              	.LVL28:
+ 334 0026 D2B2     		uxtb	r2, r2
+ 335 0028 1144     		add	r1, r1, r2
+ 336              	.LVL29:
+ 337 002a C9B2     		uxtb	r1, r1
+ 338              	.LVL30:
+ 339 002c F3E7     		b	.L22
+ 340              	.L25:
+ 341 002e 00BF     		.align	2
+ 342              	.L24:
+ 343 0030 00000000 		.word	panels
+ 344              		.cfi_endproc
+ 345              	.LFE318:
+ 347              		.section	.text.GetPixelByGlobalCoordinate,"ax",%progbits
+ 348              		.align	1
+ 349              		.global	GetPixelByGlobalCoordinate
+ 350              		.syntax unified
+ARM GAS  /tmp/ccItjmBn.s 			page 10
+
+
+ 351              		.thumb
+ 352              		.thumb_func
+ 353              		.fpu fpv4-sp-d16
+ 355              	GetPixelByGlobalCoordinate:
+ 356              	.LFB319:
+ 160:Src/addressable_led_manager.c **** 
+ 161:Src/addressable_led_manager.c **** Pixel_t* GetPixelByGlobalCoordinate(uint8_t x, uint8_t y, uint8_t z)
+ 162:Src/addressable_led_manager.c **** {
+ 357              		.loc 1 162 0
+ 358              		.cfi_startproc
+ 359              		@ args = 0, pretend = 0, frame = 0
+ 360              		@ frame_needed = 0, uses_anonymous_args = 0
+ 361              		@ link register save eliminated.
+ 362              	.LVL31:
+ 163:Src/addressable_led_manager.c ****   return NULL;
+ 164:Src/addressable_led_manager.c **** } 
+ 363              		.loc 1 164 0
+ 364 0000 0020     		movs	r0, #0
+ 365              	.LVL32:
+ 366 0002 7047     		bx	lr
+ 367              		.cfi_endproc
+ 368              	.LFE319:
+ 370              		.section	.text.AddrLEDManager_RefreshTimerStart,"ax",%progbits
+ 371              		.align	1
+ 372              		.global	AddrLEDManager_RefreshTimerStart
+ 373              		.syntax unified
+ 374              		.thumb
+ 375              		.thumb_func
+ 376              		.fpu fpv4-sp-d16
+ 378              	AddrLEDManager_RefreshTimerStart:
+ 379              	.LFB321:
+ 165:Src/addressable_led_manager.c **** 
+ 166:Src/addressable_led_manager.c **** inline AddrLEDPanel_t* GetPanelByLocation(Position_e pos)
+ 167:Src/addressable_led_manager.c **** {
+ 168:Src/addressable_led_manager.c ****   return NULL;
+ 169:Src/addressable_led_manager.c **** }
+ 170:Src/addressable_led_manager.c **** 
+ 171:Src/addressable_led_manager.c **** void AddrLEDManager_RefreshTimerStart(void)
+ 172:Src/addressable_led_manager.c **** {
+ 380              		.loc 1 172 0
+ 381              		.cfi_startproc
+ 382              		@ args = 0, pretend = 0, frame = 0
+ 383              		@ frame_needed = 0, uses_anonymous_args = 0
+ 384 0000 08B5     		push	{r3, lr}
+ 385              	.LCFI6:
+ 386              		.cfi_def_cfa_offset 8
+ 387              		.cfi_offset 3, -8
+ 388              		.cfi_offset 14, -4
+ 173:Src/addressable_led_manager.c ****   SwTimer_Start(&refreshTimer);
+ 389              		.loc 1 173 0
+ 390 0002 0248     		ldr	r0, .L29
+ 391 0004 FFF7FEFF 		bl	SwTimer_Start
+ 392              	.LVL33:
+ 174:Src/addressable_led_manager.c **** }
+ 393              		.loc 1 174 0
+ 394 0008 08BD     		pop	{r3, pc}
+ 395              	.L30:
+ARM GAS  /tmp/ccItjmBn.s 			page 11
+
+
+ 396 000a 00BF     		.align	2
+ 397              	.L29:
+ 398 000c 00000000 		.word	refreshTimer
+ 399              		.cfi_endproc
+ 400              	.LFE321:
+ 402              		.section	.text.AddrLEDManager_PlayNextAnimation,"ax",%progbits
+ 403              		.align	1
+ 404              		.global	AddrLEDManager_PlayNextAnimation
+ 405              		.syntax unified
+ 406              		.thumb
+ 407              		.thumb_func
+ 408              		.fpu fpv4-sp-d16
+ 410              	AddrLEDManager_PlayNextAnimation:
+ 411              	.LFB322:
+ 175:Src/addressable_led_manager.c **** 
+ 176:Src/addressable_led_manager.c **** void AddrLEDManager_PlayNextAnimation(void)
+ 177:Src/addressable_led_manager.c **** {
+ 412              		.loc 1 177 0
+ 413              		.cfi_startproc
+ 414              		@ args = 0, pretend = 0, frame = 16
+ 415              		@ frame_needed = 0, uses_anonymous_args = 0
+ 416 0000 10B5     		push	{r4, lr}
+ 417              	.LCFI7:
+ 418              		.cfi_def_cfa_offset 8
+ 419              		.cfi_offset 4, -8
+ 420              		.cfi_offset 14, -4
+ 421 0002 84B0     		sub	sp, sp, #16
+ 422              	.LCFI8:
+ 423              		.cfi_def_cfa_offset 24
+ 178:Src/addressable_led_manager.c ****   // Tell current animation to start ramping down
+ 179:Src/addressable_led_manager.c ****   AnimationMessage_t pauseMsg = {PAUSE, NULL};
+ 424              		.loc 1 179 0
+ 425 0004 0124     		movs	r4, #1
+ 426 0006 8DF80040 		strb	r4, [sp]
+ 427 000a 0022     		movs	r2, #0
+ 428 000c 0023     		movs	r3, #0
+ 429 000e CDE90223 		strd	r2, [sp, #8]
+ 180:Src/addressable_led_manager.c ****   animations[animationIndex % NUM_ANIMATIONS].sendMessage(&pauseMsg);
+ 430              		.loc 1 180 0
+ 431 0012 074B     		ldr	r3, .L33
+ 432 0014 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 433 0016 03EA0402 		and	r2, r3, r4
+ 434 001a 064B     		ldr	r3, .L33+4
+ 435 001c 03EB0213 		add	r3, r3, r2, lsl #4
+ 436 0020 DB68     		ldr	r3, [r3, #12]
+ 437 0022 6846     		mov	r0, sp
+ 438 0024 9847     		blx	r3
+ 439              	.LVL34:
+ 181:Src/addressable_led_manager.c **** 
+ 182:Src/addressable_led_manager.c ****   // Set our state machine to "transitioning from animation to animation"
+ 183:Src/addressable_led_manager.c ****   animationSkipInProgress = true;
+ 440              		.loc 1 183 0
+ 441 0026 044B     		ldr	r3, .L33+8
+ 442 0028 1C70     		strb	r4, [r3]
+ 184:Src/addressable_led_manager.c **** }
+ 443              		.loc 1 184 0
+ 444 002a 04B0     		add	sp, sp, #16
+ARM GAS  /tmp/ccItjmBn.s 			page 12
+
+
+ 445              	.LCFI9:
+ 446              		.cfi_def_cfa_offset 8
+ 447              		@ sp needed
+ 448 002c 10BD     		pop	{r4, pc}
+ 449              	.L34:
+ 450 002e 00BF     		.align	2
+ 451              	.L33:
+ 452 0030 00000000 		.word	.LANCHOR0
+ 453 0034 00000000 		.word	.LANCHOR2
+ 454 0038 00000000 		.word	.LANCHOR3
+ 455              		.cfi_endproc
+ 456              	.LFE322:
+ 458              		.section	.text.AddrLEDManager_SanityTest,"ax",%progbits
+ 459              		.align	1
+ 460              		.global	AddrLEDManager_SanityTest
+ 461              		.syntax unified
+ 462              		.thumb
+ 463              		.thumb_func
+ 464              		.fpu fpv4-sp-d16
+ 466              	AddrLEDManager_SanityTest:
+ 467              	.LFB323:
+ 185:Src/addressable_led_manager.c **** 
+ 186:Src/addressable_led_manager.c **** void AddrLEDManager_SanityTest(void)
+ 187:Src/addressable_led_manager.c **** {
+ 468              		.loc 1 187 0
+ 469              		.cfi_startproc
+ 470              		@ args = 0, pretend = 0, frame = 16
+ 471              		@ frame_needed = 0, uses_anonymous_args = 0
+ 472 0000 10B5     		push	{r4, lr}
+ 473              	.LCFI10:
+ 474              		.cfi_def_cfa_offset 8
+ 475              		.cfi_offset 4, -8
+ 476              		.cfi_offset 14, -4
+ 477 0002 84B0     		sub	sp, sp, #16
+ 478              	.LCFI11:
+ 479              		.cfi_def_cfa_offset 24
+ 480 0004 0EE0     		b	.L37
+ 481              	.L36:
+ 188:Src/addressable_led_manager.c ****   while(1){
+ 189:Src/addressable_led_manager.c ****     TOGGLE_ONBOARD_LED();
+ 190:Src/addressable_led_manager.c ****     
+ 191:Src/addressable_led_manager.c ****     // If we're in process of skipping, wait for current animation to ramp down
+ 192:Src/addressable_led_manager.c ****     if (animationSkipInProgress)
+ 193:Src/addressable_led_manager.c ****     {
+ 194:Src/addressable_led_manager.c ****       AnimationState_e animState = animations[animationIndex % NUM_ANIMATIONS].getState();
+ 195:Src/addressable_led_manager.c ****       if (animState == STOPPED)
+ 196:Src/addressable_led_manager.c ****       {
+ 197:Src/addressable_led_manager.c ****         animationIndex++;
+ 198:Src/addressable_led_manager.c ****         AnimationMessage_t start = {BEGIN, NULL};
+ 199:Src/addressable_led_manager.c ****         animations[animationIndex % NUM_ANIMATIONS].sendMessage(&start);
+ 200:Src/addressable_led_manager.c ****         animationSkipInProgress = false;
+ 201:Src/addressable_led_manager.c ****       }
+ 202:Src/addressable_led_manager.c ****     }
+ 203:Src/addressable_led_manager.c ****     animations[animationIndex % NUM_ANIMATIONS].update();
+ 482              		.loc 1 203 0
+ 483 0006 1B4B     		ldr	r3, .L39
+ 484 0008 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ARM GAS  /tmp/ccItjmBn.s 			page 13
+
+
+ 485 000a 03F00102 		and	r2, r3, #1
+ 486 000e 1A4B     		ldr	r3, .L39+4
+ 487 0010 03EB0213 		add	r3, r3, r2, lsl #4
+ 488 0014 5B68     		ldr	r3, [r3, #4]
+ 489 0016 9847     		blx	r3
+ 490              	.LVL35:
+ 204:Src/addressable_led_manager.c ****     AddrLED_DisplayStrip(&ledStrip1);
+ 491              		.loc 1 204 0
+ 492 0018 1848     		ldr	r0, .L39+8
+ 493 001a FFF7FEFF 		bl	AddrLED_DisplayStrip
+ 494              	.LVL36:
+ 205:Src/addressable_led_manager.c ****     HAL_Delay(10);
+ 495              		.loc 1 205 0
+ 496 001e 0A20     		movs	r0, #10
+ 497 0020 FFF7FEFF 		bl	HAL_Delay
+ 498              	.LVL37:
+ 499              	.L37:
+ 192:Src/addressable_led_manager.c ****     {
+ 500              		.loc 1 192 0
+ 501 0024 164B     		ldr	r3, .L39+12
+ 502 0026 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 503 0028 002B     		cmp	r3, #0
+ 504 002a ECD0     		beq	.L36
+ 505              	.LBB7:
+ 194:Src/addressable_led_manager.c ****       if (animState == STOPPED)
+ 506              		.loc 1 194 0
+ 507 002c 114B     		ldr	r3, .L39
+ 508 002e 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 509 0030 03F00102 		and	r2, r3, #1
+ 510 0034 104B     		ldr	r3, .L39+4
+ 511 0036 03EB0213 		add	r3, r3, r2, lsl #4
+ 512 003a 9B68     		ldr	r3, [r3, #8]
+ 513 003c 9847     		blx	r3
+ 514              	.LVL38:
+ 195:Src/addressable_led_manager.c ****       {
+ 515              		.loc 1 195 0
+ 516 003e 0328     		cmp	r0, #3
+ 517 0040 E1D1     		bne	.L36
+ 518              	.LBB8:
+ 197:Src/addressable_led_manager.c ****         AnimationMessage_t start = {BEGIN, NULL};
+ 519              		.loc 1 197 0
+ 520 0042 0C4A     		ldr	r2, .L39
+ 521 0044 1378     		ldrb	r3, [r2]	@ zero_extendqisi2
+ 522 0046 0133     		adds	r3, r3, #1
+ 523 0048 DBB2     		uxtb	r3, r3
+ 524 004a 1370     		strb	r3, [r2]
+ 198:Src/addressable_led_manager.c ****         animations[animationIndex % NUM_ANIMATIONS].sendMessage(&start);
+ 525              		.loc 1 198 0
+ 526 004c 0024     		movs	r4, #0
+ 527 004e 8DF80040 		strb	r4, [sp]
+ 528 0052 0020     		movs	r0, #0
+ 529              	.LVL39:
+ 530 0054 0021     		movs	r1, #0
+ 531 0056 CDE90201 		strd	r0, [sp, #8]
+ 199:Src/addressable_led_manager.c ****         animationSkipInProgress = false;
+ 532              		.loc 1 199 0
+ 533 005a 1378     		ldrb	r3, [r2]	@ zero_extendqisi2
+ARM GAS  /tmp/ccItjmBn.s 			page 14
+
+
+ 534 005c 03F00102 		and	r2, r3, #1
+ 535 0060 054B     		ldr	r3, .L39+4
+ 536 0062 03EB0213 		add	r3, r3, r2, lsl #4
+ 537 0066 DB68     		ldr	r3, [r3, #12]
+ 538 0068 6846     		mov	r0, sp
+ 539 006a 9847     		blx	r3
+ 540              	.LVL40:
+ 200:Src/addressable_led_manager.c ****       }
+ 541              		.loc 1 200 0
+ 542 006c 044B     		ldr	r3, .L39+12
+ 543 006e 1C70     		strb	r4, [r3]
+ 544 0070 C9E7     		b	.L36
+ 545              	.L40:
+ 546 0072 00BF     		.align	2
+ 547              	.L39:
+ 548 0074 00000000 		.word	.LANCHOR0
+ 549 0078 00000000 		.word	.LANCHOR2
+ 550 007c 00000000 		.word	ledStrip1
+ 551 0080 00000000 		.word	.LANCHOR3
+ 552              	.LBE8:
+ 553              	.LBE7:
+ 554              		.cfi_endproc
+ 555              	.LFE323:
+ 557              		.global	animations
+ 558              		.comm	randomTrianglesPixelData,400,4
+ 559              		.comm	randomFadePixelData,400,4
+ 560              		.comm	panels,160,4
+ 561              		.global	animationIndex
+ 562              		.global	animationSkipInProgress
+ 563              		.comm	refreshTimer,24,4
+ 564              		.comm	ledStrip1PacketBuffer,1921,4
+ 565              		.comm	ledStrip1Pixels,15360,4
+ 566              		.comm	ledStrip1,20,4
+ 567              		.global	ledStrip1Size
+ 568              		.section	.rodata
+ 569              		.align	2
+ 570              		.set	.LANCHOR1,. + 0
+ 571              	.LC1:
+ 572 0000 5000     		.short	80
+ 573 0002 0000     		.space	2
+ 574 0004 00000000 		.word	ledStrip1Pixels
+ 575 0008 00000000 		.word	ledStrip1PacketBuffer
+ 576 000c 00000000 		.word	htim3
+ 577 0010 0C000000 		.word	12
+ 578              		.section	.bss.animationIndex,"aw",%nobits
+ 579              		.set	.LANCHOR0,. + 0
+ 582              	animationIndex:
+ 583 0000 00       		.space	1
+ 584              		.section	.bss.animationSkipInProgress,"aw",%nobits
+ 585              		.set	.LANCHOR3,. + 0
+ 588              	animationSkipInProgress:
+ 589 0000 00       		.space	1
+ 590              		.section	.data.animations,"aw",%progbits
+ 591              		.align	2
+ 592              		.set	.LANCHOR2,. + 0
+ 595              	animations:
+ 596 0000 00000000 		.word	Animation_RandomTriangles_Init
+ARM GAS  /tmp/ccItjmBn.s 			page 15
+
+
+ 597 0004 00000000 		.word	Animation_RandomTriangles_Update
+ 598 0008 00000000 		.word	Animation_RandomTriangles_GetState
+ 599 000c 00000000 		.word	Animation_RandomTriangles_SendMessage
+ 600 0010 00000000 		.word	Animation_RandomFade_Init
+ 601 0014 00000000 		.word	Animation_RandomFade_Update
+ 602 0018 00000000 		.word	Animation_RandomFade_GetState
+ 603 001c 00000000 		.word	Animation_RandomFade_SendMessage
+ 604              		.section	.rodata.ledStrip1Size,"a",%progbits
+ 605              		.align	1
+ 608              	ledStrip1Size:
+ 609 0000 5000     		.short	80
+ 610              		.text
+ 611              	.Letext0:
+ 612              		.file 2 "/home/jon/KODMOD/EMBEDDED_TOOLCHAINS/gcc-arm-none-eabi-7-2018-q2-update/arm-none-eabi/inc
+ 613              		.file 3 "/home/jon/KODMOD/EMBEDDED_TOOLCHAINS/gcc-arm-none-eabi-7-2018-q2-update/arm-none-eabi/inc
+ 614              		.file 4 "Drivers/CMSIS/Include/core_cm4.h"
+ 615              		.file 5 "Drivers/CMSIS/Device/ST/STM32L4xx/Include/system_stm32l4xx.h"
+ 616              		.file 6 "Drivers/CMSIS/Device/ST/STM32L4xx/Include/stm32l476xx.h"
+ 617              		.file 7 "Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_def.h"
+ 618              		.file 8 "Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_dma.h"
+ 619              		.file 9 "Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_flash.h"
+ 620              		.file 10 "Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_tim.h"
+ 621              		.file 11 "Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal.h"
+ 622              		.file 12 "Inc/tim.h"
+ 623              		.file 13 "Inc/addressable_led_driver.h"
+ 624              		.file 14 "Inc/addressable_led_manager.h"
+ 625              		.file 15 "Inc/random_fade_animation.h"
+ 626              		.file 16 "Inc/random_triangles_animation.h"
+ 627              		.file 17 "Inc/sw_timers.h"
+ 628              		.file 18 "/home/jon/KODMOD/EMBEDDED_TOOLCHAINS/gcc-arm-none-eabi-7-2018-q2-update/arm-none-eabi/in
+ 629              		.file 19 "/home/jon/KODMOD/EMBEDDED_TOOLCHAINS/gcc-arm-none-eabi-7-2018-q2-update/arm-none-eabi/in
+ 630              		.file 20 "/home/jon/KODMOD/EMBEDDED_TOOLCHAINS/gcc-arm-none-eabi-7-2018-q2-update/lib/gcc/arm-none
+ 631              		.file 21 "/home/jon/KODMOD/EMBEDDED_TOOLCHAINS/gcc-arm-none-eabi-7-2018-q2-update/arm-none-eabi/in
+ 632              		.file 22 "/home/jon/KODMOD/EMBEDDED_TOOLCHAINS/gcc-arm-none-eabi-7-2018-q2-update/arm-none-eabi/in
+ 633              		.file 23 "<built-in>"
+ARM GAS  /tmp/ccItjmBn.s 			page 16
+
+
+DEFINED SYMBOLS
+                            *ABS*:0000000000000000 addressable_led_manager.c
+     /tmp/ccItjmBn.s:18     .text.InitPanel:0000000000000000 $t
+     /tmp/ccItjmBn.s:24     .text.InitPanel:0000000000000000 InitPanel
+     /tmp/ccItjmBn.s:98     .text.AddrLEDManager_RefreshCallback:0000000000000000 $t
+     /tmp/ccItjmBn.s:104    .text.AddrLEDManager_RefreshCallback:0000000000000000 AddrLEDManager_RefreshCallback
+     /tmp/ccItjmBn.s:144    .text.AddrLEDManager_RefreshCallback:0000000000000024 $d
+     /tmp/ccItjmBn.s:149    .text.AddrLEDManager_Init:0000000000000000 $t
+     /tmp/ccItjmBn.s:156    .text.AddrLEDManager_Init:0000000000000000 AddrLEDManager_Init
+     /tmp/ccItjmBn.s:278    .text.AddrLEDManager_Init:00000000000000ac $d
+                            *COM*:0000000000000014 ledStrip1
+                            *COM*:0000000000000781 ledStrip1PacketBuffer
+                            *COM*:00000000000000a0 panels
+                            *COM*:0000000000000190 randomFadePixelData
+                            *COM*:0000000000000190 randomTrianglesPixelData
+                            *COM*:0000000000000018 refreshTimer
+     /tmp/ccItjmBn.s:290    .text.GetPixelByLocalCoordinate:0000000000000000 $t
+     /tmp/ccItjmBn.s:297    .text.GetPixelByLocalCoordinate:0000000000000000 GetPixelByLocalCoordinate
+     /tmp/ccItjmBn.s:343    .text.GetPixelByLocalCoordinate:0000000000000030 $d
+     /tmp/ccItjmBn.s:348    .text.GetPixelByGlobalCoordinate:0000000000000000 $t
+     /tmp/ccItjmBn.s:355    .text.GetPixelByGlobalCoordinate:0000000000000000 GetPixelByGlobalCoordinate
+     /tmp/ccItjmBn.s:371    .text.AddrLEDManager_RefreshTimerStart:0000000000000000 $t
+     /tmp/ccItjmBn.s:378    .text.AddrLEDManager_RefreshTimerStart:0000000000000000 AddrLEDManager_RefreshTimerStart
+     /tmp/ccItjmBn.s:398    .text.AddrLEDManager_RefreshTimerStart:000000000000000c $d
+     /tmp/ccItjmBn.s:403    .text.AddrLEDManager_PlayNextAnimation:0000000000000000 $t
+     /tmp/ccItjmBn.s:410    .text.AddrLEDManager_PlayNextAnimation:0000000000000000 AddrLEDManager_PlayNextAnimation
+     /tmp/ccItjmBn.s:452    .text.AddrLEDManager_PlayNextAnimation:0000000000000030 $d
+     /tmp/ccItjmBn.s:459    .text.AddrLEDManager_SanityTest:0000000000000000 $t
+     /tmp/ccItjmBn.s:466    .text.AddrLEDManager_SanityTest:0000000000000000 AddrLEDManager_SanityTest
+     /tmp/ccItjmBn.s:548    .text.AddrLEDManager_SanityTest:0000000000000074 $d
+     /tmp/ccItjmBn.s:595    .data.animations:0000000000000000 animations
+     /tmp/ccItjmBn.s:582    .bss.animationIndex:0000000000000000 animationIndex
+     /tmp/ccItjmBn.s:588    .bss.animationSkipInProgress:0000000000000000 animationSkipInProgress
+                            *COM*:0000000000003c00 ledStrip1Pixels
+     /tmp/ccItjmBn.s:608    .rodata.ledStrip1Size:0000000000000000 ledStrip1Size
+     /tmp/ccItjmBn.s:569    .rodata:0000000000000000 $d
+     /tmp/ccItjmBn.s:583    .bss.animationIndex:0000000000000000 $d
+     /tmp/ccItjmBn.s:589    .bss.animationSkipInProgress:0000000000000000 $d
+     /tmp/ccItjmBn.s:591    .data.animations:0000000000000000 $d
+     /tmp/ccItjmBn.s:605    .rodata.ledStrip1Size:0000000000000000 $d
+
+UNDEFINED SYMBOLS
+HAL_Delay
+Animation_RandomTriangles_Update
+Animation_RandomFade_Update
+memset
+AddrLED_Init
+Animation_RandomFade_Init
+Animation_RandomTriangles_Init
+SwTimer_Start
+AddrLED_DisplayStrip
+htim3
+Animation_RandomTriangles_GetState
+Animation_RandomTriangles_SendMessage
+Animation_RandomFade_GetState
+Animation_RandomFade_SendMessage

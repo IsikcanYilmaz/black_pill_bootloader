@@ -83,6 +83,9 @@ void Error_Handler(void);
 #define BOOST_EN_GPIO_Port GPIOC
 /* USER CODE BEGIN Private defines */
 
+#define CRITICAL_SECTION_BEGIN uint32_t p = __get_PRIMASK(); __disable_irq();  
+#define CRITICAL_SECTION_END   __set_PRIMASK(p);
+
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

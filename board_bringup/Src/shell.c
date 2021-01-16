@@ -6,6 +6,8 @@
 #include "stm32l4xx_hal_gpio.h"
 #include "stdio.h"
 #include "adc.h"
+#include "addressable_led_manager.h"
+#include "stm32l4xx_hal_flash.h"
 #include <string.h>
 
 /*
@@ -68,15 +70,29 @@ static void BoardBringupTest(void)
 {
   char out[256];
 
-  /* ADC 1 TEST
+   /*ADC 1 TEST*/
+
+  HAL_GPIO_WritePin(GPIOC, BATT_ADC_EN_Pin, GPIO_PIN_SET);
   HAL_ADC_Start(&hadc1);
+  HAL_ADC_PollForConversion(&hadc1, 0xffffffff);
   sprintf(&out, "%d", HAL_ADC_GetValue(&hadc1));
-
-  HAL_GPIO_WritePin(GPIOC, BATT_ADC_EN_Pin, GPIO_PIN_RESET);
   HAL_ADC_Stop(&hadc1);
-  */
+  HAL_GPIO_WritePin(GPIOC, BATT_ADC_EN_Pin, GPIO_PIN_RESET);
 
+  /*HAL_GPIO_TogglePin(BOOST_EN_GPIO_Port, BOOST_EN_Pin);*/
+
+  /*sprintf(&out, "ASDQWE");*/
   CDC_Transmit_FS(out, strlen(out));
+}
+
+static void BoardBringupChangeAnimation(void)
+{
+  AddrLEDManager_PlayNextAnimation();
+}
+
+static void BoardBringupFlashTest(void)
+{
+  /*FLASH_Program_DoubleWord(*/
 }
 
 // Process the command string that populates our RxBuffer
@@ -87,6 +103,10 @@ GENERIC_STATUS_e Shell_ProcessCommand(void)
   if (ShellRxBufferHead > 0 && strncmp("doit", ShellRxBuffer, ShellRxBufferHead) == 0)
   {
     BoardBringupTest();
+  }
+  else if (ShellRxBufferHead > 0 && strncmp("change", ShellRxBuffer, ShellRxBufferHead) == 0)
+  {
+    BoardBringupChangeAnimation();
   }
   ShellRxBufferHead = 0;
 

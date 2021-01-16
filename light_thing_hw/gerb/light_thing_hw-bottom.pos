@@ -1,0 +1,42 @@
+### Module positions - created on Sat 31 Oct 2020 09:53:54 PM PDT ###
+### Printed by Pcbnew version kicad 5.1.5+dfsg1-2build2
+## Unit = mm, Angle = deg.
+## Side : bottom
+# Ref            Val              Package                                                      PosX       PosY       Rot  Side
+C5               1uF              C_0603_1608Metric_Pad1.05x0.95mm_HandSolder             -135.9114   -99.4412  180.0000  bottom
+C6               1uF              C_0603_1608Metric_Pad1.05x0.95mm_HandSolder             -131.0364  -101.4412    0.0000  bottom
+C7               220uF            C_0603_1608Metric_Pad1.05x0.95mm_HandSolder             -159.4450   -75.5900    0.0000  bottom
+C8               10uF             C_0603_1608Metric_Pad1.05x0.95mm_HandSolder             -134.2450   -73.1100    0.0000  bottom
+C10              10uF             C_0603_1608Metric_Pad1.05x0.95mm_HandSolder             -141.8550   -73.3400  180.0000  bottom
+C12              1nF              C_0603_1608Metric_Pad1.05x0.95mm_HandSolder             -141.8550   -75.2500  180.0000  bottom
+C13              100nF            C_0603_1608Metric_Pad1.05x0.95mm_HandSolder             -126.4450   -95.2500    0.0000  bottom
+C14              10uF             C_0603_1608Metric_Pad1.05x0.95mm_HandSolder             -144.0400  -100.9350  270.0000  bottom
+C15              2700pF           C_0603_1608Metric_Pad1.05x0.95mm_HandSolder             -154.8650   -99.2000  180.0000  bottom
+C18              10uF             C_0603_1608Metric_Pad1.05x0.95mm_HandSolder             -154.8700   -97.4800  180.0000  bottom
+C19              220uF            C_0603_1608Metric_Pad1.05x0.95mm_HandSolder             -160.2550   -78.2600    0.0000  bottom
+C20              220uF            C_0603_1608Metric_Pad1.05x0.95mm_HandSolder             -160.2550   -77.0100    0.0000  bottom
+D1               2.5A,_20V        D_SMA                                                   -142.7900   -70.3500  180.0000  bottom
+D2               GREEN_LED        LED_0603_1608Metric_Pad1.05x0.95mm_HandSolder           -121.5000   -74.2500   90.0000  bottom
+D3               RED_LED          LED_0603_1608Metric_Pad1.05x0.95mm_HandSolder           -123.5000   -74.2500   90.0000  bottom
+J2               Li-Ion_Battery   Molex_PicoBlade_53261-0271_1x02-1MP_P1.25mm_Horizontal  -124.5000  -111.2500    0.0000  bottom
+L1               10uH,_2.5A       L_0603_1608Metric_Pad1.05x0.95mm_HandSolder             -136.3600   -70.9800    0.0000  bottom
+Q1               MMBF170          SOT-23                                                  -123.5000   -99.2500   90.0000  bottom
+Q2               BSS83P           SOT-23                                                  -129.9500   -74.2500   90.0000  bottom
+R1               1k               R_0603_1608Metric_Pad1.05x0.95mm_HandSolder             -139.9114  -103.3162  270.0000  bottom
+R2               1k               R_0603_1608Metric_Pad1.05x0.95mm_HandSolder             -122.0200  -106.6900    0.0000  bottom
+R3               30.1k            R_0603_1608Metric_Pad1.05x0.95mm_HandSolder             -145.5500   -73.3400  180.0000  bottom
+R4               10k              R_0603_1608Metric_Pad1.05x0.95mm_HandSolder             -145.5550   -75.2300    0.0000  bottom
+R6               4.7k             R_0603_1608Metric_Pad1.05x0.95mm_HandSolder             -126.4450   -91.5800  180.0000  bottom
+R7               100              R_0603_1608Metric_Pad1.05x0.95mm_HandSolder             -126.4450   -93.3900    0.0000  bottom
+R8               510              R_0603_1608Metric_Pad1.05x0.95mm_HandSolder             -126.1250   -68.2500    0.0000  bottom
+R9               510              R_0603_1608Metric_Pad1.05x0.95mm_HandSolder             -126.1250   -69.7500    0.0000  bottom
+R14              1k               R_0603_1608Metric_Pad1.05x0.95mm_HandSolder             -124.4600  -104.1200   90.0000  bottom
+R15              2k               R_0603_1608Metric_Pad1.05x0.95mm_HandSolder             -157.9200  -100.1250  270.0000  bottom
+R16              357              R_0603_1608Metric_Pad1.05x0.95mm_HandSolder             -159.7200  -100.1350   90.0000  bottom
+R17              1k               R_0603_1608Metric_Pad1.05x0.95mm_HandSolder             -131.0364  -103.4412    0.0000  bottom
+R18              300              R_0603_1608Metric_Pad1.05x0.95mm_HandSolder             -158.2500   -80.5000    0.0000  bottom
+SW1              ST_USER_BUTTON1  SW_SPST_B3U-3000P                                       -121.1900   -93.4600  270.0000  bottom
+U1               BC832-V1         BC832-BC832_3d1                                         -154.9001  -106.3315    0.0000  bottom
+U4               LMR62421XMF      SOT-23-5                                                -138.0400   -74.1800  180.0000  bottom
+USB_MICRO_CONN1  USB_OTG          USB_Micro-B_Molex_47346-0001                            -123.3600   -82.9100   90.0000  bottom
+## End

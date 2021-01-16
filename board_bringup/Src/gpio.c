@@ -54,8 +54,10 @@ void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(MIC_EN_GPIO_Port, MIC_EN_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOC, BATT_ADC_EN_Pin, GPIO_PIN_SET);
-  HAL_GPIO_WritePin(GPIOC, BOOST_EN_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(BATT_ADC_EN_GPIO_Port, BATT_ADC_EN_Pin, GPIO_PIN_RESET); // RESET == BATT ADC FET OFF
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(BOOST_EN_GPIO_Port, BOOST_EN_Pin, GPIO_PIN_SET); // SET == BOOST OFF
 
   /*Configure GPIO pin : PtPin */
   GPIO_InitStruct.Pin = GREEN_LED_Pin;
