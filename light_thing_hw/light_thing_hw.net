@@ -1,7 +1,7 @@
 (export (version D)
   (design
     (source /home/jon/KODMOD/blackpill_light_thing/light_thing_hw/light_thing_hw.sch)
-    (date "Mon 18 Jan 2021 12:46:43 AM PST")
+    (date "Sun 24 Jan 2021 01:49:23 PM PST")
     (tool "Eeschema 5.1.5+dfsg1-2build2")
     (sheet (number 1) (name /) (tstamps /)
       (title_block
@@ -66,7 +66,7 @@
       (tstamp 5EDDAC0D))
     (comp (ref L1)
       (value "10uH, 2.5A")
-      (footprint Inductor_SMD:L_0603_1608Metric_Pad1.05x0.95mm_HandSolder)
+      (footprint B1047AS_100M-P3_Inductor:IND_B1047AS-100M=P3)
       (datasheet ~)
       (libsource (lib Device) (part L) (description Inductor))
       (sheetpath (names /) (tstamps /))

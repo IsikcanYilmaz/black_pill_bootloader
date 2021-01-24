@@ -154,41 +154,6 @@ $EndComp
 Text Notes 10450 800  0    129  ~ 0
 MCU
 $Comp
-L Sensor_Motion:LSM6DS3 U2
-U 1 1 5EC93EF5
-P 1350 10300
-F 0 "U2" H 1050 10900 50  0000 L CNN
-F 1 "LSM6DS3" H 1250 10300 50  0000 L CNN
-F 2 "footprints:LGA-14_3x2.5mm_P0.5mm_LayoutBorder3x4y_modded" H 950 9600 50  0001 L CNN
-F 3 "www.st.com/resource/en/datasheet/lsm6ds3.pdf" H 1450 9650 50  0001 C CNN
-	1    1350 10300
-	1    0    0    -1  
-$EndComp
-Wire Wire Line
-	1350 10900 1350 11000
-Wire Wire Line
-	1350 11000 1450 11000
-Wire Wire Line
-	1450 10900 1450 11000
-Connection ~ 1450 11000
-Wire Wire Line
-	1450 11000 1450 11050
-$Comp
-L power:GND #PWR04
-U 1 1 5EC99A31
-P 1450 11050
-F 0 "#PWR04" H 1450 10800 50  0001 C CNN
-F 1 "GND" H 1455 10877 50  0000 C CNN
-F 2 "" H 1450 11050 50  0001 C CNN
-F 3 "" H 1450 11050 50  0001 C CNN
-	1    1450 11050
-	1    0    0    -1  
-$EndComp
-Text GLabel 750  10400 0    60   Input ~ 0
-I2C1_SDA
-Text GLabel 750  10500 0    60   Input ~ 0
-I2C1_SCL
-$Comp
 L power:GND #PWR?
 U 1 1 5EC4B938
 P 900 5750
@@ -327,7 +292,7 @@ U 1 1 5EE01321
 P 1250 4100
 F 0 "L1" V 1440 4100 50  0000 C CNN
 F 1 "10uH, 2.5A" V 1349 4100 50  0000 C CNN
-F 2 "Inductor_SMD:L_0603_1608Metric_Pad1.05x0.95mm_HandSolder" H 1250 4100 50  0001 C CNN
+F 2 "B1047AS_100M-P3_Inductor:IND_B1047AS-100M=P3" H 1250 4100 50  0001 C CNN
 F 3 "~" H 1250 4100 50  0001 C CNN
 	1    1250 4100
 	0    -1   -1   0   
@@ -429,47 +394,6 @@ F 3 "" H 3050 4050 50  0001 C CNN
 	1    3050 4050
 	1    0    0    -1  
 $EndComp
-$Comp
-L power:+3V3 #PWR018
-U 1 1 5EE7019A
-P 1450 9300
-F 0 "#PWR018" H 1450 9150 50  0001 C CNN
-F 1 "+3V3" H 1465 9473 50  0000 C CNN
-F 2 "" H 1450 9300 50  0001 C CNN
-F 3 "" H 1450 9300 50  0001 C CNN
-	1    1450 9300
-	1    0    0    -1  
-$EndComp
-$Comp
-L Device:C_Small C11
-U 1 1 5EE78050
-P 1600 9500
-F 0 "C11" H 1692 9546 50  0000 L CNN
-F 1 "100nF" H 1692 9455 50  0000 L CNN
-F 2 "Capacitor_SMD:C_0603_1608Metric_Pad1.05x0.95mm_HandSolder" H 1600 9500 50  0001 C CNN
-F 3 "~" H 1600 9500 50  0001 C CNN
-F 4 "C14663" H 1600 9500 50  0001 C CNN "JLC_LIBRARY"
-	1    1600 9500
-	1    0    0    -1  
-$EndComp
-Wire Wire Line
-	1450 9300 1450 9400
-$Comp
-L power:GND #PWR019
-U 1 1 5EE842B6
-P 1600 9600
-F 0 "#PWR019" H 1600 9350 50  0001 C CNN
-F 1 "GND" H 1605 9427 50  0000 C CNN
-F 2 "" H 1600 9600 50  0001 C CNN
-F 3 "" H 1600 9600 50  0001 C CNN
-	1    1600 9600
-	1    0    0    -1  
-$EndComp
-Wire Wire Line
-	1600 9400 1450 9400
-Connection ~ 1450 9400
-Wire Wire Line
-	1450 9400 1450 9700
 Text GLabel 8450 4100 3    50   Input ~ 0
 BUTTON1
 $Comp
@@ -544,41 +468,6 @@ F 3 "" H 7300 3700 50  0001 C CNN
 $EndComp
 Wire Wire Line
 	8300 1100 8600 1100
-Text GLabel 1950 10000 2    50   Input ~ 0
-ACCEL_EXTI_1
-Text GLabel 1950 10100 2    50   Input ~ 0
-ACCEL_EXTI_2
-Wire Wire Line
-	1350 9700 1350 9400
-Wire Wire Line
-	1350 9400 1450 9400
-$Comp
-L power:GND #PWR0109
-U 1 1 5EF2C970
-P 400 10100
-F 0 "#PWR0109" H 400 9850 50  0001 C CNN
-F 1 "GND" H 250 10050 50  0000 C CNN
-F 2 "" H 400 10100 50  0001 C CNN
-F 3 "" H 400 10100 50  0001 C CNN
-	1    400  10100
-	1    0    0    -1  
-$EndComp
-Wire Wire Line
-	750  10200 550  10200
-Wire Wire Line
-	550  10200 550  10100
-Wire Wire Line
-	550  10000 400  10000
-Wire Wire Line
-	400  10000 400  10100
-Wire Wire Line
-	750  10000 550  10000
-Connection ~ 550  10000
-Connection ~ 550  10100
-Wire Wire Line
-	550  10100 550  10000
-Wire Wire Line
-	550  10100 750  10100
 Wire Notes Line
 	5450 500  11200 500 
 Wire Notes Line
@@ -963,7 +852,6 @@ F 3 "~" H 3700 4750 50  0001 C CNN
 	1    3700 4750
 	1    0    0    -1  
 $EndComp
-NoConn ~ 750  10600
 Text GLabel 6550 4050 0    50   Input ~ 0
 BATT_ADC
 $Comp
