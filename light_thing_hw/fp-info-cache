@@ -1,4 +1,4 @@
-16759201799057212
+16762425489560308
 B1047AS_100M-P3_Inductor
 IND_B1047AS-100M=P3
 
@@ -45821,6 +45821,13 @@ One digit LED 7 segment SA39-11 SC39-11 SA39-12 SC39-12
 0
 10
 10
+FSMSMTR_tactile_switch
+SW_1437566-4
+
+
+0
+2
+2
 Fanstel_modules
 BC832-BC832
 
@@ -69453,6 +69460,13 @@ Logo WEEE
 0
 0
 0
+TI_BQ21040DBVT
+SOT95P280X145-6N
+
+
+0
+6
+6
 TerminalBlock
 TerminalBlock_Altech_AK300-2_P5.00mm
 Altech AK300 terminal block, pitch 5.0mm, 45 degree angled, see http://www.mouser.com/ds/2/16/PCBMETRC-24178.pdf
