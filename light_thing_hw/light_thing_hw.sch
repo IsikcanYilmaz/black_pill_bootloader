@@ -25,7 +25,7 @@ F 3 "" H 4200 1350 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L light_thing_hw-rescue:C_Small C9
+L light_thing_hw-rescue:C_Small-light_thing_hw-rescue C9
 U 1 1 5EBF990E
 P 7900 1350
 F 0 "C9" H 7910 1420 50  0000 L CNN
@@ -61,7 +61,7 @@ Wire Wire Line
 	7800 1350 7500 1350
 Connection ~ 7500 1350
 $Comp
-L light_thing_hw-rescue:R R5
+L light_thing_hw-rescue:R-light_thing_hw-rescue R5
 U 1 1 5EBFB07E
 P 8600 1650
 F 0 "R5" V 8680 1650 50  0000 C CNN
@@ -95,7 +95,7 @@ F 3 "" H 4200 850 50  0001 C CNN
 	1    0    0    -1  
 $EndComp
 $Comp
-L light_thing_hw-rescue:USB_OTG USB_MICRO_CONN1
+L light_thing_hw-rescue:USB_OTG-light_thing_hw-rescue USB_MICRO_CONN1
 U 1 1 5EBFE33E
 P 3450 3100
 F 0 "USB_MICRO_CONN1" V 3150 2800 50  0000 L CNN
@@ -397,7 +397,7 @@ $EndComp
 Text GLabel 8450 4100 3    50   Input ~ 0
 BUTTON1
 $Comp
-L light_thing_hw-rescue:C_Small C13
+L light_thing_hw-rescue:C_Small-light_thing_hw-rescue C13
 U 1 1 5EEA19F9
 P 7700 4500
 F 0 "C13" H 7710 4570 50  0000 L CNN
@@ -906,7 +906,7 @@ Wire Wire Line
 Wire Wire Line
 	2300 4100 2500 4100
 $Comp
-L light_thing_hw-rescue:C_Small C1
+L light_thing_hw-rescue:C_Small-light_thing_hw-rescue C1
 U 1 1 5EE590BE
 P 4200 1100
 F 0 "C1" H 4210 1170 50  0000 L CNN
@@ -918,7 +918,7 @@ F 4 "C14663" H 4200 1100 50  0001 C CNN "JLC_LIBRARY"
 	1    0    0    -1  
 $EndComp
 $Comp
-L light_thing_hw-rescue:C_Small C2
+L light_thing_hw-rescue:C_Small-light_thing_hw-rescue C2
 U 1 1 5EE73B85
 P 4450 1100
 F 0 "C2" H 4460 1170 50  0000 L CNN
@@ -930,7 +930,7 @@ F 4 "C14663" H 4450 1100 50  0001 C CNN "JLC_LIBRARY"
 	1    0    0    -1  
 $EndComp
 $Comp
-L light_thing_hw-rescue:C_Small C3
+L light_thing_hw-rescue:C_Small-light_thing_hw-rescue C3
 U 1 1 5EE7C964
 P 4700 1100
 F 0 "C3" H 4710 1170 50  0000 L CNN
@@ -942,7 +942,7 @@ F 4 "C14663" H 4700 1100 50  0001 C CNN "JLC_LIBRARY"
 	1    0    0    -1  
 $EndComp
 $Comp
-L light_thing_hw-rescue:C_Small C4
+L light_thing_hw-rescue:C_Small-light_thing_hw-rescue C4
 U 1 1 5EE8573C
 P 4950 1100
 F 0 "C4" H 4960 1170 50  0000 L CNN
@@ -954,7 +954,7 @@ F 4 "C14663" H 4950 1100 50  0001 C CNN "JLC_LIBRARY"
 	1    0    0    -1  
 $EndComp
 $Comp
-L light_thing_hw-rescue:C_Small C16
+L light_thing_hw-rescue:C_Small-light_thing_hw-rescue C16
 U 1 1 5EE8E535
 P 5200 1100
 F 0 "C16" H 5210 1170 50  0000 L CNN
@@ -966,7 +966,7 @@ F 4 "C14663" H 5200 1100 50  0001 C CNN "JLC_LIBRARY"
 	1    0    0    -1  
 $EndComp
 $Comp
-L light_thing_hw-rescue:C_Small C17
+L light_thing_hw-rescue:C_Small-light_thing_hw-rescue C17
 U 1 1 5EE8E53B
 P 5450 1100
 F 0 "C17" H 5460 1170 50  0000 L CNN
@@ -1641,6 +1641,7 @@ F 7 "The center Exposed Pad (EP), for MPU devices is a No Connect (NC) pad. To a
 F 8 "PQFN-14N TDK-InvenSense" H 5200 6400 50  0001 L BNN "PACKAGE"
 F 9 "Low-Power, High-Performance Integrated 6-Axis MEMS MotionTracking Device in 2.5mm x 3mm Package" H 5200 6400 50  0001 L BNN "DESCRIPTION"
 F 10 "TDK InvenSense" H 5200 6400 50  0001 L BNN "MF"
+F 11 "C124140" H 5200 6400 50  0001 C CNN "JLC_LIBRARY"
 	1    5200 6400
 	1    0    0    -1  
 $EndComp
@@ -1836,6 +1837,7 @@ F 0 "U2" H 2150 2170 50  0000 C CNN
 F 1 "BQ21040DBVT" H 2150 2079 50  0000 C CNN
 F 2 "TI_BQ21040DBVT:SOT95P280X145-6N" H 2150 1600 50  0001 L BNN
 F 3 "" H 2150 1600 50  0001 L BNN
+F 4 "C78978" H 2150 1600 50  0001 C CNN "JLC_LIBRARY"
 	1    2150 1600
 	1    0    0    -1  
 $EndComp
