@@ -282,6 +282,28 @@ X ~ 2 0 -150 50 U 50 50 1 1 P
 ENDDRAW
 ENDDEF
 #
+# EVQ-P7J01P_smt_right_angle_tactile_switch_EVQ-P7J01P
+#
+DEF EVQ-P7J01P_smt_right_angle_tactile_switch_EVQ-P7J01P SW 0 40 Y N 1 L N
+F0 "SW" -100 100 50 H V L BNN
+F1 "EVQ-P7J01P_smt_right_angle_tactile_switch_EVQ-P7J01P" -100 -151 50 H V L BNN
+F2 "SW_EVQ-P7J01P" 0 0 50 H I L BNN
+F3 "" 0 0 50 H I L BNN
+F4 "Manufacturer Recommendation" 0 0 50 H I L BNN "STANDARD"
+F5 "Panasonic" 0 0 50 H I L BNN "MANUFACTURER"
+DRAW
+C -100 0 10 0 0 10 N
+C 100 0 10 0 0 10 N
+P 2 0 0 10 -100 0 -200 0 N
+P 2 0 0 10 -100 0 80 60 N
+P 2 0 0 10 100 0 200 0 N
+X ~ 1_1 -300 0 100 R 40 40 0 0 P
+X ~ 1_2 -300 0 100 R 40 40 0 0 P
+X ~ 2_1 300 0 100 L 40 40 0 0 P
+X ~ 2_2 300 0 100 L 40 40 0 0 P
+ENDDRAW
+ENDDEF
+#
 # Fanstel-kicad-library-cache_BC832-V1
 #
 DEF Fanstel-kicad-library-cache_BC832-V1 U 0 40 Y Y 1 L N

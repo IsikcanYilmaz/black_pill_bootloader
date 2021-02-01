@@ -1,4 +1,4 @@
-16762425489560308
+16765649782851996
 B1047AS_100M-P3_Inductor
 IND_B1047AS-100M=P3
 
@@ -45821,6 +45821,13 @@ One digit LED 7 segment SA39-11 SC39-11 SA39-12 SC39-12
 0
 10
 10
+EVQ-P7J01P_smt_right_angle_tactile_switch
+SW_EVQ-P7J01P
+
+
+0
+4
+4
 FSMSMTR_tactile_switch
 SW_1437566-4
 
@@ -74556,3 +74563,10 @@ SON50P300X300X80-11N
 0
 11
 11
+tl1105sf160q_right_angle_tactile_switch
+TL1105SF160Q
+
+
+0
+4
+4
