@@ -10,7 +10,7 @@
 
 ~ L I G H T  C U B E ~
 
-A "Cube of light" project using panels full of WS2812B addressable LEDs, based on an STM32L453.
+A "Cube of light" using panels full of WS2812B addressable LEDs, based on an STM32L453.
 
 Current state of the project is:
  - LED panels glued and soldered into forming the 5 sides of the cube.
@@ -19,6 +19,7 @@ Current state of the project is:
  
 Need to do:
  - Order it, assemble it.
+ - Get the nordic part to work, enable bluetooth. 
 
 ![Prototype 1](https://raw.githubusercontent.com/IsikcanYilmaz/light_cube/master/misc/proto_preview1.jpg)
 
