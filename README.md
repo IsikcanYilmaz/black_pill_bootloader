@@ -1,13 +1,3 @@
-        _________
-       /         /|
-      /         / |
-     /         /  |
-    /________ /   |
-    |o o o o |   /
-    |o o o o |  /
-    |o o o o | /
-    |o o o o |/
-
 ~ L I G H T  C U B E ~
 
 A "Cube of light" using panels full of WS2812B addressable LEDs, based on an STM32L453.
