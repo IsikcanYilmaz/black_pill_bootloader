@@ -1,0 +1,1856 @@
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccG4UpZh.s 			page 1
+
+
+   1              		.cpu cortex-m4
+   2              		.eabi_attribute 27, 1
+   3              		.eabi_attribute 28, 1
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 6
+  11              		.eabi_attribute 34, 1
+  12              		.eabi_attribute 18, 4
+  13              		.file	"random_fade_animation.c"
+  14              		.text
+  15              	.Ltext0:
+  16              		.cfi_sections	.debug_frame
+  17              		.section	.bss.context,"aw",%nobits
+  18              		.align	2
+  21              	context:
+  22 0000 00000000 		.space	24
+  22      00000000 
+  22      00000000 
+  22      00000000 
+  22      00000000 
+  23              		.section	.text.Animation_RandomFade_Init,"ax",%progbits
+  24              		.align	1
+  25              		.global	Animation_RandomFade_Init
+  26              		.arch armv7e-m
+  27              		.syntax unified
+  28              		.thumb
+  29              		.thumb_func
+  30              		.fpu fpv4-sp-d16
+  32              	Animation_RandomFade_Init:
+  33              	.LFB292:
+  34              		.file 1 "Src/random_fade_animation.c"
+   1:Src/random_fade_animation.c **** #include "random_fade_animation.h"
+   2:Src/random_fade_animation.c **** #include "addressable_led_manager.h"
+   3:Src/random_fade_animation.c **** #include "utils.h"
+   4:Src/random_fade_animation.c **** #include <stdlib.h>
+   5:Src/random_fade_animation.c **** 
+   6:Src/random_fade_animation.c **** /*
+   7:Src/random_fade_animation.c ****  *  RANDOM FADE ANIMATION MODULE 
+   8:Src/random_fade_animation.c ****  *
+   9:Src/random_fade_animation.c ****  *  This animation module will pick pixels that are not lit, randomly assign them
+  10:Src/random_fade_animation.c ****  *  some color and a decrementRate, and decrements them every update by that value.
+  11:Src/random_fade_animation.c ****  *
+  12:Src/random_fade_animation.c ****  *  The random colors are picked between the $lower and $upper variables that currently
+  13:Src/random_fade_animation.c ****  *  reside in the update function. 
+  14:Src/random_fade_animation.c ****  *
+  15:Src/random_fade_animation.c ****  *  There's also a WAIT_TIME that has the pixel wait at 0 brightness for that many update
+  16:Src/random_fade_animation.c ****  *  cycles. looks neat
+  17:Src/random_fade_animation.c ****  *
+  18:Src/random_fade_animation.c ****  *  Average current consumptions between ranges of $lower-$upper values with 1-10 $waitTime, 1-1 $d
+  19:Src/random_fade_animation.c ****  *  (Note that this animation uses 2 color channels at one time. so this survey is done with 2 chan
+  20:Src/random_fade_animation.c ****  *  
+  21:Src/random_fade_animation.c ****  *  [l]   [u]   [Avg Current]  
+  22:Src/random_fade_animation.c ****  *  0     5   : 30mA           
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccG4UpZh.s 			page 2
+
+
+  23:Src/random_fade_animation.c ****  *  5     5   : 30-40mA
+  24:Src/random_fade_animation.c ****  *  5    10   : 40mA
+  25:Src/random_fade_animation.c ****  *  10   10   : 40-50mA
+  26:Src/random_fade_animation.c ****  *  20   20   : 70-90mA
+  27:Src/random_fade_animation.c ****  *  30   30   : 100-120mA
+  28:Src/random_fade_animation.c ****  *  40   40   : 150-170mA
+  29:Src/random_fade_animation.c ****  *  50   50   : 90-120mA  (Increased decrement rate to 1-10, wait time to 1-30 at this point and on
+  30:Src/random_fade_animation.c ****  *  70   70   : 150-200mA 
+  31:Src/random_fade_animation.c ****  *  0    70   : 70-100mA
+  32:Src/random_fade_animation.c ****  *  100 100   : 230-300mA
+  33:Src/random_fade_animation.c ****  *  50  100   : 150-190mA
+  34:Src/random_fade_animation.c ****  *  50  100   : 90-110mA  (Increased decrement rate to 10-30 at this point and on)
+  35:Src/random_fade_animation.c ****  *  100 100   : 120-150mA
+  36:Src/random_fade_animation.c ****  */
+  37:Src/random_fade_animation.c **** 
+  38:Src/random_fade_animation.c **** static void randomFade1(void);
+  39:Src/random_fade_animation.c **** static void randomFade2(void);
+  40:Src/random_fade_animation.c **** static void rampUp();
+  41:Src/random_fade_animation.c **** static void rampDown();
+  42:Src/random_fade_animation.c **** 
+  43:Src/random_fade_animation.c **** typedef struct {
+  44:Src/random_fade_animation.c ****   uint8_t numPanels;
+  45:Src/random_fade_animation.c ****   uint8_t numLeds;
+  46:Src/random_fade_animation.c ****   AnimationState_e state;
+  47:Src/random_fade_animation.c **** 
+  48:Src/random_fade_animation.c ****   // This will be a ptr to an array of consecutive panel objects
+  49:Src/random_fade_animation.c ****   AddrLEDPanel_t *panels; 
+  50:Src/random_fade_animation.c **** 
+  51:Src/random_fade_animation.c ****   // Below is tobe used as storage for metadata about the Pixels that this animation module will ke
+  52:Src/random_fade_animation.c ****   RandomFadePixelData_t *pixelDataPtr;
+  53:Src/random_fade_animation.c ****   
+  54:Src/random_fade_animation.c ****   // Below are animation config variables
+  55:Src/random_fade_animation.c ****   // lower and upper limits for the random numbers
+  56:Src/random_fade_animation.c ****   uint8_t lowerBrightness;
+  57:Src/random_fade_animation.c ****   uint8_t upperBrightness;
+  58:Src/random_fade_animation.c ****   uint8_t lowerDecrementRate;
+  59:Src/random_fade_animation.c ****   uint8_t upperDecrementRate;
+  60:Src/random_fade_animation.c ****   uint8_t lowerWaitTime;
+  61:Src/random_fade_animation.c ****   uint8_t upperWaitTime;
+  62:Src/random_fade_animation.c ****   uint8_t cutoff; // < decrement pixel until this value
+  63:Src/random_fade_animation.c ****   bool singleValForAllChannels; // < same value for all of the rgb channels, or not
+  64:Src/random_fade_animation.c **** 
+  65:Src/random_fade_animation.c ****   // Pointer to the strip. assuming there's only one
+  66:Src/random_fade_animation.c ****   AddrLEDStrip_t *stripBegin;
+  67:Src/random_fade_animation.c **** } AnimationContext_t; 
+  68:Src/random_fade_animation.c **** 
+  69:Src/random_fade_animation.c **** static AnimationContext_t context;
+  70:Src/random_fade_animation.c **** 
+  71:Src/random_fade_animation.c **** 
+  72:Src/random_fade_animation.c **** void Animation_RandomFade_Init(AddrLEDPanel_t *panels, uint8_t numPanels, RandomFadePixelData_t *pi
+  73:Src/random_fade_animation.c **** {
+  35              		.loc 1 73 1
+  36              		.cfi_startproc
+  37              		@ args = 0, pretend = 0, frame = 24
+  38              		@ frame_needed = 1, uses_anonymous_args = 0
+  39 0000 80B5     		push	{r7, lr}
+  40              	.LCFI0:
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccG4UpZh.s 			page 3
+
+
+  41              		.cfi_def_cfa_offset 8
+  42              		.cfi_offset 7, -8
+  43              		.cfi_offset 14, -4
+  44 0002 86B0     		sub	sp, sp, #24
+  45              	.LCFI1:
+  46              		.cfi_def_cfa_offset 32
+  47 0004 00AF     		add	r7, sp, #0
+  48              	.LCFI2:
+  49              		.cfi_def_cfa_register 7
+  50 0006 F860     		str	r0, [r7, #12]
+  51 0008 0B46     		mov	r3, r1
+  52 000a 7A60     		str	r2, [r7, #4]
+  53 000c FB72     		strb	r3, [r7, #11]
+  74:Src/random_fade_animation.c ****   context.panels = panels;
+  54              		.loc 1 74 18
+  55 000e 3F4A     		ldr	r2, .L4
+  56 0010 FB68     		ldr	r3, [r7, #12]
+  57 0012 5360     		str	r3, [r2, #4]
+  75:Src/random_fade_animation.c ****   context.pixelDataPtr = pixelDataPtr;
+  58              		.loc 1 75 24
+  59 0014 3D4A     		ldr	r2, .L4
+  60 0016 7B68     		ldr	r3, [r7, #4]
+  61 0018 9360     		str	r3, [r2, #8]
+  76:Src/random_fade_animation.c ****   context.stripBegin = panels->strip;
+  62              		.loc 1 76 30
+  63 001a FB68     		ldr	r3, [r7, #12]
+  64 001c 1B68     		ldr	r3, [r3]
+  65              		.loc 1 76 22
+  66 001e 3B4A     		ldr	r2, .L4
+  67 0020 5361     		str	r3, [r2, #20]
+  77:Src/random_fade_animation.c ****   context.numPanels = numPanels;
+  68              		.loc 1 77 21
+  69 0022 3A4A     		ldr	r2, .L4
+  70 0024 FB7A     		ldrb	r3, [r7, #11]
+  71 0026 1370     		strb	r3, [r2]
+  78:Src/random_fade_animation.c ****   context.numLeds = panels->numLeds * numPanels;
+  72              		.loc 1 78 27
+  73 0028 FB68     		ldr	r3, [r7, #12]
+  74 002a 1B89     		ldrh	r3, [r3, #8]
+  75              		.loc 1 78 19
+  76 002c DBB2     		uxtb	r3, r3
+  77 002e FA7A     		ldrb	r2, [r7, #11]
+  78 0030 12FB03F3 		smulbb	r3, r2, r3
+  79 0034 DAB2     		uxtb	r2, r3
+  80 0036 354B     		ldr	r3, .L4
+  81 0038 5A70     		strb	r2, [r3, #1]
+  79:Src/random_fade_animation.c ****   
+  80:Src/random_fade_animation.c ****   context.lowerBrightness    = 0;
+  82              		.loc 1 80 30
+  83 003a 344B     		ldr	r3, .L4
+  84 003c 0022     		movs	r2, #0
+  85 003e 1A73     		strb	r2, [r3, #12]
+  81:Src/random_fade_animation.c ****   context.upperBrightness    = 50;
+  86              		.loc 1 81 30
+  87 0040 324B     		ldr	r3, .L4
+  88 0042 3222     		movs	r2, #50
+  89 0044 5A73     		strb	r2, [r3, #13]
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccG4UpZh.s 			page 4
+
+
+  82:Src/random_fade_animation.c ****   context.lowerDecrementRate = 1;
+  90              		.loc 1 82 30
+  91 0046 314B     		ldr	r3, .L4
+  92 0048 0122     		movs	r2, #1
+  93 004a 9A73     		strb	r2, [r3, #14]
+  83:Src/random_fade_animation.c ****   context.upperDecrementRate = 2;
+  94              		.loc 1 83 30
+  95 004c 2F4B     		ldr	r3, .L4
+  96 004e 0222     		movs	r2, #2
+  97 0050 DA73     		strb	r2, [r3, #15]
+  84:Src/random_fade_animation.c ****   context.lowerWaitTime      = 10;
+  98              		.loc 1 84 30
+  99 0052 2E4B     		ldr	r3, .L4
+ 100 0054 0A22     		movs	r2, #10
+ 101 0056 1A74     		strb	r2, [r3, #16]
+  85:Src/random_fade_animation.c ****   context.upperWaitTime      = 50;
+ 102              		.loc 1 85 30
+ 103 0058 2C4B     		ldr	r3, .L4
+ 104 005a 3222     		movs	r2, #50
+ 105 005c 5A74     		strb	r2, [r3, #17]
+  86:Src/random_fade_animation.c ****   context.cutoff             = 0;
+ 106              		.loc 1 86 30
+ 107 005e 2B4B     		ldr	r3, .L4
+ 108 0060 0022     		movs	r2, #0
+ 109 0062 9A74     		strb	r2, [r3, #18]
+  87:Src/random_fade_animation.c ****   context.singleValForAllChannels = false;
+ 110              		.loc 1 87 35
+ 111 0064 294B     		ldr	r3, .L4
+ 112 0066 0022     		movs	r2, #0
+ 113 0068 DA74     		strb	r2, [r3, #19]
+ 114              	.LBB2:
+  88:Src/random_fade_animation.c **** 
+  89:Src/random_fade_animation.c ****   // Start pixels with a wait time so all of them dont go full brightness at the same time at the b
+  90:Src/random_fade_animation.c ****   for (int i = 0; i < context.numLeds; i++)
+ 115              		.loc 1 90 12
+ 116 006a 0023     		movs	r3, #0
+ 117 006c 7B61     		str	r3, [r7, #20]
+ 118              		.loc 1 90 3
+ 119 006e 42E0     		b	.L2
+ 120              	.L3:
+ 121              	.LBB3:
+  91:Src/random_fade_animation.c ****   {
+  92:Src/random_fade_animation.c ****     RandomFadePixelData_t *currData = (RandomFadePixelData_t *) &context.pixelDataPtr[i];
+ 122              		.loc 1 92 73 discriminator 3
+ 123 0070 264B     		ldr	r3, .L4
+ 124 0072 9968     		ldr	r1, [r3, #8]
+ 125              		.loc 1 92 86 discriminator 3
+ 126 0074 7A69     		ldr	r2, [r7, #20]
+ 127 0076 1346     		mov	r3, r2
+ 128 0078 9B00     		lsls	r3, r3, #2
+ 129 007a 1344     		add	r3, r3, r2
+ 130              		.loc 1 92 28 discriminator 3
+ 131 007c 0B44     		add	r3, r3, r1
+ 132 007e 3B61     		str	r3, [r7, #16]
+  93:Src/random_fade_animation.c ****     currData->waitTime = RAND_IN_RANGE(context.lowerWaitTime, context.upperWaitTime);
+ 133              		.loc 1 93 26 discriminator 3
+ 134 0080 FFF7FEFF 		bl	rand
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccG4UpZh.s 			page 5
+
+
+ 135 0084 0246     		mov	r2, r0
+ 136 0086 214B     		ldr	r3, .L4
+ 137 0088 5B7C     		ldrb	r3, [r3, #17]	@ zero_extendqisi2
+ 138 008a 1946     		mov	r1, r3
+ 139 008c 1F4B     		ldr	r3, .L4
+ 140 008e 1B7C     		ldrb	r3, [r3, #16]	@ zero_extendqisi2
+ 141 0090 CB1A     		subs	r3, r1, r3
+ 142 0092 0133     		adds	r3, r3, #1
+ 143 0094 92FBF3F1 		sdiv	r1, r2, r3
+ 144 0098 03FB01F3 		mul	r3, r3, r1
+ 145 009c D31A     		subs	r3, r2, r3
+ 146 009e DAB2     		uxtb	r2, r3
+ 147 00a0 1A4B     		ldr	r3, .L4
+ 148 00a2 1B7C     		ldrb	r3, [r3, #16]	@ zero_extendqisi2
+ 149 00a4 1344     		add	r3, r3, r2
+ 150 00a6 DAB2     		uxtb	r2, r3
+ 151              		.loc 1 93 24 discriminator 3
+ 152 00a8 3B69     		ldr	r3, [r7, #16]
+ 153 00aa 5A70     		strb	r2, [r3, #1]
+  94:Src/random_fade_animation.c ****     currData->decrementRate = RAND_IN_RANGE(context.lowerDecrementRate, context.upperDecrementRate)
+ 154              		.loc 1 94 31 discriminator 3
+ 155 00ac FFF7FEFF 		bl	rand
+ 156 00b0 0246     		mov	r2, r0
+ 157 00b2 164B     		ldr	r3, .L4
+ 158 00b4 DB7B     		ldrb	r3, [r3, #15]	@ zero_extendqisi2
+ 159 00b6 1946     		mov	r1, r3
+ 160 00b8 144B     		ldr	r3, .L4
+ 161 00ba 9B7B     		ldrb	r3, [r3, #14]	@ zero_extendqisi2
+ 162 00bc CB1A     		subs	r3, r1, r3
+ 163 00be 0133     		adds	r3, r3, #1
+ 164 00c0 92FBF3F1 		sdiv	r1, r2, r3
+ 165 00c4 03FB01F3 		mul	r3, r3, r1
+ 166 00c8 D31A     		subs	r3, r2, r3
+ 167 00ca DAB2     		uxtb	r2, r3
+ 168 00cc 0F4B     		ldr	r3, .L4
+ 169 00ce 9B7B     		ldrb	r3, [r3, #14]	@ zero_extendqisi2
+ 170 00d0 1344     		add	r3, r3, r2
+ 171 00d2 DAB2     		uxtb	r2, r3
+ 172              		.loc 1 94 29 discriminator 3
+ 173 00d4 3B69     		ldr	r3, [r7, #16]
+ 174 00d6 1A70     		strb	r2, [r3]
+  95:Src/random_fade_animation.c ****     currData->redDecrementRate = currData->decrementRate;
+ 175              		.loc 1 95 42 discriminator 3
+ 176 00d8 3B69     		ldr	r3, [r7, #16]
+ 177 00da 1A78     		ldrb	r2, [r3]	@ zero_extendqisi2
+ 178              		.loc 1 95 32 discriminator 3
+ 179 00dc 3B69     		ldr	r3, [r7, #16]
+ 180 00de 9A70     		strb	r2, [r3, #2]
+  96:Src/random_fade_animation.c ****     currData->greenDecrementRate = currData->decrementRate;
+ 181              		.loc 1 96 44 discriminator 3
+ 182 00e0 3B69     		ldr	r3, [r7, #16]
+ 183 00e2 1A78     		ldrb	r2, [r3]	@ zero_extendqisi2
+ 184              		.loc 1 96 34 discriminator 3
+ 185 00e4 3B69     		ldr	r3, [r7, #16]
+ 186 00e6 DA70     		strb	r2, [r3, #3]
+  97:Src/random_fade_animation.c ****     currData->blueDecrementRate = currData->decrementRate;
+ 187              		.loc 1 97 43 discriminator 3
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccG4UpZh.s 			page 6
+
+
+ 188 00e8 3B69     		ldr	r3, [r7, #16]
+ 189 00ea 1A78     		ldrb	r2, [r3]	@ zero_extendqisi2
+ 190              		.loc 1 97 33 discriminator 3
+ 191 00ec 3B69     		ldr	r3, [r7, #16]
+ 192 00ee 1A71     		strb	r2, [r3, #4]
+ 193              	.LBE3:
+  90:Src/random_fade_animation.c ****   {
+ 194              		.loc 1 90 41 discriminator 3
+ 195 00f0 7B69     		ldr	r3, [r7, #20]
+ 196 00f2 0133     		adds	r3, r3, #1
+ 197 00f4 7B61     		str	r3, [r7, #20]
+ 198              	.L2:
+  90:Src/random_fade_animation.c ****   {
+ 199              		.loc 1 90 30 discriminator 1
+ 200 00f6 054B     		ldr	r3, .L4
+ 201 00f8 5B78     		ldrb	r3, [r3, #1]	@ zero_extendqisi2
+ 202 00fa 1A46     		mov	r2, r3
+  90:Src/random_fade_animation.c ****   {
+ 203              		.loc 1 90 3 discriminator 1
+ 204 00fc 7B69     		ldr	r3, [r7, #20]
+ 205 00fe 9342     		cmp	r3, r2
+ 206 0100 B6DB     		blt	.L3
+ 207              	.LBE2:
+  98:Src/random_fade_animation.c ****   }
+  99:Src/random_fade_animation.c **** }
+ 208              		.loc 1 99 1
+ 209 0102 00BF     		nop
+ 210 0104 00BF     		nop
+ 211 0106 1837     		adds	r7, r7, #24
+ 212              	.LCFI3:
+ 213              		.cfi_def_cfa_offset 8
+ 214 0108 BD46     		mov	sp, r7
+ 215              	.LCFI4:
+ 216              		.cfi_def_cfa_register 13
+ 217              		@ sp needed
+ 218 010a 80BD     		pop	{r7, pc}
+ 219              	.L5:
+ 220              		.align	2
+ 221              	.L4:
+ 222 010c 00000000 		.word	context
+ 223              		.cfi_endproc
+ 224              	.LFE292:
+ 226              		.section	.text.Animation_RandomFade_GetState,"ax",%progbits
+ 227              		.align	1
+ 228              		.global	Animation_RandomFade_GetState
+ 229              		.syntax unified
+ 230              		.thumb
+ 231              		.thumb_func
+ 232              		.fpu fpv4-sp-d16
+ 234              	Animation_RandomFade_GetState:
+ 235              	.LFB293:
+ 100:Src/random_fade_animation.c **** 
+ 101:Src/random_fade_animation.c **** AnimationState_e Animation_RandomFade_GetState(void)
+ 102:Src/random_fade_animation.c **** {
+ 236              		.loc 1 102 1
+ 237              		.cfi_startproc
+ 238              		@ args = 0, pretend = 0, frame = 0
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccG4UpZh.s 			page 7
+
+
+ 239              		@ frame_needed = 1, uses_anonymous_args = 0
+ 240              		@ link register save eliminated.
+ 241 0000 80B4     		push	{r7}
+ 242              	.LCFI5:
+ 243              		.cfi_def_cfa_offset 4
+ 244              		.cfi_offset 7, -4
+ 245 0002 00AF     		add	r7, sp, #0
+ 246              	.LCFI6:
+ 247              		.cfi_def_cfa_register 7
+ 103:Src/random_fade_animation.c ****   return context.state;
+ 248              		.loc 1 103 17
+ 249 0004 034B     		ldr	r3, .L8
+ 250 0006 9B78     		ldrb	r3, [r3, #2]	@ zero_extendqisi2
+ 104:Src/random_fade_animation.c **** }
+ 251              		.loc 1 104 1
+ 252 0008 1846     		mov	r0, r3
+ 253 000a BD46     		mov	sp, r7
+ 254              	.LCFI7:
+ 255              		.cfi_def_cfa_register 13
+ 256              		@ sp needed
+ 257 000c 5DF8047B 		ldr	r7, [sp], #4
+ 258              	.LCFI8:
+ 259              		.cfi_restore 7
+ 260              		.cfi_def_cfa_offset 0
+ 261 0010 7047     		bx	lr
+ 262              	.L9:
+ 263 0012 00BF     		.align	2
+ 264              	.L8:
+ 265 0014 00000000 		.word	context
+ 266              		.cfi_endproc
+ 267              	.LFE293:
+ 269              		.section	.text.Animation_RandomFade_SendMessage,"ax",%progbits
+ 270              		.align	1
+ 271              		.global	Animation_RandomFade_SendMessage
+ 272              		.syntax unified
+ 273              		.thumb
+ 274              		.thumb_func
+ 275              		.fpu fpv4-sp-d16
+ 277              	Animation_RandomFade_SendMessage:
+ 278              	.LFB294:
+ 105:Src/random_fade_animation.c **** void Animation_RandomFade_SendMessage(AnimationMessage_t *message)
+ 106:Src/random_fade_animation.c **** {
+ 279              		.loc 1 106 1
+ 280              		.cfi_startproc
+ 281              		@ args = 0, pretend = 0, frame = 16
+ 282              		@ frame_needed = 1, uses_anonymous_args = 0
+ 283              		@ link register save eliminated.
+ 284 0000 80B4     		push	{r7}
+ 285              	.LCFI9:
+ 286              		.cfi_def_cfa_offset 4
+ 287              		.cfi_offset 7, -4
+ 288 0002 85B0     		sub	sp, sp, #20
+ 289              	.LCFI10:
+ 290              		.cfi_def_cfa_offset 24
+ 291 0004 00AF     		add	r7, sp, #0
+ 292              	.LCFI11:
+ 293              		.cfi_def_cfa_register 7
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccG4UpZh.s 			page 8
+
+
+ 294 0006 7860     		str	r0, [r7, #4]
+ 107:Src/random_fade_animation.c ****   switch(message->signal)
+ 295              		.loc 1 107 17
+ 296 0008 7B68     		ldr	r3, [r7, #4]
+ 297 000a 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 298              		.loc 1 107 3
+ 299 000c 002B     		cmp	r3, #0
+ 300 000e 05D0     		beq	.L11
+ 301 0010 002B     		cmp	r3, #0
+ 302 0012 24DB     		blt	.L18
+ 303 0014 013B     		subs	r3, r3, #1
+ 304 0016 012B     		cmp	r3, #1
+ 305 0018 21D8     		bhi	.L18
+ 306 001a 03E0     		b	.L17
+ 307              	.L11:
+ 108:Src/random_fade_animation.c ****   {
+ 109:Src/random_fade_animation.c ****     case BEGIN:
+ 110:Src/random_fade_animation.c ****       {
+ 111:Src/random_fade_animation.c ****         context.state = RAMPING_UP;
+ 308              		.loc 1 111 23
+ 309 001c 134B     		ldr	r3, .L19
+ 310 001e 0022     		movs	r2, #0
+ 311 0020 9A70     		strb	r2, [r3, #2]
+ 112:Src/random_fade_animation.c ****         break;
+ 312              		.loc 1 112 9
+ 313 0022 1DE0     		b	.L14
+ 314              	.L17:
+ 113:Src/random_fade_animation.c ****       }
+ 114:Src/random_fade_animation.c ****     case PAUSE:
+ 115:Src/random_fade_animation.c ****     case STOP:
+ 116:Src/random_fade_animation.c ****       {
+ 117:Src/random_fade_animation.c ****         context.state = RAMPING_DOWN;
+ 315              		.loc 1 117 23
+ 316 0024 114B     		ldr	r3, .L19
+ 317 0026 0222     		movs	r2, #2
+ 318 0028 9A70     		strb	r2, [r3, #2]
+ 319              	.LBB4:
+ 118:Src/random_fade_animation.c ****         for (int i = 0; i < NUM_LEDS_PER_PANEL_SIDE; i++)
+ 320              		.loc 1 118 18
+ 321 002a 0023     		movs	r3, #0
+ 322 002c FB60     		str	r3, [r7, #12]
+ 323              		.loc 1 118 9
+ 324 002e 12E0     		b	.L15
+ 325              	.L16:
+ 326              	.LBB5:
+ 119:Src/random_fade_animation.c ****         {
+ 120:Src/random_fade_animation.c ****           Pixel_t *currPixel = (Pixel_t *) &context.stripBegin->pixels[i];
+ 327              		.loc 1 120 52 discriminator 3
+ 328 0030 0E4B     		ldr	r3, .L19
+ 329 0032 5B69     		ldr	r3, [r3, #20]
+ 330              		.loc 1 120 63 discriminator 3
+ 331 0034 5A68     		ldr	r2, [r3, #4]
+ 332              		.loc 1 120 71 discriminator 3
+ 333 0036 FB68     		ldr	r3, [r7, #12]
+ 334 0038 DB00     		lsls	r3, r3, #3
+ 335              		.loc 1 120 20 discriminator 3
+ 336 003a 1344     		add	r3, r3, r2
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccG4UpZh.s 			page 9
+
+
+ 337 003c BB60     		str	r3, [r7, #8]
+ 121:Src/random_fade_animation.c ****           currPixel->red = 0;
+ 338              		.loc 1 121 26 discriminator 3
+ 339 003e BB68     		ldr	r3, [r7, #8]
+ 340 0040 0022     		movs	r2, #0
+ 341 0042 5A70     		strb	r2, [r3, #1]
+ 122:Src/random_fade_animation.c ****           currPixel->green = 0;
+ 342              		.loc 1 122 28 discriminator 3
+ 343 0044 BB68     		ldr	r3, [r7, #8]
+ 344 0046 0022     		movs	r2, #0
+ 345 0048 1A70     		strb	r2, [r3]
+ 123:Src/random_fade_animation.c ****           currPixel->blue = 0;
+ 346              		.loc 1 123 27 discriminator 3
+ 347 004a BB68     		ldr	r3, [r7, #8]
+ 348 004c 0022     		movs	r2, #0
+ 349 004e 9A70     		strb	r2, [r3, #2]
+ 350              	.LBE5:
+ 118:Src/random_fade_animation.c ****         {
+ 351              		.loc 1 118 55 discriminator 3
+ 352 0050 FB68     		ldr	r3, [r7, #12]
+ 353 0052 0133     		adds	r3, r3, #1
+ 354 0054 FB60     		str	r3, [r7, #12]
+ 355              	.L15:
+ 118:Src/random_fade_animation.c ****         {
+ 356              		.loc 1 118 9 discriminator 1
+ 357 0056 FB68     		ldr	r3, [r7, #12]
+ 358 0058 032B     		cmp	r3, #3
+ 359 005a E9DD     		ble	.L16
+ 360              	.LBE4:
+ 124:Src/random_fade_animation.c ****         } 
+ 125:Src/random_fade_animation.c ****         break;
+ 361              		.loc 1 125 9
+ 362 005c 00E0     		b	.L14
+ 363              	.L18:
+ 126:Src/random_fade_animation.c ****       }
+ 127:Src/random_fade_animation.c ****     default:
+ 128:Src/random_fade_animation.c ****       break;
+ 364              		.loc 1 128 7
+ 365 005e 00BF     		nop
+ 366              	.L14:
+ 129:Src/random_fade_animation.c ****   }
+ 130:Src/random_fade_animation.c **** }
+ 367              		.loc 1 130 1
+ 368 0060 00BF     		nop
+ 369 0062 1437     		adds	r7, r7, #20
+ 370              	.LCFI12:
+ 371              		.cfi_def_cfa_offset 4
+ 372 0064 BD46     		mov	sp, r7
+ 373              	.LCFI13:
+ 374              		.cfi_def_cfa_register 13
+ 375              		@ sp needed
+ 376 0066 5DF8047B 		ldr	r7, [sp], #4
+ 377              	.LCFI14:
+ 378              		.cfi_restore 7
+ 379              		.cfi_def_cfa_offset 0
+ 380 006a 7047     		bx	lr
+ 381              	.L20:
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccG4UpZh.s 			page 10
+
+
+ 382              		.align	2
+ 383              	.L19:
+ 384 006c 00000000 		.word	context
+ 385              		.cfi_endproc
+ 386              	.LFE294:
+ 388              		.section	.text.Animation_RandomFade_Update,"ax",%progbits
+ 389              		.align	1
+ 390              		.global	Animation_RandomFade_Update
+ 391              		.syntax unified
+ 392              		.thumb
+ 393              		.thumb_func
+ 394              		.fpu fpv4-sp-d16
+ 396              	Animation_RandomFade_Update:
+ 397              	.LFB295:
+ 131:Src/random_fade_animation.c **** 
+ 132:Src/random_fade_animation.c **** void Animation_RandomFade_Update(void)
+ 133:Src/random_fade_animation.c **** {
+ 398              		.loc 1 133 1
+ 399              		.cfi_startproc
+ 400              		@ args = 0, pretend = 0, frame = 0
+ 401              		@ frame_needed = 1, uses_anonymous_args = 0
+ 402 0000 80B5     		push	{r7, lr}
+ 403              	.LCFI15:
+ 404              		.cfi_def_cfa_offset 8
+ 405              		.cfi_offset 7, -8
+ 406              		.cfi_offset 14, -4
+ 407 0002 00AF     		add	r7, sp, #0
+ 408              	.LCFI16:
+ 409              		.cfi_def_cfa_register 7
+ 134:Src/random_fade_animation.c ****   switch(context.state)
+ 410              		.loc 1 134 17
+ 411 0004 0D4B     		ldr	r3, .L30
+ 412 0006 9B78     		ldrb	r3, [r3, #2]	@ zero_extendqisi2
+ 413 0008 032B     		cmp	r3, #3
+ 414 000a 14D8     		bhi	.L29
+ 415 000c 01A2     		adr	r2, .L24
+ 416 000e 52F823F0 		ldr	pc, [r2, r3, lsl #2]
+ 417 0012 00BF     		.p2align 2
+ 418              	.L24:
+ 419 0014 25000000 		.word	.L27+1
+ 420 0018 2B000000 		.word	.L26+1
+ 421 001c 31000000 		.word	.L25+1
+ 422 0020 37000000 		.word	.L29+1
+ 423              		.p2align 1
+ 424              	.L27:
+ 135:Src/random_fade_animation.c ****   {
+ 136:Src/random_fade_animation.c ****     case(RAMPING_UP):
+ 137:Src/random_fade_animation.c ****       {
+ 138:Src/random_fade_animation.c ****         rampUp();
+ 425              		.loc 1 138 9
+ 426 0024 FFF7FEFF 		bl	rampUp
+ 139:Src/random_fade_animation.c ****         break;
+ 427              		.loc 1 139 9
+ 428 0028 06E0     		b	.L28
+ 429              	.L26:
+ 140:Src/random_fade_animation.c ****       }
+ 141:Src/random_fade_animation.c ****     case(RUNNING):
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccG4UpZh.s 			page 11
+
+
+ 142:Src/random_fade_animation.c ****       {
+ 143:Src/random_fade_animation.c ****         randomFade2();
+ 430              		.loc 1 143 9
+ 431 002a FFF7FEFF 		bl	randomFade2
+ 144:Src/random_fade_animation.c ****         break;
+ 432              		.loc 1 144 9
+ 433 002e 03E0     		b	.L28
+ 434              	.L25:
+ 145:Src/random_fade_animation.c ****       }
+ 146:Src/random_fade_animation.c ****     case(RAMPING_DOWN):
+ 147:Src/random_fade_animation.c ****       {
+ 148:Src/random_fade_animation.c ****         rampDown();
+ 435              		.loc 1 148 9
+ 436 0030 FFF7FEFF 		bl	rampDown
+ 149:Src/random_fade_animation.c ****         break;
+ 437              		.loc 1 149 9
+ 438 0034 00E0     		b	.L28
+ 439              	.L29:
+ 150:Src/random_fade_animation.c ****       }
+ 151:Src/random_fade_animation.c ****     case(STOPPED):
+ 152:Src/random_fade_animation.c ****       {
+ 153:Src/random_fade_animation.c ****         //
+ 154:Src/random_fade_animation.c ****         break;
+ 155:Src/random_fade_animation.c ****       }
+ 156:Src/random_fade_animation.c ****     default:
+ 157:Src/random_fade_animation.c ****       break;
+ 440              		.loc 1 157 7
+ 441 0036 00BF     		nop
+ 442              	.L28:
+ 158:Src/random_fade_animation.c ****   }
+ 159:Src/random_fade_animation.c **** }
+ 443              		.loc 1 159 1
+ 444 0038 00BF     		nop
+ 445 003a 80BD     		pop	{r7, pc}
+ 446              	.L31:
+ 447              		.align	2
+ 448              	.L30:
+ 449 003c 00000000 		.word	context
+ 450              		.cfi_endproc
+ 451              	.LFE295:
+ 453              		.section	.text.rampUp,"ax",%progbits
+ 454              		.align	1
+ 455              		.syntax unified
+ 456              		.thumb
+ 457              		.thumb_func
+ 458              		.fpu fpv4-sp-d16
+ 460              	rampUp:
+ 461              	.LFB296:
+ 160:Src/random_fade_animation.c **** 
+ 161:Src/random_fade_animation.c **** // There may be multiple animations defined here. they differ slightly but in general are similar t
+ 162:Src/random_fade_animation.c **** // thus they reside in the same animation module. they share the context and metadata variables.
+ 163:Src/random_fade_animation.c **** // honestly its redundant and inefficient in terms of space, but fuck it. the thing is still early 
+ 164:Src/random_fade_animation.c **** 
+ 165:Src/random_fade_animation.c **** static void rampUp()
+ 166:Src/random_fade_animation.c **** {
+ 462              		.loc 1 166 1
+ 463              		.cfi_startproc
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccG4UpZh.s 			page 12
+
+
+ 464              		@ args = 0, pretend = 0, frame = 0
+ 465              		@ frame_needed = 1, uses_anonymous_args = 0
+ 466              		@ link register save eliminated.
+ 467 0000 80B4     		push	{r7}
+ 468              	.LCFI17:
+ 469              		.cfi_def_cfa_offset 4
+ 470              		.cfi_offset 7, -4
+ 471 0002 00AF     		add	r7, sp, #0
+ 472              	.LCFI18:
+ 473              		.cfi_def_cfa_register 7
+ 167:Src/random_fade_animation.c ****   context.state = RUNNING;
+ 474              		.loc 1 167 17
+ 475 0004 034B     		ldr	r3, .L33
+ 476 0006 0122     		movs	r2, #1
+ 477 0008 9A70     		strb	r2, [r3, #2]
+ 168:Src/random_fade_animation.c **** }
+ 478              		.loc 1 168 1
+ 479 000a 00BF     		nop
+ 480 000c BD46     		mov	sp, r7
+ 481              	.LCFI19:
+ 482              		.cfi_def_cfa_register 13
+ 483              		@ sp needed
+ 484 000e 5DF8047B 		ldr	r7, [sp], #4
+ 485              	.LCFI20:
+ 486              		.cfi_restore 7
+ 487              		.cfi_def_cfa_offset 0
+ 488 0012 7047     		bx	lr
+ 489              	.L34:
+ 490              		.align	2
+ 491              	.L33:
+ 492 0014 00000000 		.word	context
+ 493              		.cfi_endproc
+ 494              	.LFE296:
+ 496              		.section	.text.rampDown,"ax",%progbits
+ 497              		.align	1
+ 498              		.syntax unified
+ 499              		.thumb
+ 500              		.thumb_func
+ 501              		.fpu fpv4-sp-d16
+ 503              	rampDown:
+ 504              	.LFB297:
+ 169:Src/random_fade_animation.c **** 
+ 170:Src/random_fade_animation.c **** static void rampDown()
+ 171:Src/random_fade_animation.c **** {
+ 505              		.loc 1 171 1
+ 506              		.cfi_startproc
+ 507              		@ args = 0, pretend = 0, frame = 16
+ 508              		@ frame_needed = 1, uses_anonymous_args = 0
+ 509              		@ link register save eliminated.
+ 510 0000 80B4     		push	{r7}
+ 511              	.LCFI21:
+ 512              		.cfi_def_cfa_offset 4
+ 513              		.cfi_offset 7, -4
+ 514 0002 85B0     		sub	sp, sp, #20
+ 515              	.LCFI22:
+ 516              		.cfi_def_cfa_offset 24
+ 517 0004 00AF     		add	r7, sp, #0
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccG4UpZh.s 			page 13
+
+
+ 518              	.LCFI23:
+ 519              		.cfi_def_cfa_register 7
+ 172:Src/random_fade_animation.c ****   bool rampDownFinished = true;
+ 520              		.loc 1 172 8
+ 521 0006 0123     		movs	r3, #1
+ 522 0008 FB73     		strb	r3, [r7, #15]
+ 523              	.LBB6:
+ 173:Src/random_fade_animation.c ****   for (int i = 0; i < context.numLeds; i++)
+ 524              		.loc 1 173 12
+ 525 000a 0023     		movs	r3, #0
+ 526 000c BB60     		str	r3, [r7, #8]
+ 527              		.loc 1 173 3
+ 528 000e 45E0     		b	.L36
+ 529              	.L42:
+ 530              	.LBB7:
+ 174:Src/random_fade_animation.c ****   {
+ 175:Src/random_fade_animation.c ****     Pixel_t *currPixel = (Pixel_t *) &context.stripBegin->pixels[i];
+ 531              		.loc 1 175 46
+ 532 0010 2B4B     		ldr	r3, .L45
+ 533 0012 5B69     		ldr	r3, [r3, #20]
+ 534              		.loc 1 175 57
+ 535 0014 5A68     		ldr	r2, [r3, #4]
+ 536              		.loc 1 175 65
+ 537 0016 BB68     		ldr	r3, [r7, #8]
+ 538 0018 DB00     		lsls	r3, r3, #3
+ 539              		.loc 1 175 14
+ 540 001a 1344     		add	r3, r3, r2
+ 541 001c 7B60     		str	r3, [r7, #4]
+ 176:Src/random_fade_animation.c ****     RandomFadePixelData_t *currData = (RandomFadePixelData_t *) &context.pixelDataPtr[i];
+ 542              		.loc 1 176 73
+ 543 001e 284B     		ldr	r3, .L45
+ 544 0020 9968     		ldr	r1, [r3, #8]
+ 545              		.loc 1 176 86
+ 546 0022 BA68     		ldr	r2, [r7, #8]
+ 547 0024 1346     		mov	r3, r2
+ 548 0026 9B00     		lsls	r3, r3, #2
+ 549 0028 1344     		add	r3, r3, r2
+ 550              		.loc 1 176 28
+ 551 002a 0B44     		add	r3, r3, r1
+ 552 002c 3B60     		str	r3, [r7]
+ 177:Src/random_fade_animation.c ****     
+ 178:Src/random_fade_animation.c ****     rampDownFinished &= (!currPixel->red && !currPixel->green && !currPixel->blue);
+ 553              		.loc 1 178 22
+ 554 002e FB7B     		ldrb	r3, [r7, #15]	@ zero_extendqisi2
+ 555              		.loc 1 178 36
+ 556 0030 7A68     		ldr	r2, [r7, #4]
+ 557 0032 5278     		ldrb	r2, [r2, #1]	@ zero_extendqisi2
+ 558              		.loc 1 178 63
+ 559 0034 002A     		cmp	r2, #0
+ 560 0036 09D1     		bne	.L37
+ 561              		.loc 1 178 55 discriminator 1
+ 562 0038 7A68     		ldr	r2, [r7, #4]
+ 563 003a 1278     		ldrb	r2, [r2]	@ zero_extendqisi2
+ 564              		.loc 1 178 42 discriminator 1
+ 565 003c 002A     		cmp	r2, #0
+ 566 003e 05D1     		bne	.L37
+ 567              		.loc 1 178 76 discriminator 3
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccG4UpZh.s 			page 14
+
+
+ 568 0040 7A68     		ldr	r2, [r7, #4]
+ 569 0042 9278     		ldrb	r2, [r2, #2]	@ zero_extendqisi2
+ 570              		.loc 1 178 63 discriminator 3
+ 571 0044 002A     		cmp	r2, #0
+ 572 0046 01D1     		bne	.L37
+ 573              		.loc 1 178 63 is_stmt 0 discriminator 5
+ 574 0048 0122     		movs	r2, #1
+ 575 004a 00E0     		b	.L38
+ 576              	.L37:
+ 577              		.loc 1 178 63 discriminator 6
+ 578 004c 0022     		movs	r2, #0
+ 579              	.L38:
+ 580              		.loc 1 178 22 is_stmt 1 discriminator 8
+ 581 004e 1340     		ands	r3, r3, r2
+ 582 0050 002B     		cmp	r3, #0
+ 583 0052 14BF     		ite	ne
+ 584 0054 0123     		movne	r3, #1
+ 585 0056 0023     		moveq	r3, #0
+ 586 0058 FB73     		strb	r3, [r7, #15]
+ 179:Src/random_fade_animation.c ****    
+ 180:Src/random_fade_animation.c ****     if (currPixel->red)
+ 587              		.loc 1 180 18 discriminator 8
+ 588 005a 7B68     		ldr	r3, [r7, #4]
+ 589 005c 5B78     		ldrb	r3, [r3, #1]	@ zero_extendqisi2
+ 590              		.loc 1 180 8 discriminator 8
+ 591 005e 002B     		cmp	r3, #0
+ 592 0060 05D0     		beq	.L39
+ 181:Src/random_fade_animation.c ****       currPixel->red--;
+ 593              		.loc 1 181 16
+ 594 0062 7B68     		ldr	r3, [r7, #4]
+ 595 0064 5B78     		ldrb	r3, [r3, #1]	@ zero_extendqisi2
+ 596              		.loc 1 181 21
+ 597 0066 013B     		subs	r3, r3, #1
+ 598 0068 DAB2     		uxtb	r2, r3
+ 599 006a 7B68     		ldr	r3, [r7, #4]
+ 600 006c 5A70     		strb	r2, [r3, #1]
+ 601              	.L39:
+ 182:Src/random_fade_animation.c ****     if (currPixel->green)
+ 602              		.loc 1 182 18
+ 603 006e 7B68     		ldr	r3, [r7, #4]
+ 604 0070 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 605              		.loc 1 182 8
+ 606 0072 002B     		cmp	r3, #0
+ 607 0074 05D0     		beq	.L40
+ 183:Src/random_fade_animation.c ****       currPixel->green--;
+ 608              		.loc 1 183 16
+ 609 0076 7B68     		ldr	r3, [r7, #4]
+ 610 0078 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 611              		.loc 1 183 23
+ 612 007a 013B     		subs	r3, r3, #1
+ 613 007c DAB2     		uxtb	r2, r3
+ 614 007e 7B68     		ldr	r3, [r7, #4]
+ 615 0080 1A70     		strb	r2, [r3]
+ 616              	.L40:
+ 184:Src/random_fade_animation.c ****     if (currPixel->blue)
+ 617              		.loc 1 184 18
+ 618 0082 7B68     		ldr	r3, [r7, #4]
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccG4UpZh.s 			page 15
+
+
+ 619 0084 9B78     		ldrb	r3, [r3, #2]	@ zero_extendqisi2
+ 620              		.loc 1 184 8
+ 621 0086 002B     		cmp	r3, #0
+ 622 0088 05D0     		beq	.L41
+ 185:Src/random_fade_animation.c ****       currPixel->blue--;
+ 623              		.loc 1 185 16
+ 624 008a 7B68     		ldr	r3, [r7, #4]
+ 625 008c 9B78     		ldrb	r3, [r3, #2]	@ zero_extendqisi2
+ 626              		.loc 1 185 22
+ 627 008e 013B     		subs	r3, r3, #1
+ 628 0090 DAB2     		uxtb	r2, r3
+ 629 0092 7B68     		ldr	r3, [r7, #4]
+ 630 0094 9A70     		strb	r2, [r3, #2]
+ 631              	.L41:
+ 632              	.LBE7:
+ 173:Src/random_fade_animation.c ****   {
+ 633              		.loc 1 173 41 discriminator 2
+ 634 0096 BB68     		ldr	r3, [r7, #8]
+ 635 0098 0133     		adds	r3, r3, #1
+ 636 009a BB60     		str	r3, [r7, #8]
+ 637              	.L36:
+ 173:Src/random_fade_animation.c ****   {
+ 638              		.loc 1 173 30 discriminator 1
+ 639 009c 084B     		ldr	r3, .L45
+ 640 009e 5B78     		ldrb	r3, [r3, #1]	@ zero_extendqisi2
+ 641 00a0 1A46     		mov	r2, r3
+ 173:Src/random_fade_animation.c ****   {
+ 642              		.loc 1 173 3 discriminator 1
+ 643 00a2 BB68     		ldr	r3, [r7, #8]
+ 644 00a4 9342     		cmp	r3, r2
+ 645 00a6 B3DB     		blt	.L42
+ 646              	.LBE6:
+ 186:Src/random_fade_animation.c ****   }
+ 187:Src/random_fade_animation.c **** 
+ 188:Src/random_fade_animation.c ****   if (rampDownFinished)
+ 647              		.loc 1 188 6
+ 648 00a8 FB7B     		ldrb	r3, [r7, #15]	@ zero_extendqisi2
+ 649 00aa 002B     		cmp	r3, #0
+ 650 00ac 02D0     		beq	.L44
+ 189:Src/random_fade_animation.c ****   {
+ 190:Src/random_fade_animation.c ****     context.state = STOPPED;
+ 651              		.loc 1 190 19
+ 652 00ae 044B     		ldr	r3, .L45
+ 653 00b0 0322     		movs	r2, #3
+ 654 00b2 9A70     		strb	r2, [r3, #2]
+ 655              	.L44:
+ 191:Src/random_fade_animation.c ****   }
+ 192:Src/random_fade_animation.c **** }
+ 656              		.loc 1 192 1
+ 657 00b4 00BF     		nop
+ 658 00b6 1437     		adds	r7, r7, #20
+ 659              	.LCFI24:
+ 660              		.cfi_def_cfa_offset 4
+ 661 00b8 BD46     		mov	sp, r7
+ 662              	.LCFI25:
+ 663              		.cfi_def_cfa_register 13
+ 664              		@ sp needed
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccG4UpZh.s 			page 16
+
+
+ 665 00ba 5DF8047B 		ldr	r7, [sp], #4
+ 666              	.LCFI26:
+ 667              		.cfi_restore 7
+ 668              		.cfi_def_cfa_offset 0
+ 669 00be 7047     		bx	lr
+ 670              	.L46:
+ 671              		.align	2
+ 672              	.L45:
+ 673 00c0 00000000 		.word	context
+ 674              		.cfi_endproc
+ 675              	.LFE297:
+ 677              		.section	.text.randomFade2,"ax",%progbits
+ 678              		.align	1
+ 679              		.syntax unified
+ 680              		.thumb
+ 681              		.thumb_func
+ 682              		.fpu fpv4-sp-d16
+ 684              	randomFade2:
+ 685              	.LFB298:
+ 193:Src/random_fade_animation.c **** 
+ 194:Src/random_fade_animation.c **** static void randomFade2(void)
+ 195:Src/random_fade_animation.c **** {
+ 686              		.loc 1 195 1
+ 687              		.cfi_startproc
+ 688              		@ args = 0, pretend = 0, frame = 32
+ 689              		@ frame_needed = 1, uses_anonymous_args = 0
+ 690 0000 90B5     		push	{r4, r7, lr}
+ 691              	.LCFI27:
+ 692              		.cfi_def_cfa_offset 12
+ 693              		.cfi_offset 4, -12
+ 694              		.cfi_offset 7, -8
+ 695              		.cfi_offset 14, -4
+ 696 0002 89B0     		sub	sp, sp, #36
+ 697              	.LCFI28:
+ 698              		.cfi_def_cfa_offset 48
+ 699 0004 00AF     		add	r7, sp, #0
+ 700              	.LCFI29:
+ 701              		.cfi_def_cfa_register 7
+ 196:Src/random_fade_animation.c ****   static uint32_t count = 0;
+ 197:Src/random_fade_animation.c ****   static Pixel_t currColor = (Pixel_t) {.red = 0, .green = 0, .blue = 0};
+ 198:Src/random_fade_animation.c ****   if (count % 100 == 0)
+ 702              		.loc 1 198 13
+ 703 0006 674B     		ldr	r3, .L60
+ 704 0008 1A68     		ldr	r2, [r3]
+ 705 000a 674B     		ldr	r3, .L60+4
+ 706 000c A3FB0213 		umull	r1, r3, r3, r2
+ 707 0010 5B09     		lsrs	r3, r3, #5
+ 708 0012 6421     		movs	r1, #100
+ 709 0014 01FB03F3 		mul	r3, r1, r3
+ 710 0018 D31A     		subs	r3, r2, r3
+ 711              		.loc 1 198 6
+ 712 001a 002B     		cmp	r3, #0
+ 713 001c 0DD1     		bne	.L48
+ 199:Src/random_fade_animation.c ****   {
+ 200:Src/random_fade_animation.c ****     currColor = (Pixel_t) getRandomColor(context.lowerBrightness, context.upperBrightness);
+ 714              		.loc 1 200 27
+ 715 001e 634B     		ldr	r3, .L60+8
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccG4UpZh.s 			page 17
+
+
+ 716 0020 197B     		ldrb	r1, [r3, #12]	@ zero_extendqisi2
+ 717 0022 624B     		ldr	r3, .L60+8
+ 718 0024 5A7B     		ldrb	r2, [r3, #13]	@ zero_extendqisi2
+ 719 0026 624C     		ldr	r4, .L60+12
+ 720 0028 3B46     		mov	r3, r7
+ 721 002a 1846     		mov	r0, r3
+ 722 002c FFF7FEFF 		bl	getRandomColor
+ 723 0030 2346     		mov	r3, r4
+ 724 0032 3A46     		mov	r2, r7
+ 725 0034 1068     		ldr	r0, [r2]	@ unaligned
+ 726 0036 5168     		ldr	r1, [r2, #4]	@ unaligned
+ 727 0038 03C3     		stmia	r3!, {r0, r1}
+ 728              	.L48:
+ 729              	.LBB8:
+ 201:Src/random_fade_animation.c ****   }
+ 202:Src/random_fade_animation.c **** 
+ 203:Src/random_fade_animation.c ****   for (int i = 0; i < context.numLeds; i++)
+ 730              		.loc 1 203 12
+ 731 003a 0023     		movs	r3, #0
+ 732 003c FB61     		str	r3, [r7, #28]
+ 733              		.loc 1 203 3
+ 734 003e A1E0     		b	.L49
+ 735              	.L59:
+ 736              	.LBB9:
+ 204:Src/random_fade_animation.c ****   {
+ 205:Src/random_fade_animation.c ****     Pixel_t *currPixel = (Pixel_t *) &context.stripBegin->pixels[i];
+ 737              		.loc 1 205 46
+ 738 0040 5A4B     		ldr	r3, .L60+8
+ 739 0042 5B69     		ldr	r3, [r3, #20]
+ 740              		.loc 1 205 57
+ 741 0044 5A68     		ldr	r2, [r3, #4]
+ 742              		.loc 1 205 65
+ 743 0046 FB69     		ldr	r3, [r7, #28]
+ 744 0048 DB00     		lsls	r3, r3, #3
+ 745              		.loc 1 205 14
+ 746 004a 1344     		add	r3, r3, r2
+ 747 004c BB61     		str	r3, [r7, #24]
+ 206:Src/random_fade_animation.c ****     RandomFadePixelData_t *currData = (RandomFadePixelData_t *) &context.pixelDataPtr[i];
+ 748              		.loc 1 206 73
+ 749 004e 574B     		ldr	r3, .L60+8
+ 750 0050 9968     		ldr	r1, [r3, #8]
+ 751              		.loc 1 206 86
+ 752 0052 FA69     		ldr	r2, [r7, #28]
+ 753 0054 1346     		mov	r3, r2
+ 754 0056 9B00     		lsls	r3, r3, #2
+ 755 0058 1344     		add	r3, r3, r2
+ 756              		.loc 1 206 28
+ 757 005a 0B44     		add	r3, r3, r1
+ 758 005c 7B61     		str	r3, [r7, #20]
+ 207:Src/random_fade_animation.c ****     uint8_t decrementRate = currData->decrementRate;
+ 759              		.loc 1 207 13
+ 760 005e 7B69     		ldr	r3, [r7, #20]
+ 761 0060 1B78     		ldrb	r3, [r3]
+ 762 0062 FB74     		strb	r3, [r7, #19]
+ 208:Src/random_fade_animation.c **** 
+ 209:Src/random_fade_animation.c ****     // If all colors reached 0, check for wait time, decrement it, and if it too 
+ 210:Src/random_fade_animation.c ****     // has reached zero, find a new random value.
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccG4UpZh.s 			page 18
+
+
+ 211:Src/random_fade_animation.c ****     // If all colors havent reached 0, decrement them
+ 212:Src/random_fade_animation.c ****     if (currPixel->red <= context.cutoff && currPixel->green <= context.cutoff && currPixel->blue <
+ 763              		.loc 1 212 18
+ 764 0064 BB69     		ldr	r3, [r7, #24]
+ 765 0066 5A78     		ldrb	r2, [r3, #1]	@ zero_extendqisi2
+ 766              		.loc 1 212 34
+ 767 0068 504B     		ldr	r3, .L60+8
+ 768 006a 9B7C     		ldrb	r3, [r3, #18]	@ zero_extendqisi2
+ 769              		.loc 1 212 8
+ 770 006c 9A42     		cmp	r2, r3
+ 771 006e 56D8     		bhi	.L50
+ 772              		.loc 1 212 54 discriminator 1
+ 773 0070 BB69     		ldr	r3, [r7, #24]
+ 774 0072 1A78     		ldrb	r2, [r3]	@ zero_extendqisi2
+ 775              		.loc 1 212 72 discriminator 1
+ 776 0074 4D4B     		ldr	r3, .L60+8
+ 777 0076 9B7C     		ldrb	r3, [r3, #18]	@ zero_extendqisi2
+ 778              		.loc 1 212 42 discriminator 1
+ 779 0078 9A42     		cmp	r2, r3
+ 780 007a 50D8     		bhi	.L50
+ 781              		.loc 1 212 92 discriminator 2
+ 782 007c BB69     		ldr	r3, [r7, #24]
+ 783 007e 9A78     		ldrb	r2, [r3, #2]	@ zero_extendqisi2
+ 784              		.loc 1 212 109 discriminator 2
+ 785 0080 4A4B     		ldr	r3, .L60+8
+ 786 0082 9B7C     		ldrb	r3, [r3, #18]	@ zero_extendqisi2
+ 787              		.loc 1 212 80 discriminator 2
+ 788 0084 9A42     		cmp	r2, r3
+ 789 0086 4AD8     		bhi	.L50
+ 213:Src/random_fade_animation.c ****     {
+ 214:Src/random_fade_animation.c ****       if (currData->waitTime > 0)
+ 790              		.loc 1 214 19
+ 791 0088 7B69     		ldr	r3, [r7, #20]
+ 792 008a 5B78     		ldrb	r3, [r3, #1]	@ zero_extendqisi2
+ 793              		.loc 1 214 10
+ 794 008c 002B     		cmp	r3, #0
+ 795 008e 06D0     		beq	.L51
+ 215:Src/random_fade_animation.c ****       {
+ 216:Src/random_fade_animation.c ****         currData->waitTime--;
+ 796              		.loc 1 216 17
+ 797 0090 7B69     		ldr	r3, [r7, #20]
+ 798 0092 5B78     		ldrb	r3, [r3, #1]	@ zero_extendqisi2
+ 799              		.loc 1 216 27
+ 800 0094 013B     		subs	r3, r3, #1
+ 801 0096 DAB2     		uxtb	r2, r3
+ 802 0098 7B69     		ldr	r3, [r7, #20]
+ 803 009a 5A70     		strb	r2, [r3, #1]
+ 217:Src/random_fade_animation.c ****         continue;
+ 804              		.loc 1 217 9
+ 805 009c 6FE0     		b	.L52
+ 806              	.L51:
+ 218:Src/random_fade_animation.c ****       }
+ 219:Src/random_fade_animation.c ****       currData->decrementRate = RAND_IN_RANGE(context.lowerDecrementRate, context.upperDecrementRat
+ 807              		.loc 1 219 33
+ 808 009e FFF7FEFF 		bl	rand
+ 809 00a2 0246     		mov	r2, r0
+ 810 00a4 414B     		ldr	r3, .L60+8
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccG4UpZh.s 			page 19
+
+
+ 811 00a6 DB7B     		ldrb	r3, [r3, #15]	@ zero_extendqisi2
+ 812 00a8 1946     		mov	r1, r3
+ 813 00aa 404B     		ldr	r3, .L60+8
+ 814 00ac 9B7B     		ldrb	r3, [r3, #14]	@ zero_extendqisi2
+ 815 00ae CB1A     		subs	r3, r1, r3
+ 816 00b0 0133     		adds	r3, r3, #1
+ 817 00b2 92FBF3F1 		sdiv	r1, r2, r3
+ 818 00b6 03FB01F3 		mul	r3, r3, r1
+ 819 00ba D31A     		subs	r3, r2, r3
+ 820 00bc DAB2     		uxtb	r2, r3
+ 821 00be 3B4B     		ldr	r3, .L60+8
+ 822 00c0 9B7B     		ldrb	r3, [r3, #14]	@ zero_extendqisi2
+ 823 00c2 1344     		add	r3, r3, r2
+ 824 00c4 DAB2     		uxtb	r2, r3
+ 825              		.loc 1 219 31
+ 826 00c6 7B69     		ldr	r3, [r7, #20]
+ 827 00c8 1A70     		strb	r2, [r3]
+ 220:Src/random_fade_animation.c ****       *currPixel = currColor;
+ 828              		.loc 1 220 18
+ 829 00ca BB69     		ldr	r3, [r7, #24]
+ 830 00cc 3849     		ldr	r1, .L60+12
+ 831 00ce 1A46     		mov	r2, r3
+ 832 00d0 0B46     		mov	r3, r1
+ 833 00d2 03CB     		ldmia	r3!, {r0, r1}
+ 834 00d4 1060     		str	r0, [r2]	@ unaligned
+ 835 00d6 5160     		str	r1, [r2, #4]	@ unaligned
+ 221:Src/random_fade_animation.c ****       currData->redDecrementRate = currData->decrementRate;
+ 836              		.loc 1 221 44
+ 837 00d8 7B69     		ldr	r3, [r7, #20]
+ 838 00da 1A78     		ldrb	r2, [r3]	@ zero_extendqisi2
+ 839              		.loc 1 221 34
+ 840 00dc 7B69     		ldr	r3, [r7, #20]
+ 841 00de 9A70     		strb	r2, [r3, #2]
+ 222:Src/random_fade_animation.c ****       currData->greenDecrementRate = currData->decrementRate;
+ 842              		.loc 1 222 46
+ 843 00e0 7B69     		ldr	r3, [r7, #20]
+ 844 00e2 1A78     		ldrb	r2, [r3]	@ zero_extendqisi2
+ 845              		.loc 1 222 36
+ 846 00e4 7B69     		ldr	r3, [r7, #20]
+ 847 00e6 DA70     		strb	r2, [r3, #3]
+ 223:Src/random_fade_animation.c ****       currData->blueDecrementRate = currData->decrementRate;
+ 848              		.loc 1 223 45
+ 849 00e8 7B69     		ldr	r3, [r7, #20]
+ 850 00ea 1A78     		ldrb	r2, [r3]	@ zero_extendqisi2
+ 851              		.loc 1 223 35
+ 852 00ec 7B69     		ldr	r3, [r7, #20]
+ 853 00ee 1A71     		strb	r2, [r3, #4]
+ 224:Src/random_fade_animation.c ****       currData->waitTime = RAND_IN_RANGE(context.lowerWaitTime, context.upperWaitTime);
+ 854              		.loc 1 224 28
+ 855 00f0 FFF7FEFF 		bl	rand
+ 856 00f4 0246     		mov	r2, r0
+ 857 00f6 2D4B     		ldr	r3, .L60+8
+ 858 00f8 5B7C     		ldrb	r3, [r3, #17]	@ zero_extendqisi2
+ 859 00fa 1946     		mov	r1, r3
+ 860 00fc 2B4B     		ldr	r3, .L60+8
+ 861 00fe 1B7C     		ldrb	r3, [r3, #16]	@ zero_extendqisi2
+ 862 0100 CB1A     		subs	r3, r1, r3
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccG4UpZh.s 			page 20
+
+
+ 863 0102 0133     		adds	r3, r3, #1
+ 864 0104 92FBF3F1 		sdiv	r1, r2, r3
+ 865 0108 03FB01F3 		mul	r3, r3, r1
+ 866 010c D31A     		subs	r3, r2, r3
+ 867 010e DAB2     		uxtb	r2, r3
+ 868 0110 264B     		ldr	r3, .L60+8
+ 869 0112 1B7C     		ldrb	r3, [r3, #16]	@ zero_extendqisi2
+ 870 0114 1344     		add	r3, r3, r2
+ 871 0116 DAB2     		uxtb	r2, r3
+ 872              		.loc 1 224 26
+ 873 0118 7B69     		ldr	r3, [r7, #20]
+ 874 011a 5A70     		strb	r2, [r3, #1]
+ 875 011c 2FE0     		b	.L52
+ 876              	.L50:
+ 225:Src/random_fade_animation.c ****     }
+ 226:Src/random_fade_animation.c ****     else
+ 227:Src/random_fade_animation.c ****     {
+ 228:Src/random_fade_animation.c ****       currPixel->red = (currPixel->red > currData->redDecrementRate) ? currPixel->red - currData->r
+ 877              		.loc 1 228 34
+ 878 011e BB69     		ldr	r3, [r7, #24]
+ 879 0120 5A78     		ldrb	r2, [r3, #1]	@ zero_extendqisi2
+ 880              		.loc 1 228 50
+ 881 0122 7B69     		ldr	r3, [r7, #20]
+ 882 0124 9B78     		ldrb	r3, [r3, #2]	@ zero_extendqisi2
+ 883              		.loc 1 228 22
+ 884 0126 9A42     		cmp	r2, r3
+ 885 0128 06D9     		bls	.L53
+ 886              		.loc 1 228 81 discriminator 1
+ 887 012a BB69     		ldr	r3, [r7, #24]
+ 888 012c 5A78     		ldrb	r2, [r3, #1]	@ zero_extendqisi2
+ 889              		.loc 1 228 97 discriminator 1
+ 890 012e 7B69     		ldr	r3, [r7, #20]
+ 891 0130 9B78     		ldrb	r3, [r3, #2]	@ zero_extendqisi2
+ 892              		.loc 1 228 22 discriminator 1
+ 893 0132 D31A     		subs	r3, r2, r3
+ 894 0134 DAB2     		uxtb	r2, r3
+ 895 0136 00E0     		b	.L54
+ 896              	.L53:
+ 897              		.loc 1 228 22 is_stmt 0 discriminator 2
+ 898 0138 0022     		movs	r2, #0
+ 899              	.L54:
+ 900              		.loc 1 228 22 discriminator 4
+ 901 013a BB69     		ldr	r3, [r7, #24]
+ 902 013c 5A70     		strb	r2, [r3, #1]
+ 229:Src/random_fade_animation.c ****       currPixel->green = (currPixel->green > currData->greenDecrementRate) ? currPixel->green - cur
+ 903              		.loc 1 229 36 is_stmt 1 discriminator 4
+ 904 013e BB69     		ldr	r3, [r7, #24]
+ 905 0140 1A78     		ldrb	r2, [r3]	@ zero_extendqisi2
+ 906              		.loc 1 229 54 discriminator 4
+ 907 0142 7B69     		ldr	r3, [r7, #20]
+ 908 0144 DB78     		ldrb	r3, [r3, #3]	@ zero_extendqisi2
+ 909              		.loc 1 229 24 discriminator 4
+ 910 0146 9A42     		cmp	r2, r3
+ 911 0148 06D9     		bls	.L55
+ 912              		.loc 1 229 87 discriminator 1
+ 913 014a BB69     		ldr	r3, [r7, #24]
+ 914 014c 1A78     		ldrb	r2, [r3]	@ zero_extendqisi2
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccG4UpZh.s 			page 21
+
+
+ 915              		.loc 1 229 105 discriminator 1
+ 916 014e 7B69     		ldr	r3, [r7, #20]
+ 917 0150 DB78     		ldrb	r3, [r3, #3]	@ zero_extendqisi2
+ 918              		.loc 1 229 24 discriminator 1
+ 919 0152 D31A     		subs	r3, r2, r3
+ 920 0154 DAB2     		uxtb	r2, r3
+ 921 0156 00E0     		b	.L56
+ 922              	.L55:
+ 923              		.loc 1 229 24 is_stmt 0 discriminator 2
+ 924 0158 0022     		movs	r2, #0
+ 925              	.L56:
+ 926              		.loc 1 229 24 discriminator 4
+ 927 015a BB69     		ldr	r3, [r7, #24]
+ 928 015c 1A70     		strb	r2, [r3]
+ 230:Src/random_fade_animation.c ****       currPixel->blue = (currPixel->blue > currData->blueDecrementRate) ? currPixel->blue - currDat
+ 929              		.loc 1 230 35 is_stmt 1 discriminator 4
+ 930 015e BB69     		ldr	r3, [r7, #24]
+ 931 0160 9A78     		ldrb	r2, [r3, #2]	@ zero_extendqisi2
+ 932              		.loc 1 230 52 discriminator 4
+ 933 0162 7B69     		ldr	r3, [r7, #20]
+ 934 0164 1B79     		ldrb	r3, [r3, #4]	@ zero_extendqisi2
+ 935              		.loc 1 230 23 discriminator 4
+ 936 0166 9A42     		cmp	r2, r3
+ 937 0168 06D9     		bls	.L57
+ 938              		.loc 1 230 84 discriminator 1
+ 939 016a BB69     		ldr	r3, [r7, #24]
+ 940 016c 9A78     		ldrb	r2, [r3, #2]	@ zero_extendqisi2
+ 941              		.loc 1 230 101 discriminator 1
+ 942 016e 7B69     		ldr	r3, [r7, #20]
+ 943 0170 1B79     		ldrb	r3, [r3, #4]	@ zero_extendqisi2
+ 944              		.loc 1 230 23 discriminator 1
+ 945 0172 D31A     		subs	r3, r2, r3
+ 946 0174 DAB2     		uxtb	r2, r3
+ 947 0176 00E0     		b	.L58
+ 948              	.L57:
+ 949              		.loc 1 230 23 is_stmt 0 discriminator 2
+ 950 0178 0022     		movs	r2, #0
+ 951              	.L58:
+ 952              		.loc 1 230 23 discriminator 4
+ 953 017a BB69     		ldr	r3, [r7, #24]
+ 954 017c 9A70     		strb	r2, [r3, #2]
+ 955              	.L52:
+ 956              	.LBE9:
+ 203:Src/random_fade_animation.c ****   {
+ 957              		.loc 1 203 41 is_stmt 1 discriminator 2
+ 958 017e FB69     		ldr	r3, [r7, #28]
+ 959 0180 0133     		adds	r3, r3, #1
+ 960 0182 FB61     		str	r3, [r7, #28]
+ 961              	.L49:
+ 203:Src/random_fade_animation.c ****   {
+ 962              		.loc 1 203 30 discriminator 1
+ 963 0184 094B     		ldr	r3, .L60+8
+ 964 0186 5B78     		ldrb	r3, [r3, #1]	@ zero_extendqisi2
+ 965 0188 1A46     		mov	r2, r3
+ 203:Src/random_fade_animation.c ****   {
+ 966              		.loc 1 203 3 discriminator 1
+ 967 018a FB69     		ldr	r3, [r7, #28]
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccG4UpZh.s 			page 22
+
+
+ 968 018c 9342     		cmp	r3, r2
+ 969 018e FFF657AF 		blt	.L59
+ 970              	.LBE8:
+ 231:Src/random_fade_animation.c ****     }
+ 232:Src/random_fade_animation.c ****   }
+ 233:Src/random_fade_animation.c ****   count++;
+ 971              		.loc 1 233 8
+ 972 0192 044B     		ldr	r3, .L60
+ 973 0194 1B68     		ldr	r3, [r3]
+ 974 0196 0133     		adds	r3, r3, #1
+ 975 0198 024A     		ldr	r2, .L60
+ 976 019a 1360     		str	r3, [r2]
+ 234:Src/random_fade_animation.c **** }
+ 977              		.loc 1 234 1
+ 978 019c 00BF     		nop
+ 979 019e 2437     		adds	r7, r7, #36
+ 980              	.LCFI30:
+ 981              		.cfi_def_cfa_offset 12
+ 982 01a0 BD46     		mov	sp, r7
+ 983              	.LCFI31:
+ 984              		.cfi_def_cfa_register 13
+ 985              		@ sp needed
+ 986 01a2 90BD     		pop	{r4, r7, pc}
+ 987              	.L61:
+ 988              		.align	2
+ 989              	.L60:
+ 990 01a4 00000000 		.word	count.10628
+ 991 01a8 1F85EB51 		.word	1374389535
+ 992 01ac 00000000 		.word	context
+ 993 01b0 00000000 		.word	currColor.10629
+ 994              		.cfi_endproc
+ 995              	.LFE298:
+ 997              		.section	.text.randomFade1,"ax",%progbits
+ 998              		.align	1
+ 999              		.syntax unified
+ 1000              		.thumb
+ 1001              		.thumb_func
+ 1002              		.fpu fpv4-sp-d16
+ 1004              	randomFade1:
+ 1005              	.LFB299:
+ 235:Src/random_fade_animation.c **** 
+ 236:Src/random_fade_animation.c **** static void randomFade1(void)
+ 237:Src/random_fade_animation.c **** {
+ 1006              		.loc 1 237 1
+ 1007              		.cfi_startproc
+ 1008              		@ args = 0, pretend = 0, frame = 24
+ 1009              		@ frame_needed = 1, uses_anonymous_args = 0
+ 1010 0000 80B5     		push	{r7, lr}
+ 1011              	.LCFI32:
+ 1012              		.cfi_def_cfa_offset 8
+ 1013              		.cfi_offset 7, -8
+ 1014              		.cfi_offset 14, -4
+ 1015 0002 86B0     		sub	sp, sp, #24
+ 1016              	.LCFI33:
+ 1017              		.cfi_def_cfa_offset 32
+ 1018 0004 00AF     		add	r7, sp, #0
+ 1019              	.LCFI34:
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccG4UpZh.s 			page 23
+
+
+ 1020              		.cfi_def_cfa_register 7
+ 1021              	.LBB10:
+ 238:Src/random_fade_animation.c ****   static uint32_t count = 0;
+ 239:Src/random_fade_animation.c ****   for (int i = 0; i < context.numLeds; i++)
+ 1022              		.loc 1 239 12
+ 1023 0006 0023     		movs	r3, #0
+ 1024 0008 7B61     		str	r3, [r7, #20]
+ 1025              		.loc 1 239 3
+ 1026 000a 08E1     		b	.L63
+ 1027              	.L79:
+ 1028              	.LBB11:
+ 240:Src/random_fade_animation.c ****   {
+ 241:Src/random_fade_animation.c ****     Pixel_t *currPixel = (Pixel_t *) &context.stripBegin->pixels[i];
+ 1029              		.loc 1 241 46
+ 1030 000c 8C4B     		ldr	r3, .L80
+ 1031 000e 5B69     		ldr	r3, [r3, #20]
+ 1032              		.loc 1 241 57
+ 1033 0010 5A68     		ldr	r2, [r3, #4]
+ 1034              		.loc 1 241 65
+ 1035 0012 7B69     		ldr	r3, [r7, #20]
+ 1036 0014 DB00     		lsls	r3, r3, #3
+ 1037              		.loc 1 241 14
+ 1038 0016 1344     		add	r3, r3, r2
+ 1039 0018 3B61     		str	r3, [r7, #16]
+ 242:Src/random_fade_animation.c ****     RandomFadePixelData_t *currData = (RandomFadePixelData_t *) &context.pixelDataPtr[i];
+ 1040              		.loc 1 242 73
+ 1041 001a 894B     		ldr	r3, .L80
+ 1042 001c 9968     		ldr	r1, [r3, #8]
+ 1043              		.loc 1 242 86
+ 1044 001e 7A69     		ldr	r2, [r7, #20]
+ 1045 0020 1346     		mov	r3, r2
+ 1046 0022 9B00     		lsls	r3, r3, #2
+ 1047 0024 1344     		add	r3, r3, r2
+ 1048              		.loc 1 242 28
+ 1049 0026 0B44     		add	r3, r3, r1
+ 1050 0028 FB60     		str	r3, [r7, #12]
+ 243:Src/random_fade_animation.c ****     uint8_t decrementRate = currData->decrementRate;
+ 1051              		.loc 1 243 13
+ 1052 002a FB68     		ldr	r3, [r7, #12]
+ 1053 002c 1B78     		ldrb	r3, [r3]
+ 1054 002e FB72     		strb	r3, [r7, #11]
+ 244:Src/random_fade_animation.c **** 
+ 245:Src/random_fade_animation.c ****     // If all colors reached 0, check for wait time, decrement it, and if it too 
+ 246:Src/random_fade_animation.c ****     // has reached zero, find a new random value.
+ 247:Src/random_fade_animation.c ****     // If all colors havent reached 0, decrement them
+ 248:Src/random_fade_animation.c ****     if (currPixel->red <= context.cutoff && currPixel->green <= context.cutoff && currPixel->blue <
+ 1055              		.loc 1 248 18
+ 1056 0030 3B69     		ldr	r3, [r7, #16]
+ 1057 0032 5A78     		ldrb	r2, [r3, #1]	@ zero_extendqisi2
+ 1058              		.loc 1 248 34
+ 1059 0034 824B     		ldr	r3, .L80
+ 1060 0036 9B7C     		ldrb	r3, [r3, #18]	@ zero_extendqisi2
+ 1061              		.loc 1 248 8
+ 1062 0038 9A42     		cmp	r2, r3
+ 1063 003a 00F2C380 		bhi	.L64
+ 1064              		.loc 1 248 54 discriminator 1
+ 1065 003e 3B69     		ldr	r3, [r7, #16]
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccG4UpZh.s 			page 24
+
+
+ 1066 0040 1A78     		ldrb	r2, [r3]	@ zero_extendqisi2
+ 1067              		.loc 1 248 72 discriminator 1
+ 1068 0042 7F4B     		ldr	r3, .L80
+ 1069 0044 9B7C     		ldrb	r3, [r3, #18]	@ zero_extendqisi2
+ 1070              		.loc 1 248 42 discriminator 1
+ 1071 0046 9A42     		cmp	r2, r3
+ 1072 0048 00F2BC80 		bhi	.L64
+ 1073              		.loc 1 248 92 discriminator 2
+ 1074 004c 3B69     		ldr	r3, [r7, #16]
+ 1075 004e 9A78     		ldrb	r2, [r3, #2]	@ zero_extendqisi2
+ 1076              		.loc 1 248 109 discriminator 2
+ 1077 0050 7B4B     		ldr	r3, .L80
+ 1078 0052 9B7C     		ldrb	r3, [r3, #18]	@ zero_extendqisi2
+ 1079              		.loc 1 248 80 discriminator 2
+ 1080 0054 9A42     		cmp	r2, r3
+ 1081 0056 00F2B580 		bhi	.L64
+ 249:Src/random_fade_animation.c ****     {
+ 250:Src/random_fade_animation.c ****       if (currData->waitTime > 0)
+ 1082              		.loc 1 250 19
+ 1083 005a FB68     		ldr	r3, [r7, #12]
+ 1084 005c 5B78     		ldrb	r3, [r3, #1]	@ zero_extendqisi2
+ 1085              		.loc 1 250 10
+ 1086 005e 002B     		cmp	r3, #0
+ 1087 0060 06D0     		beq	.L65
+ 251:Src/random_fade_animation.c ****       {
+ 252:Src/random_fade_animation.c ****         currData->waitTime--;
+ 1088              		.loc 1 252 17
+ 1089 0062 FB68     		ldr	r3, [r7, #12]
+ 1090 0064 5B78     		ldrb	r3, [r3, #1]	@ zero_extendqisi2
+ 1091              		.loc 1 252 27
+ 1092 0066 013B     		subs	r3, r3, #1
+ 1093 0068 DAB2     		uxtb	r2, r3
+ 1094 006a FB68     		ldr	r3, [r7, #12]
+ 1095 006c 5A70     		strb	r2, [r3, #1]
+ 253:Src/random_fade_animation.c ****         continue;
+ 1096              		.loc 1 253 9
+ 1097 006e D3E0     		b	.L66
+ 1098              	.L65:
+ 254:Src/random_fade_animation.c ****       }
+ 255:Src/random_fade_animation.c ****       currData->decrementRate = RAND_IN_RANGE(context.lowerDecrementRate, context.upperDecrementRat
+ 1099              		.loc 1 255 33
+ 1100 0070 FFF7FEFF 		bl	rand
+ 1101 0074 0246     		mov	r2, r0
+ 1102 0076 724B     		ldr	r3, .L80
+ 1103 0078 DB7B     		ldrb	r3, [r3, #15]	@ zero_extendqisi2
+ 1104 007a 1946     		mov	r1, r3
+ 1105 007c 704B     		ldr	r3, .L80
+ 1106 007e 9B7B     		ldrb	r3, [r3, #14]	@ zero_extendqisi2
+ 1107 0080 CB1A     		subs	r3, r1, r3
+ 1108 0082 0133     		adds	r3, r3, #1
+ 1109 0084 92FBF3F1 		sdiv	r1, r2, r3
+ 1110 0088 03FB01F3 		mul	r3, r3, r1
+ 1111 008c D31A     		subs	r3, r2, r3
+ 1112 008e DAB2     		uxtb	r2, r3
+ 1113 0090 6B4B     		ldr	r3, .L80
+ 1114 0092 9B7B     		ldrb	r3, [r3, #14]	@ zero_extendqisi2
+ 1115 0094 1344     		add	r3, r3, r2
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccG4UpZh.s 			page 25
+
+
+ 1116 0096 DAB2     		uxtb	r2, r3
+ 1117              		.loc 1 255 31
+ 1118 0098 FB68     		ldr	r3, [r7, #12]
+ 1119 009a 1A70     		strb	r2, [r3]
+ 256:Src/random_fade_animation.c **** 
+ 257:Src/random_fade_animation.c ****       if (count % 200 < 100)
+ 1120              		.loc 1 257 17
+ 1121 009c 694B     		ldr	r3, .L80+4
+ 1122 009e 1A68     		ldr	r2, [r3]
+ 1123 00a0 694B     		ldr	r3, .L80+8
+ 1124 00a2 A3FB0213 		umull	r1, r3, r3, r2
+ 1125 00a6 9B09     		lsrs	r3, r3, #6
+ 1126 00a8 C821     		movs	r1, #200
+ 1127 00aa 01FB03F3 		mul	r3, r1, r3
+ 1128 00ae D31A     		subs	r3, r2, r3
+ 1129              		.loc 1 257 10
+ 1130 00b0 632B     		cmp	r3, #99
+ 1131 00b2 38D8     		bhi	.L67
+ 1132              	.LBB12:
+ 258:Src/random_fade_animation.c ****       {
+ 259:Src/random_fade_animation.c ****         uint8_t r1 = RAND_IN_RANGE(context.lowerBrightness, context.upperBrightness);
+ 1133              		.loc 1 259 22
+ 1134 00b4 FFF7FEFF 		bl	rand
+ 1135 00b8 0246     		mov	r2, r0
+ 1136 00ba 614B     		ldr	r3, .L80
+ 1137 00bc 5B7B     		ldrb	r3, [r3, #13]	@ zero_extendqisi2
+ 1138 00be 1946     		mov	r1, r3
+ 1139 00c0 5F4B     		ldr	r3, .L80
+ 1140 00c2 1B7B     		ldrb	r3, [r3, #12]	@ zero_extendqisi2
+ 1141 00c4 CB1A     		subs	r3, r1, r3
+ 1142 00c6 0133     		adds	r3, r3, #1
+ 1143 00c8 92FBF3F1 		sdiv	r1, r2, r3
+ 1144 00cc 03FB01F3 		mul	r3, r3, r1
+ 1145 00d0 D31A     		subs	r3, r2, r3
+ 1146 00d2 DAB2     		uxtb	r2, r3
+ 1147 00d4 5A4B     		ldr	r3, .L80
+ 1148 00d6 1B7B     		ldrb	r3, [r3, #12]	@ zero_extendqisi2
+ 1149              		.loc 1 259 17
+ 1150 00d8 1344     		add	r3, r3, r2
+ 1151 00da 3B72     		strb	r3, [r7, #8]
+ 260:Src/random_fade_animation.c ****         uint8_t r2 = (context.singleValForAllChannels) ? r1 : RAND_IN_RANGE(context.lowerBrightness
+ 1152              		.loc 1 260 30
+ 1153 00dc 584B     		ldr	r3, .L80
+ 1154 00de DB7C     		ldrb	r3, [r3, #19]	@ zero_extendqisi2
+ 1155              		.loc 1 260 17
+ 1156 00e0 002B     		cmp	r3, #0
+ 1157 00e2 14D1     		bne	.L68
+ 1158              		.loc 1 260 63 discriminator 1
+ 1159 00e4 FFF7FEFF 		bl	rand
+ 1160 00e8 0246     		mov	r2, r0
+ 1161 00ea 554B     		ldr	r3, .L80
+ 1162 00ec 5B7B     		ldrb	r3, [r3, #13]	@ zero_extendqisi2
+ 1163 00ee 1946     		mov	r1, r3
+ 1164 00f0 534B     		ldr	r3, .L80
+ 1165 00f2 1B7B     		ldrb	r3, [r3, #12]	@ zero_extendqisi2
+ 1166 00f4 CB1A     		subs	r3, r1, r3
+ 1167 00f6 0133     		adds	r3, r3, #1
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccG4UpZh.s 			page 26
+
+
+ 1168 00f8 92FBF3F1 		sdiv	r1, r2, r3
+ 1169 00fc 03FB01F3 		mul	r3, r3, r1
+ 1170 0100 D31A     		subs	r3, r2, r3
+ 1171 0102 DAB2     		uxtb	r2, r3
+ 1172 0104 4E4B     		ldr	r3, .L80
+ 1173 0106 1B7B     		ldrb	r3, [r3, #12]	@ zero_extendqisi2
+ 1174              		.loc 1 260 17 discriminator 1
+ 1175 0108 1344     		add	r3, r3, r2
+ 1176 010a DBB2     		uxtb	r3, r3
+ 1177 010c 00E0     		b	.L69
+ 1178              	.L68:
+ 1179              		.loc 1 260 17 is_stmt 0 discriminator 2
+ 1180 010e 3B7A     		ldrb	r3, [r7, #8]	@ zero_extendqisi2
+ 1181              	.L69:
+ 1182              		.loc 1 260 17 discriminator 4
+ 1183 0110 FB71     		strb	r3, [r7, #7]
+ 261:Src/random_fade_animation.c ****         currPixel->red = 0; 
+ 1184              		.loc 1 261 24 is_stmt 1 discriminator 4
+ 1185 0112 3B69     		ldr	r3, [r7, #16]
+ 1186 0114 0022     		movs	r2, #0
+ 1187 0116 5A70     		strb	r2, [r3, #1]
+ 262:Src/random_fade_animation.c ****         currPixel->green = r1;
+ 1188              		.loc 1 262 26 discriminator 4
+ 1189 0118 3B69     		ldr	r3, [r7, #16]
+ 1190 011a 3A7A     		ldrb	r2, [r7, #8]
+ 1191 011c 1A70     		strb	r2, [r3]
+ 263:Src/random_fade_animation.c ****         currPixel->blue = r2;
+ 1192              		.loc 1 263 25 discriminator 4
+ 1193 011e 3B69     		ldr	r3, [r7, #16]
+ 1194 0120 FA79     		ldrb	r2, [r7, #7]
+ 1195 0122 9A70     		strb	r2, [r3, #2]
+ 1196              	.LBE12:
+ 1197 0124 37E0     		b	.L70
+ 1198              	.L67:
+ 1199              	.LBB13:
+ 264:Src/random_fade_animation.c ****       }
+ 265:Src/random_fade_animation.c ****       else if (count % 200 < 200)
+ 266:Src/random_fade_animation.c ****       {
+ 267:Src/random_fade_animation.c ****         uint8_t r1 = RAND_IN_RANGE(context.lowerBrightness, context.upperBrightness);
+ 1200              		.loc 1 267 22
+ 1201 0126 FFF7FEFF 		bl	rand
+ 1202 012a 0246     		mov	r2, r0
+ 1203 012c 444B     		ldr	r3, .L80
+ 1204 012e 5B7B     		ldrb	r3, [r3, #13]	@ zero_extendqisi2
+ 1205 0130 1946     		mov	r1, r3
+ 1206 0132 434B     		ldr	r3, .L80
+ 1207 0134 1B7B     		ldrb	r3, [r3, #12]	@ zero_extendqisi2
+ 1208 0136 CB1A     		subs	r3, r1, r3
+ 1209 0138 0133     		adds	r3, r3, #1
+ 1210 013a 92FBF3F1 		sdiv	r1, r2, r3
+ 1211 013e 03FB01F3 		mul	r3, r3, r1
+ 1212 0142 D31A     		subs	r3, r2, r3
+ 1213 0144 DAB2     		uxtb	r2, r3
+ 1214 0146 3E4B     		ldr	r3, .L80
+ 1215 0148 1B7B     		ldrb	r3, [r3, #12]	@ zero_extendqisi2
+ 1216              		.loc 1 267 17
+ 1217 014a 1344     		add	r3, r3, r2
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccG4UpZh.s 			page 27
+
+
+ 1218 014c BB72     		strb	r3, [r7, #10]
+ 268:Src/random_fade_animation.c ****         uint8_t r2 = (context.singleValForAllChannels) ? r1 : RAND_IN_RANGE(context.lowerBrightness
+ 1219              		.loc 1 268 30
+ 1220 014e 3C4B     		ldr	r3, .L80
+ 1221 0150 DB7C     		ldrb	r3, [r3, #19]	@ zero_extendqisi2
+ 1222              		.loc 1 268 17
+ 1223 0152 002B     		cmp	r3, #0
+ 1224 0154 14D1     		bne	.L71
+ 1225              		.loc 1 268 63 discriminator 1
+ 1226 0156 FFF7FEFF 		bl	rand
+ 1227 015a 0246     		mov	r2, r0
+ 1228 015c 384B     		ldr	r3, .L80
+ 1229 015e 5B7B     		ldrb	r3, [r3, #13]	@ zero_extendqisi2
+ 1230 0160 1946     		mov	r1, r3
+ 1231 0162 374B     		ldr	r3, .L80
+ 1232 0164 1B7B     		ldrb	r3, [r3, #12]	@ zero_extendqisi2
+ 1233 0166 CB1A     		subs	r3, r1, r3
+ 1234 0168 0133     		adds	r3, r3, #1
+ 1235 016a 92FBF3F1 		sdiv	r1, r2, r3
+ 1236 016e 03FB01F3 		mul	r3, r3, r1
+ 1237 0172 D31A     		subs	r3, r2, r3
+ 1238 0174 DAB2     		uxtb	r2, r3
+ 1239 0176 324B     		ldr	r3, .L80
+ 1240 0178 1B7B     		ldrb	r3, [r3, #12]	@ zero_extendqisi2
+ 1241              		.loc 1 268 17 discriminator 1
+ 1242 017a 1344     		add	r3, r3, r2
+ 1243 017c DBB2     		uxtb	r3, r3
+ 1244 017e 00E0     		b	.L72
+ 1245              	.L71:
+ 1246              		.loc 1 268 17 is_stmt 0 discriminator 2
+ 1247 0180 BB7A     		ldrb	r3, [r7, #10]	@ zero_extendqisi2
+ 1248              	.L72:
+ 1249              		.loc 1 268 17 discriminator 4
+ 1250 0182 7B72     		strb	r3, [r7, #9]
+ 269:Src/random_fade_animation.c ****         currPixel->red = r1;
+ 1251              		.loc 1 269 24 is_stmt 1 discriminator 4
+ 1252 0184 3B69     		ldr	r3, [r7, #16]
+ 1253 0186 BA7A     		ldrb	r2, [r7, #10]
+ 1254 0188 5A70     		strb	r2, [r3, #1]
+ 270:Src/random_fade_animation.c ****         currPixel->green = 0; 
+ 1255              		.loc 1 270 26 discriminator 4
+ 1256 018a 3B69     		ldr	r3, [r7, #16]
+ 1257 018c 0022     		movs	r2, #0
+ 1258 018e 1A70     		strb	r2, [r3]
+ 271:Src/random_fade_animation.c ****         currPixel->blue = r2;
+ 1259              		.loc 1 271 25 discriminator 4
+ 1260 0190 3B69     		ldr	r3, [r7, #16]
+ 1261 0192 7A7A     		ldrb	r2, [r7, #9]
+ 1262 0194 9A70     		strb	r2, [r3, #2]
+ 1263              	.L70:
+ 1264              	.LBE13:
+ 272:Src/random_fade_animation.c ****       }
+ 273:Src/random_fade_animation.c ****       else
+ 274:Src/random_fade_animation.c ****       {
+ 275:Src/random_fade_animation.c ****         uint8_t r1 = RAND_IN_RANGE(context.lowerBrightness, context.upperBrightness);
+ 276:Src/random_fade_animation.c ****         uint8_t r2 = (context.singleValForAllChannels) ? r1 : RAND_IN_RANGE(context.lowerBrightness
+ 277:Src/random_fade_animation.c ****         currPixel->red = r1;
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccG4UpZh.s 			page 28
+
+
+ 278:Src/random_fade_animation.c ****         currPixel->green = r1;
+ 279:Src/random_fade_animation.c ****         currPixel->blue = 0;
+ 280:Src/random_fade_animation.c ****       }
+ 281:Src/random_fade_animation.c **** 
+ 282:Src/random_fade_animation.c ****       currData->waitTime = RAND_IN_RANGE(context.lowerWaitTime, context.upperWaitTime);
+ 1265              		.loc 1 282 28
+ 1266 0196 FFF7FEFF 		bl	rand
+ 1267 019a 0246     		mov	r2, r0
+ 1268 019c 284B     		ldr	r3, .L80
+ 1269 019e 5B7C     		ldrb	r3, [r3, #17]	@ zero_extendqisi2
+ 1270 01a0 1946     		mov	r1, r3
+ 1271 01a2 274B     		ldr	r3, .L80
+ 1272 01a4 1B7C     		ldrb	r3, [r3, #16]	@ zero_extendqisi2
+ 1273 01a6 CB1A     		subs	r3, r1, r3
+ 1274 01a8 0133     		adds	r3, r3, #1
+ 1275 01aa 92FBF3F1 		sdiv	r1, r2, r3
+ 1276 01ae 03FB01F3 		mul	r3, r3, r1
+ 1277 01b2 D31A     		subs	r3, r2, r3
+ 1278 01b4 DAB2     		uxtb	r2, r3
+ 1279 01b6 224B     		ldr	r3, .L80
+ 1280 01b8 1B7C     		ldrb	r3, [r3, #16]	@ zero_extendqisi2
+ 1281 01ba 1344     		add	r3, r3, r2
+ 1282 01bc DAB2     		uxtb	r2, r3
+ 1283              		.loc 1 282 26
+ 1284 01be FB68     		ldr	r3, [r7, #12]
+ 1285 01c0 5A70     		strb	r2, [r3, #1]
+ 1286 01c2 29E0     		b	.L66
+ 1287              	.L64:
+ 283:Src/random_fade_animation.c ****     }
+ 284:Src/random_fade_animation.c ****     else
+ 285:Src/random_fade_animation.c ****     {
+ 286:Src/random_fade_animation.c ****       currPixel->red = (currPixel->red > decrementRate) ? currPixel->red - decrementRate : 0;
+ 1288              		.loc 1 286 34
+ 1289 01c4 3B69     		ldr	r3, [r7, #16]
+ 1290 01c6 5B78     		ldrb	r3, [r3, #1]	@ zero_extendqisi2
+ 1291              		.loc 1 286 22
+ 1292 01c8 FA7A     		ldrb	r2, [r7, #11]	@ zero_extendqisi2
+ 1293 01ca 9A42     		cmp	r2, r3
+ 1294 01cc 05D2     		bcs	.L73
+ 1295              		.loc 1 286 68 discriminator 1
+ 1296 01ce 3B69     		ldr	r3, [r7, #16]
+ 1297 01d0 5A78     		ldrb	r2, [r3, #1]	@ zero_extendqisi2
+ 1298              		.loc 1 286 22 discriminator 1
+ 1299 01d2 FB7A     		ldrb	r3, [r7, #11]
+ 1300 01d4 D31A     		subs	r3, r2, r3
+ 1301 01d6 DAB2     		uxtb	r2, r3
+ 1302 01d8 00E0     		b	.L74
+ 1303              	.L73:
+ 1304              		.loc 1 286 22 is_stmt 0 discriminator 2
+ 1305 01da 0022     		movs	r2, #0
+ 1306              	.L74:
+ 1307              		.loc 1 286 22 discriminator 4
+ 1308 01dc 3B69     		ldr	r3, [r7, #16]
+ 1309 01de 5A70     		strb	r2, [r3, #1]
+ 287:Src/random_fade_animation.c ****       currPixel->green = (currPixel->green > decrementRate) ? currPixel->green - decrementRate : 0;
+ 1310              		.loc 1 287 36 is_stmt 1 discriminator 4
+ 1311 01e0 3B69     		ldr	r3, [r7, #16]
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccG4UpZh.s 			page 29
+
+
+ 1312 01e2 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 1313              		.loc 1 287 24 discriminator 4
+ 1314 01e4 FA7A     		ldrb	r2, [r7, #11]	@ zero_extendqisi2
+ 1315 01e6 9A42     		cmp	r2, r3
+ 1316 01e8 05D2     		bcs	.L75
+ 1317              		.loc 1 287 72 discriminator 1
+ 1318 01ea 3B69     		ldr	r3, [r7, #16]
+ 1319 01ec 1A78     		ldrb	r2, [r3]	@ zero_extendqisi2
+ 1320              		.loc 1 287 24 discriminator 1
+ 1321 01ee FB7A     		ldrb	r3, [r7, #11]
+ 1322 01f0 D31A     		subs	r3, r2, r3
+ 1323 01f2 DAB2     		uxtb	r2, r3
+ 1324 01f4 00E0     		b	.L76
+ 1325              	.L75:
+ 1326              		.loc 1 287 24 is_stmt 0 discriminator 2
+ 1327 01f6 0022     		movs	r2, #0
+ 1328              	.L76:
+ 1329              		.loc 1 287 24 discriminator 4
+ 1330 01f8 3B69     		ldr	r3, [r7, #16]
+ 1331 01fa 1A70     		strb	r2, [r3]
+ 288:Src/random_fade_animation.c ****       currPixel->blue = (currPixel->blue > decrementRate) ? currPixel->blue - decrementRate : 0;
+ 1332              		.loc 1 288 35 is_stmt 1 discriminator 4
+ 1333 01fc 3B69     		ldr	r3, [r7, #16]
+ 1334 01fe 9B78     		ldrb	r3, [r3, #2]	@ zero_extendqisi2
+ 1335              		.loc 1 288 23 discriminator 4
+ 1336 0200 FA7A     		ldrb	r2, [r7, #11]	@ zero_extendqisi2
+ 1337 0202 9A42     		cmp	r2, r3
+ 1338 0204 05D2     		bcs	.L77
+ 1339              		.loc 1 288 70 discriminator 1
+ 1340 0206 3B69     		ldr	r3, [r7, #16]
+ 1341 0208 9A78     		ldrb	r2, [r3, #2]	@ zero_extendqisi2
+ 1342              		.loc 1 288 23 discriminator 1
+ 1343 020a FB7A     		ldrb	r3, [r7, #11]
+ 1344 020c D31A     		subs	r3, r2, r3
+ 1345 020e DAB2     		uxtb	r2, r3
+ 1346 0210 00E0     		b	.L78
+ 1347              	.L77:
+ 1348              		.loc 1 288 23 is_stmt 0 discriminator 2
+ 1349 0212 0022     		movs	r2, #0
+ 1350              	.L78:
+ 1351              		.loc 1 288 23 discriminator 4
+ 1352 0214 3B69     		ldr	r3, [r7, #16]
+ 1353 0216 9A70     		strb	r2, [r3, #2]
+ 1354              	.L66:
+ 1355              	.LBE11:
+ 239:Src/random_fade_animation.c ****   {
+ 1356              		.loc 1 239 41 is_stmt 1 discriminator 2
+ 1357 0218 7B69     		ldr	r3, [r7, #20]
+ 1358 021a 0133     		adds	r3, r3, #1
+ 1359 021c 7B61     		str	r3, [r7, #20]
+ 1360              	.L63:
+ 239:Src/random_fade_animation.c ****   {
+ 1361              		.loc 1 239 30 discriminator 1
+ 1362 021e 084B     		ldr	r3, .L80
+ 1363 0220 5B78     		ldrb	r3, [r3, #1]	@ zero_extendqisi2
+ 1364 0222 1A46     		mov	r2, r3
+ 239:Src/random_fade_animation.c ****   {
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccG4UpZh.s 			page 30
+
+
+ 1365              		.loc 1 239 3 discriminator 1
+ 1366 0224 7B69     		ldr	r3, [r7, #20]
+ 1367 0226 9342     		cmp	r3, r2
+ 1368 0228 FFF6F0AE 		blt	.L79
+ 1369              	.LBE10:
+ 289:Src/random_fade_animation.c ****     }
+ 290:Src/random_fade_animation.c ****   }
+ 291:Src/random_fade_animation.c ****   count++;
+ 1370              		.loc 1 291 8
+ 1371 022c 054B     		ldr	r3, .L80+4
+ 1372 022e 1B68     		ldr	r3, [r3]
+ 1373 0230 0133     		adds	r3, r3, #1
+ 1374 0232 044A     		ldr	r2, .L80+4
+ 1375 0234 1360     		str	r3, [r2]
+ 292:Src/random_fade_animation.c **** }
+ 1376              		.loc 1 292 1
+ 1377 0236 00BF     		nop
+ 1378 0238 1837     		adds	r7, r7, #24
+ 1379              	.LCFI35:
+ 1380              		.cfi_def_cfa_offset 8
+ 1381 023a BD46     		mov	sp, r7
+ 1382              	.LCFI36:
+ 1383              		.cfi_def_cfa_register 13
+ 1384              		@ sp needed
+ 1385 023c 80BD     		pop	{r7, pc}
+ 1386              	.L81:
+ 1387 023e 00BF     		.align	2
+ 1388              	.L80:
+ 1389 0240 00000000 		.word	context
+ 1390 0244 00000000 		.word	count.10642
+ 1391 0248 1F85EB51 		.word	1374389535
+ 1392              		.cfi_endproc
+ 1393              	.LFE299:
+ 1395              		.section	.bss.count.10628,"aw",%nobits
+ 1396              		.align	2
+ 1399              	count.10628:
+ 1400 0000 00000000 		.space	4
+ 1401              		.section	.bss.currColor.10629,"aw",%nobits
+ 1402              		.align	2
+ 1405              	currColor.10629:
+ 1406 0000 00000000 		.space	8
+ 1406      00000000 
+ 1407              		.section	.bss.count.10642,"aw",%nobits
+ 1408              		.align	2
+ 1411              	count.10642:
+ 1412 0000 00000000 		.space	4
+ 1413              		.text
+ 1414              	.Letext0:
+ 1415              		.file 2 "/Users/isikcanyilmaz/KODMOD/b607/test/mcu/tools/gcc9.2.1/mac/arm-none-eabi/include/machin
+ 1416              		.file 3 "/Users/isikcanyilmaz/KODMOD/b607/test/mcu/tools/gcc9.2.1/mac/arm-none-eabi/include/sys/_s
+ 1417              		.file 4 "Drivers/CMSIS/Include/core_cm4.h"
+ 1418              		.file 5 "Drivers/CMSIS/Device/ST/STM32L4xx/Include/system_stm32l4xx.h"
+ 1419              		.file 6 "Drivers/CMSIS/Device/ST/STM32L4xx/Include/stm32l452xx.h"
+ 1420              		.file 7 "Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_def.h"
+ 1421              		.file 8 "Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_dma.h"
+ 1422              		.file 9 "Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_flash.h"
+ 1423              		.file 10 "Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_tim.h"
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccG4UpZh.s 			page 31
+
+
+ 1424              		.file 11 "Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal.h"
+ 1425              		.file 12 "Inc/tim.h"
+ 1426              		.file 13 "Inc/addressable_led_driver.h"
+ 1427              		.file 14 "Inc/addressable_led_manager.h"
+ 1428              		.file 15 "Inc/random_fade_animation.h"
+ 1429              		.file 16 "/Users/isikcanyilmaz/KODMOD/b607/test/mcu/tools/gcc9.2.1/mac/arm-none-eabi/include/sys/l
+ 1430              		.file 17 "/Users/isikcanyilmaz/KODMOD/b607/test/mcu/tools/gcc9.2.1/mac/arm-none-eabi/include/sys/_
+ 1431              		.file 18 "/Users/isikcanyilmaz/KODMOD/b607/test/mcu/tools/gcc9.2.1/mac/lib/gcc/arm-none-eabi/9.2.1
+ 1432              		.file 19 "/Users/isikcanyilmaz/KODMOD/b607/test/mcu/tools/gcc9.2.1/mac/arm-none-eabi/include/sys/r
+ 1433              		.file 20 "/Users/isikcanyilmaz/KODMOD/b607/test/mcu/tools/gcc9.2.1/mac/arm-none-eabi/include/stdli
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccG4UpZh.s 			page 32
+
+
+DEFINED SYMBOLS
+                            *ABS*:0000000000000000 random_fade_animation.c
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccG4UpZh.s:18     .bss.context:0000000000000000 $d
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccG4UpZh.s:21     .bss.context:0000000000000000 context
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccG4UpZh.s:24     .text.Animation_RandomFade_Init:0000000000000000 $t
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccG4UpZh.s:32     .text.Animation_RandomFade_Init:0000000000000000 Animation_RandomFade_Init
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccG4UpZh.s:222    .text.Animation_RandomFade_Init:000000000000010c $d
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccG4UpZh.s:227    .text.Animation_RandomFade_GetState:0000000000000000 $t
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccG4UpZh.s:234    .text.Animation_RandomFade_GetState:0000000000000000 Animation_RandomFade_GetState
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccG4UpZh.s:265    .text.Animation_RandomFade_GetState:0000000000000014 $d
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccG4UpZh.s:270    .text.Animation_RandomFade_SendMessage:0000000000000000 $t
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccG4UpZh.s:277    .text.Animation_RandomFade_SendMessage:0000000000000000 Animation_RandomFade_SendMessage
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccG4UpZh.s:384    .text.Animation_RandomFade_SendMessage:000000000000006c $d
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccG4UpZh.s:389    .text.Animation_RandomFade_Update:0000000000000000 $t
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccG4UpZh.s:396    .text.Animation_RandomFade_Update:0000000000000000 Animation_RandomFade_Update
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccG4UpZh.s:419    .text.Animation_RandomFade_Update:0000000000000014 $d
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccG4UpZh.s:423    .text.Animation_RandomFade_Update:0000000000000024 $t
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccG4UpZh.s:460    .text.rampUp:0000000000000000 rampUp
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccG4UpZh.s:684    .text.randomFade2:0000000000000000 randomFade2
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccG4UpZh.s:503    .text.rampDown:0000000000000000 rampDown
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccG4UpZh.s:449    .text.Animation_RandomFade_Update:000000000000003c $d
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccG4UpZh.s:454    .text.rampUp:0000000000000000 $t
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccG4UpZh.s:492    .text.rampUp:0000000000000014 $d
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccG4UpZh.s:497    .text.rampDown:0000000000000000 $t
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccG4UpZh.s:673    .text.rampDown:00000000000000c0 $d
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccG4UpZh.s:678    .text.randomFade2:0000000000000000 $t
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccG4UpZh.s:990    .text.randomFade2:00000000000001a4 $d
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccG4UpZh.s:1399   .bss.count.10628:0000000000000000 count.10628
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccG4UpZh.s:1405   .bss.currColor.10629:0000000000000000 currColor.10629
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccG4UpZh.s:998    .text.randomFade1:0000000000000000 $t
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccG4UpZh.s:1004   .text.randomFade1:0000000000000000 randomFade1
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccG4UpZh.s:1389   .text.randomFade1:0000000000000240 $d
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccG4UpZh.s:1411   .bss.count.10642:0000000000000000 count.10642
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccG4UpZh.s:1396   .bss.count.10628:0000000000000000 $d
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccG4UpZh.s:1402   .bss.currColor.10629:0000000000000000 $d
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccG4UpZh.s:1408   .bss.count.10642:0000000000000000 $d
+
+UNDEFINED SYMBOLS
+rand
+getRandomColor

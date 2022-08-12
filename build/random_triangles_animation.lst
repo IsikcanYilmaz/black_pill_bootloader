@@ -1,0 +1,2713 @@
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s 			page 1
+
+
+   1              		.cpu cortex-m4
+   2              		.eabi_attribute 27, 1
+   3              		.eabi_attribute 28, 1
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 6
+  11              		.eabi_attribute 34, 1
+  12              		.eabi_attribute 18, 4
+  13              		.file	"random_triangles_animation.c"
+  14              		.text
+  15              	.Ltext0:
+  16              		.cfi_sections	.debug_frame
+  17              		.section	.bss.context,"aw",%nobits
+  18              		.align	2
+  21              	context:
+  22 0000 00000000 		.space	20
+  22      00000000 
+  22      00000000 
+  22      00000000 
+  22      00000000 
+  23              		.section	.text.Animation_RandomTriangles_Init,"ax",%progbits
+  24              		.align	1
+  25              		.global	Animation_RandomTriangles_Init
+  26              		.arch armv7e-m
+  27              		.syntax unified
+  28              		.thumb
+  29              		.thumb_func
+  30              		.fpu fpv4-sp-d16
+  32              	Animation_RandomTriangles_Init:
+  33              	.LFB292:
+  34              		.file 1 "Src/random_triangles_animation.c"
+   1:Src/random_triangles_animation.c **** #include "random_triangles_animation.h"
+   2:Src/random_triangles_animation.c **** #include "addressable_led_manager.h"
+   3:Src/random_triangles_animation.c **** #include "utils.h"
+   4:Src/random_triangles_animation.c **** #include "color.h"
+   5:Src/random_triangles_animation.c **** #include <stdlib.h>
+   6:Src/random_triangles_animation.c **** 
+   7:Src/random_triangles_animation.c **** #define HSV_TEST true
+   8:Src/random_triangles_animation.c **** 
+   9:Src/random_triangles_animation.c **** /*
+  10:Src/random_triangles_animation.c ****  *  RANDOM TRIANGLES ANIMATION MODULE 
+  11:Src/random_triangles_animation.c ****  *
+  12:Src/random_triangles_animation.c **** 
+  13:Src/random_triangles_animation.c ****  */
+  14:Src/random_triangles_animation.c **** 
+  15:Src/random_triangles_animation.c **** typedef struct {
+  16:Src/random_triangles_animation.c ****   uint8_t numPanels;
+  17:Src/random_triangles_animation.c ****   uint8_t numLeds;
+  18:Src/random_triangles_animation.c ****   AnimationState_e state;
+  19:Src/random_triangles_animation.c **** 
+  20:Src/random_triangles_animation.c ****   // This will be a ptr to an array of consecutive panel objects
+  21:Src/random_triangles_animation.c ****   AddrLEDPanel_t *panels; 
+  22:Src/random_triangles_animation.c **** 
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s 			page 2
+
+
+  23:Src/random_triangles_animation.c ****   // Below is tobe used as storage for metadata about the Pixels that this animation module will ke
+  24:Src/random_triangles_animation.c ****   RandomTrianglesPixelData_t *pixelDataPtr;
+  25:Src/random_triangles_animation.c ****   
+  26:Src/random_triangles_animation.c ****   // Below are animation config variables
+  27:Src/random_triangles_animation.c ****   // lower and upper limits for the random numbers
+  28:Src/random_triangles_animation.c ****   uint8_t upperBrightness;
+  29:Src/random_triangles_animation.c ****   uint8_t lowerBrightness;
+  30:Src/random_triangles_animation.c **** 
+  31:Src/random_triangles_animation.c ****   // Pointer to the strip. assuming there's only one
+  32:Src/random_triangles_animation.c ****   AddrLEDStrip_t *stripBegin;
+  33:Src/random_triangles_animation.c **** } AnimationContext_t; 
+  34:Src/random_triangles_animation.c **** 
+  35:Src/random_triangles_animation.c **** static AnimationContext_t context;
+  36:Src/random_triangles_animation.c **** 
+  37:Src/random_triangles_animation.c **** static void randomTriangles1();
+  38:Src/random_triangles_animation.c **** static void randomTriangles2();
+  39:Src/random_triangles_animation.c **** static void rampUp();
+  40:Src/random_triangles_animation.c **** static void rampDown();
+  41:Src/random_triangles_animation.c **** 
+  42:Src/random_triangles_animation.c **** void Animation_RandomTriangles_Init(AddrLEDPanel_t *panels, uint8_t numPanels, RandomTrianglesPixel
+  43:Src/random_triangles_animation.c **** {
+  35              		.loc 1 43 1
+  36              		.cfi_startproc
+  37              		@ args = 0, pretend = 0, frame = 16
+  38              		@ frame_needed = 1, uses_anonymous_args = 0
+  39 0000 80B5     		push	{r7, lr}
+  40              	.LCFI0:
+  41              		.cfi_def_cfa_offset 8
+  42              		.cfi_offset 7, -8
+  43              		.cfi_offset 14, -4
+  44 0002 84B0     		sub	sp, sp, #16
+  45              	.LCFI1:
+  46              		.cfi_def_cfa_offset 24
+  47 0004 00AF     		add	r7, sp, #0
+  48              	.LCFI2:
+  49              		.cfi_def_cfa_register 7
+  50 0006 F860     		str	r0, [r7, #12]
+  51 0008 0B46     		mov	r3, r1
+  52 000a 7A60     		str	r2, [r7, #4]
+  53 000c FB72     		strb	r3, [r7, #11]
+  44:Src/random_triangles_animation.c ****   memset(pixelDataPtr, 0x00, sizeof(RandomTrianglesPixelData_t) * numPanels * panels->numLeds);
+  54              		.loc 1 44 77
+  55 000e FB7A     		ldrb	r3, [r7, #11]	@ zero_extendqisi2
+  56              		.loc 1 44 85
+  57 0010 FA68     		ldr	r2, [r7, #12]
+  58 0012 1289     		ldrh	r2, [r2, #8]
+  59              		.loc 1 44 77
+  60 0014 02FB03F2 		mul	r2, r2, r3
+  61              		.loc 1 44 3
+  62 0018 1346     		mov	r3, r2
+  63 001a 9B00     		lsls	r3, r3, #2
+  64 001c 1344     		add	r3, r3, r2
+  65 001e 1A46     		mov	r2, r3
+  66 0020 0021     		movs	r1, #0
+  67 0022 7868     		ldr	r0, [r7, #4]
+  68 0024 FFF7FEFF 		bl	memset
+  45:Src/random_triangles_animation.c **** 
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s 			page 3
+
+
+  46:Src/random_triangles_animation.c ****   context.panels = panels;
+  69              		.loc 1 46 18
+  70 0028 0F4A     		ldr	r2, .L2
+  71 002a FB68     		ldr	r3, [r7, #12]
+  72 002c 5360     		str	r3, [r2, #4]
+  47:Src/random_triangles_animation.c ****   context.pixelDataPtr = pixelDataPtr;
+  73              		.loc 1 47 24
+  74 002e 0E4A     		ldr	r2, .L2
+  75 0030 7B68     		ldr	r3, [r7, #4]
+  76 0032 9360     		str	r3, [r2, #8]
+  48:Src/random_triangles_animation.c ****   context.stripBegin = panels->strip;
+  77              		.loc 1 48 30
+  78 0034 FB68     		ldr	r3, [r7, #12]
+  79 0036 1B68     		ldr	r3, [r3]
+  80              		.loc 1 48 22
+  81 0038 0B4A     		ldr	r2, .L2
+  82 003a 1361     		str	r3, [r2, #16]
+  49:Src/random_triangles_animation.c ****   context.numPanels = numPanels;
+  83              		.loc 1 49 21
+  84 003c 0A4A     		ldr	r2, .L2
+  85 003e FB7A     		ldrb	r3, [r7, #11]
+  86 0040 1370     		strb	r3, [r2]
+  50:Src/random_triangles_animation.c ****   context.numLeds = panels->numLeds * numPanels;
+  87              		.loc 1 50 27
+  88 0042 FB68     		ldr	r3, [r7, #12]
+  89 0044 1B89     		ldrh	r3, [r3, #8]
+  90              		.loc 1 50 19
+  91 0046 DBB2     		uxtb	r3, r3
+  92 0048 FA7A     		ldrb	r2, [r7, #11]
+  93 004a 12FB03F3 		smulbb	r3, r2, r3
+  94 004e DAB2     		uxtb	r2, r3
+  95 0050 054B     		ldr	r3, .L2
+  96 0052 5A70     		strb	r2, [r3, #1]
+  51:Src/random_triangles_animation.c **** 
+  52:Src/random_triangles_animation.c ****   context.lowerBrightness = 0;
+  97              		.loc 1 52 27
+  98 0054 044B     		ldr	r3, .L2
+  99 0056 0022     		movs	r2, #0
+ 100 0058 5A73     		strb	r2, [r3, #13]
+  53:Src/random_triangles_animation.c ****   context.upperBrightness = 225;
+ 101              		.loc 1 53 27
+ 102 005a 034B     		ldr	r3, .L2
+ 103 005c E122     		movs	r2, #225
+ 104 005e 1A73     		strb	r2, [r3, #12]
+  54:Src/random_triangles_animation.c **** }
+ 105              		.loc 1 54 1
+ 106 0060 00BF     		nop
+ 107 0062 1037     		adds	r7, r7, #16
+ 108              	.LCFI3:
+ 109              		.cfi_def_cfa_offset 8
+ 110 0064 BD46     		mov	sp, r7
+ 111              	.LCFI4:
+ 112              		.cfi_def_cfa_register 13
+ 113              		@ sp needed
+ 114 0066 80BD     		pop	{r7, pc}
+ 115              	.L3:
+ 116              		.align	2
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s 			page 4
+
+
+ 117              	.L2:
+ 118 0068 00000000 		.word	context
+ 119              		.cfi_endproc
+ 120              	.LFE292:
+ 122              		.section	.text.Animation_RandomTriangles_SendMessage,"ax",%progbits
+ 123              		.align	1
+ 124              		.global	Animation_RandomTriangles_SendMessage
+ 125              		.syntax unified
+ 126              		.thumb
+ 127              		.thumb_func
+ 128              		.fpu fpv4-sp-d16
+ 130              	Animation_RandomTriangles_SendMessage:
+ 131              	.LFB293:
+  55:Src/random_triangles_animation.c **** 
+  56:Src/random_triangles_animation.c **** // TODO // Change SendMessage to ProcessMessage
+  57:Src/random_triangles_animation.c **** void Animation_RandomTriangles_SendMessage(AnimationMessage_t *message)
+  58:Src/random_triangles_animation.c **** {
+ 132              		.loc 1 58 1
+ 133              		.cfi_startproc
+ 134              		@ args = 0, pretend = 0, frame = 24
+ 135              		@ frame_needed = 1, uses_anonymous_args = 0
+ 136              		@ link register save eliminated.
+ 137 0000 80B4     		push	{r7}
+ 138              	.LCFI5:
+ 139              		.cfi_def_cfa_offset 4
+ 140              		.cfi_offset 7, -4
+ 141 0002 87B0     		sub	sp, sp, #28
+ 142              	.LCFI6:
+ 143              		.cfi_def_cfa_offset 32
+ 144 0004 00AF     		add	r7, sp, #0
+ 145              	.LCFI7:
+ 146              		.cfi_def_cfa_register 7
+ 147 0006 7860     		str	r0, [r7, #4]
+  59:Src/random_triangles_animation.c ****   switch(message->signal)
+ 148              		.loc 1 59 17
+ 149 0008 7B68     		ldr	r3, [r7, #4]
+ 150 000a 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 151              		.loc 1 59 3
+ 152 000c 002B     		cmp	r3, #0
+ 153 000e 05D0     		beq	.L5
+ 154 0010 002B     		cmp	r3, #0
+ 155 0012 32DB     		blt	.L12
+ 156 0014 013B     		subs	r3, r3, #1
+ 157 0016 012B     		cmp	r3, #1
+ 158 0018 2FD8     		bhi	.L12
+ 159 001a 03E0     		b	.L11
+ 160              	.L5:
+  60:Src/random_triangles_animation.c ****   {
+  61:Src/random_triangles_animation.c ****     case BEGIN:
+  62:Src/random_triangles_animation.c ****       {
+  63:Src/random_triangles_animation.c ****         context.state = RAMPING_UP;
+ 161              		.loc 1 63 23
+ 162 001c 1A4B     		ldr	r3, .L13
+ 163 001e 0022     		movs	r2, #0
+ 164 0020 9A70     		strb	r2, [r3, #2]
+  64:Src/random_triangles_animation.c ****         break;
+ 165              		.loc 1 64 9
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s 			page 5
+
+
+ 166 0022 2BE0     		b	.L8
+ 167              	.L11:
+  65:Src/random_triangles_animation.c ****       }
+  66:Src/random_triangles_animation.c ****     case PAUSE:
+  67:Src/random_triangles_animation.c ****     case STOP:
+  68:Src/random_triangles_animation.c ****       {
+  69:Src/random_triangles_animation.c ****         context.state = RAMPING_DOWN;
+ 168              		.loc 1 69 23
+ 169 0024 184B     		ldr	r3, .L13
+ 170 0026 0222     		movs	r2, #2
+ 171 0028 9A70     		strb	r2, [r3, #2]
+ 172              	.LBB2:
+  70:Src/random_triangles_animation.c **** 
+  71:Src/random_triangles_animation.c ****         // Keep a backup of where we leave off the LEDs
+  72:Src/random_triangles_animation.c ****         for (int i = 0; i < context.numLeds; i++)
+ 173              		.loc 1 72 18
+ 174 002a 0023     		movs	r3, #0
+ 175 002c 7B61     		str	r3, [r7, #20]
+ 176              		.loc 1 72 9
+ 177 002e 1DE0     		b	.L9
+ 178              	.L10:
+ 179              	.LBB3:
+  73:Src/random_triangles_animation.c ****         {
+  74:Src/random_triangles_animation.c ****           RandomTrianglesPixelData_t *currData = (RandomTrianglesPixelData_t *) &context.pixelDataP
+ 180              		.loc 1 74 89 discriminator 3
+ 181 0030 154B     		ldr	r3, .L13
+ 182 0032 9968     		ldr	r1, [r3, #8]
+ 183              		.loc 1 74 102 discriminator 3
+ 184 0034 7A69     		ldr	r2, [r7, #20]
+ 185 0036 1346     		mov	r3, r2
+ 186 0038 9B00     		lsls	r3, r3, #2
+ 187 003a 1344     		add	r3, r3, r2
+ 188              		.loc 1 74 39 discriminator 3
+ 189 003c 0B44     		add	r3, r3, r1
+ 190 003e 3B61     		str	r3, [r7, #16]
+  75:Src/random_triangles_animation.c ****           Pixel_t *currPixel = (Pixel_t *) &context.stripBegin->pixels[i];
+ 191              		.loc 1 75 52 discriminator 3
+ 192 0040 114B     		ldr	r3, .L13
+ 193 0042 1B69     		ldr	r3, [r3, #16]
+ 194              		.loc 1 75 63 discriminator 3
+ 195 0044 5A68     		ldr	r2, [r3, #4]
+ 196              		.loc 1 75 71 discriminator 3
+ 197 0046 7B69     		ldr	r3, [r7, #20]
+ 198 0048 DB00     		lsls	r3, r3, #3
+ 199              		.loc 1 75 20 discriminator 3
+ 200 004a 1344     		add	r3, r3, r2
+ 201 004c FB60     		str	r3, [r7, #12]
+  76:Src/random_triangles_animation.c ****           currData->backupR = currPixel->red;
+ 202              		.loc 1 76 40 discriminator 3
+ 203 004e FB68     		ldr	r3, [r7, #12]
+ 204 0050 5A78     		ldrb	r2, [r3, #1]	@ zero_extendqisi2
+ 205              		.loc 1 76 29 discriminator 3
+ 206 0052 3B69     		ldr	r3, [r7, #16]
+ 207 0054 9A70     		strb	r2, [r3, #2]
+  77:Src/random_triangles_animation.c ****           currData->backupG = currPixel->green;
+ 208              		.loc 1 77 40 discriminator 3
+ 209 0056 FB68     		ldr	r3, [r7, #12]
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s 			page 6
+
+
+ 210 0058 1A78     		ldrb	r2, [r3]	@ zero_extendqisi2
+ 211              		.loc 1 77 29 discriminator 3
+ 212 005a 3B69     		ldr	r3, [r7, #16]
+ 213 005c DA70     		strb	r2, [r3, #3]
+  78:Src/random_triangles_animation.c ****           currData->backupB = currPixel->blue;
+ 214              		.loc 1 78 40 discriminator 3
+ 215 005e FB68     		ldr	r3, [r7, #12]
+ 216 0060 9A78     		ldrb	r2, [r3, #2]	@ zero_extendqisi2
+ 217              		.loc 1 78 29 discriminator 3
+ 218 0062 3B69     		ldr	r3, [r7, #16]
+ 219 0064 1A71     		strb	r2, [r3, #4]
+ 220              	.LBE3:
+  72:Src/random_triangles_animation.c ****         {
+ 221              		.loc 1 72 47 discriminator 3
+ 222 0066 7B69     		ldr	r3, [r7, #20]
+ 223 0068 0133     		adds	r3, r3, #1
+ 224 006a 7B61     		str	r3, [r7, #20]
+ 225              	.L9:
+  72:Src/random_triangles_animation.c ****         {
+ 226              		.loc 1 72 36 discriminator 1
+ 227 006c 064B     		ldr	r3, .L13
+ 228 006e 5B78     		ldrb	r3, [r3, #1]	@ zero_extendqisi2
+ 229 0070 1A46     		mov	r2, r3
+  72:Src/random_triangles_animation.c ****         {
+ 230              		.loc 1 72 9 discriminator 1
+ 231 0072 7B69     		ldr	r3, [r7, #20]
+ 232 0074 9342     		cmp	r3, r2
+ 233 0076 DBDB     		blt	.L10
+ 234              	.LBE2:
+  79:Src/random_triangles_animation.c ****         } 
+  80:Src/random_triangles_animation.c ****         break;
+ 235              		.loc 1 80 9
+ 236 0078 00E0     		b	.L8
+ 237              	.L12:
+  81:Src/random_triangles_animation.c ****       }
+  82:Src/random_triangles_animation.c ****     default:
+  83:Src/random_triangles_animation.c ****       break;
+ 238              		.loc 1 83 7
+ 239 007a 00BF     		nop
+ 240              	.L8:
+  84:Src/random_triangles_animation.c ****   }
+  85:Src/random_triangles_animation.c **** }
+ 241              		.loc 1 85 1
+ 242 007c 00BF     		nop
+ 243 007e 1C37     		adds	r7, r7, #28
+ 244              	.LCFI8:
+ 245              		.cfi_def_cfa_offset 4
+ 246 0080 BD46     		mov	sp, r7
+ 247              	.LCFI9:
+ 248              		.cfi_def_cfa_register 13
+ 249              		@ sp needed
+ 250 0082 5DF8047B 		ldr	r7, [sp], #4
+ 251              	.LCFI10:
+ 252              		.cfi_restore 7
+ 253              		.cfi_def_cfa_offset 0
+ 254 0086 7047     		bx	lr
+ 255              	.L14:
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s 			page 7
+
+
+ 256              		.align	2
+ 257              	.L13:
+ 258 0088 00000000 		.word	context
+ 259              		.cfi_endproc
+ 260              	.LFE293:
+ 262              		.section	.text.Animation_RandomTriangles_GetState,"ax",%progbits
+ 263              		.align	1
+ 264              		.global	Animation_RandomTriangles_GetState
+ 265              		.syntax unified
+ 266              		.thumb
+ 267              		.thumb_func
+ 268              		.fpu fpv4-sp-d16
+ 270              	Animation_RandomTriangles_GetState:
+ 271              	.LFB294:
+  86:Src/random_triangles_animation.c **** 
+  87:Src/random_triangles_animation.c **** AnimationState_e Animation_RandomTriangles_GetState(void)
+  88:Src/random_triangles_animation.c **** {
+ 272              		.loc 1 88 1
+ 273              		.cfi_startproc
+ 274              		@ args = 0, pretend = 0, frame = 0
+ 275              		@ frame_needed = 1, uses_anonymous_args = 0
+ 276              		@ link register save eliminated.
+ 277 0000 80B4     		push	{r7}
+ 278              	.LCFI11:
+ 279              		.cfi_def_cfa_offset 4
+ 280              		.cfi_offset 7, -4
+ 281 0002 00AF     		add	r7, sp, #0
+ 282              	.LCFI12:
+ 283              		.cfi_def_cfa_register 7
+  89:Src/random_triangles_animation.c ****   return context.state;
+ 284              		.loc 1 89 17
+ 285 0004 034B     		ldr	r3, .L17
+ 286 0006 9B78     		ldrb	r3, [r3, #2]	@ zero_extendqisi2
+  90:Src/random_triangles_animation.c **** }
+ 287              		.loc 1 90 1
+ 288 0008 1846     		mov	r0, r3
+ 289 000a BD46     		mov	sp, r7
+ 290              	.LCFI13:
+ 291              		.cfi_def_cfa_register 13
+ 292              		@ sp needed
+ 293 000c 5DF8047B 		ldr	r7, [sp], #4
+ 294              	.LCFI14:
+ 295              		.cfi_restore 7
+ 296              		.cfi_def_cfa_offset 0
+ 297 0010 7047     		bx	lr
+ 298              	.L18:
+ 299 0012 00BF     		.align	2
+ 300              	.L17:
+ 301 0014 00000000 		.word	context
+ 302              		.cfi_endproc
+ 303              	.LFE294:
+ 305              		.section	.text.Animation_RandomTriangles_Update,"ax",%progbits
+ 306              		.align	1
+ 307              		.global	Animation_RandomTriangles_Update
+ 308              		.syntax unified
+ 309              		.thumb
+ 310              		.thumb_func
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s 			page 8
+
+
+ 311              		.fpu fpv4-sp-d16
+ 313              	Animation_RandomTriangles_Update:
+ 314              	.LFB295:
+  91:Src/random_triangles_animation.c **** 
+  92:Src/random_triangles_animation.c **** void Animation_RandomTriangles_Update(void)
+  93:Src/random_triangles_animation.c **** {
+ 315              		.loc 1 93 1
+ 316              		.cfi_startproc
+ 317              		@ args = 0, pretend = 0, frame = 0
+ 318              		@ frame_needed = 1, uses_anonymous_args = 0
+ 319 0000 80B5     		push	{r7, lr}
+ 320              	.LCFI15:
+ 321              		.cfi_def_cfa_offset 8
+ 322              		.cfi_offset 7, -8
+ 323              		.cfi_offset 14, -4
+ 324 0002 00AF     		add	r7, sp, #0
+ 325              	.LCFI16:
+ 326              		.cfi_def_cfa_register 7
+  94:Src/random_triangles_animation.c ****   switch(context.state)
+ 327              		.loc 1 94 17
+ 328 0004 0D4B     		ldr	r3, .L28
+ 329 0006 9B78     		ldrb	r3, [r3, #2]	@ zero_extendqisi2
+ 330 0008 032B     		cmp	r3, #3
+ 331 000a 14D8     		bhi	.L27
+ 332 000c 01A2     		adr	r2, .L22
+ 333 000e 52F823F0 		ldr	pc, [r2, r3, lsl #2]
+ 334 0012 00BF     		.p2align 2
+ 335              	.L22:
+ 336 0014 25000000 		.word	.L25+1
+ 337 0018 2B000000 		.word	.L24+1
+ 338 001c 31000000 		.word	.L23+1
+ 339 0020 37000000 		.word	.L27+1
+ 340              		.p2align 1
+ 341              	.L25:
+  95:Src/random_triangles_animation.c ****   {
+  96:Src/random_triangles_animation.c ****     case(RAMPING_UP):
+  97:Src/random_triangles_animation.c ****       {
+  98:Src/random_triangles_animation.c ****         rampUp();
+ 342              		.loc 1 98 9
+ 343 0024 FFF7FEFF 		bl	rampUp
+  99:Src/random_triangles_animation.c ****         break;
+ 344              		.loc 1 99 9
+ 345 0028 06E0     		b	.L26
+ 346              	.L24:
+ 100:Src/random_triangles_animation.c ****       }
+ 101:Src/random_triangles_animation.c ****     case(RUNNING):
+ 102:Src/random_triangles_animation.c ****       {
+ 103:Src/random_triangles_animation.c ****         randomTriangles1();
+ 347              		.loc 1 103 9
+ 348 002a FFF7FEFF 		bl	randomTriangles1
+ 104:Src/random_triangles_animation.c ****         break;
+ 349              		.loc 1 104 9
+ 350 002e 03E0     		b	.L26
+ 351              	.L23:
+ 105:Src/random_triangles_animation.c ****       }
+ 106:Src/random_triangles_animation.c ****     case(RAMPING_DOWN):
+ 107:Src/random_triangles_animation.c ****       {
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s 			page 9
+
+
+ 108:Src/random_triangles_animation.c ****         rampDown();
+ 352              		.loc 1 108 9
+ 353 0030 FFF7FEFF 		bl	rampDown
+ 109:Src/random_triangles_animation.c ****         break;
+ 354              		.loc 1 109 9
+ 355 0034 00E0     		b	.L26
+ 356              	.L27:
+ 110:Src/random_triangles_animation.c ****       }
+ 111:Src/random_triangles_animation.c ****     case(STOPPED):
+ 112:Src/random_triangles_animation.c ****       {
+ 113:Src/random_triangles_animation.c ****         //
+ 114:Src/random_triangles_animation.c ****         break;
+ 115:Src/random_triangles_animation.c ****       }
+ 116:Src/random_triangles_animation.c ****     default:
+ 117:Src/random_triangles_animation.c ****       break;
+ 357              		.loc 1 117 7
+ 358 0036 00BF     		nop
+ 359              	.L26:
+ 118:Src/random_triangles_animation.c ****   }
+ 119:Src/random_triangles_animation.c **** }
+ 360              		.loc 1 119 1
+ 361 0038 00BF     		nop
+ 362 003a 80BD     		pop	{r7, pc}
+ 363              	.L29:
+ 364              		.align	2
+ 365              	.L28:
+ 366 003c 00000000 		.word	context
+ 367              		.cfi_endproc
+ 368              	.LFE295:
+ 370              		.section	.text.rampUp,"ax",%progbits
+ 371              		.align	1
+ 372              		.syntax unified
+ 373              		.thumb
+ 374              		.thumb_func
+ 375              		.fpu fpv4-sp-d16
+ 377              	rampUp:
+ 378              	.LFB296:
+ 120:Src/random_triangles_animation.c **** 
+ 121:Src/random_triangles_animation.c **** static void rampUp(void)
+ 122:Src/random_triangles_animation.c **** {
+ 379              		.loc 1 122 1
+ 380              		.cfi_startproc
+ 381              		@ args = 0, pretend = 0, frame = 16
+ 382              		@ frame_needed = 1, uses_anonymous_args = 0
+ 383              		@ link register save eliminated.
+ 384 0000 80B4     		push	{r7}
+ 385              	.LCFI17:
+ 386              		.cfi_def_cfa_offset 4
+ 387              		.cfi_offset 7, -4
+ 388 0002 85B0     		sub	sp, sp, #20
+ 389              	.LCFI18:
+ 390              		.cfi_def_cfa_offset 24
+ 391 0004 00AF     		add	r7, sp, #0
+ 392              	.LCFI19:
+ 393              		.cfi_def_cfa_register 7
+ 123:Src/random_triangles_animation.c ****   static uint8_t clockdivider = 0;
+ 124:Src/random_triangles_animation.c **** 
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s 			page 10
+
+
+ 125:Src/random_triangles_animation.c ****   clockdivider++;
+ 394              		.loc 1 125 15
+ 395 0006 444B     		ldr	r3, .L46
+ 396 0008 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 397 000a 0133     		adds	r3, r3, #1
+ 398 000c DAB2     		uxtb	r2, r3
+ 399 000e 424B     		ldr	r3, .L46
+ 400 0010 1A70     		strb	r2, [r3]
+ 126:Src/random_triangles_animation.c **** 
+ 127:Src/random_triangles_animation.c ****   bool rampUpFinished = false;
+ 401              		.loc 1 127 8
+ 402 0012 0023     		movs	r3, #0
+ 403 0014 FB73     		strb	r3, [r7, #15]
+ 404              	.LBB4:
+ 128:Src/random_triangles_animation.c ****   for (int i = 0; i < context.numLeds; i++)
+ 405              		.loc 1 128 12
+ 406 0016 0023     		movs	r3, #0
+ 407 0018 BB60     		str	r3, [r7, #8]
+ 408              		.loc 1 128 3
+ 409 001a 6AE0     		b	.L31
+ 410              	.L43:
+ 411              	.LBB5:
+ 129:Src/random_triangles_animation.c ****   {
+ 130:Src/random_triangles_animation.c ****     RandomTrianglesPixelData_t *currData = (RandomTrianglesPixelData_t *) &context.pixelDataPtr[i];
+ 412              		.loc 1 130 83
+ 413 001c 3F4B     		ldr	r3, .L46+4
+ 414 001e 9968     		ldr	r1, [r3, #8]
+ 415              		.loc 1 130 96
+ 416 0020 BA68     		ldr	r2, [r7, #8]
+ 417 0022 1346     		mov	r3, r2
+ 418 0024 9B00     		lsls	r3, r3, #2
+ 419 0026 1344     		add	r3, r3, r2
+ 420              		.loc 1 130 33
+ 421 0028 0B44     		add	r3, r3, r1
+ 422 002a 7B60     		str	r3, [r7, #4]
+ 131:Src/random_triangles_animation.c ****     Pixel_t *currPixel = (Pixel_t *) &context.stripBegin->pixels[i];
+ 423              		.loc 1 131 46
+ 424 002c 3B4B     		ldr	r3, .L46+4
+ 425 002e 1B69     		ldr	r3, [r3, #16]
+ 426              		.loc 1 131 57
+ 427 0030 5A68     		ldr	r2, [r3, #4]
+ 428              		.loc 1 131 65
+ 429 0032 BB68     		ldr	r3, [r7, #8]
+ 430 0034 DB00     		lsls	r3, r3, #3
+ 431              		.loc 1 131 14
+ 432 0036 1344     		add	r3, r3, r2
+ 433 0038 3B60     		str	r3, [r7]
+ 132:Src/random_triangles_animation.c ****     
+ 133:Src/random_triangles_animation.c ****     rampUpFinished = (currPixel->red == currData->backupR && currPixel->green == currData->backupG 
+ 434              		.loc 1 133 32
+ 435 003a 3B68     		ldr	r3, [r7]
+ 436 003c 5A78     		ldrb	r2, [r3, #1]	@ zero_extendqisi2
+ 437              		.loc 1 133 49
+ 438 003e 7B68     		ldr	r3, [r7, #4]
+ 439 0040 9B78     		ldrb	r3, [r3, #2]	@ zero_extendqisi2
+ 440              		.loc 1 133 100
+ 441 0042 9A42     		cmp	r2, r3
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s 			page 11
+
+
+ 442 0044 0DD1     		bne	.L32
+ 443              		.loc 1 133 71 discriminator 1
+ 444 0046 3B68     		ldr	r3, [r7]
+ 445 0048 1A78     		ldrb	r2, [r3]	@ zero_extendqisi2
+ 446              		.loc 1 133 90 discriminator 1
+ 447 004a 7B68     		ldr	r3, [r7, #4]
+ 448 004c DB78     		ldrb	r3, [r3, #3]	@ zero_extendqisi2
+ 449              		.loc 1 133 59 discriminator 1
+ 450 004e 9A42     		cmp	r2, r3
+ 451 0050 07D1     		bne	.L32
+ 452              		.loc 1 133 112 discriminator 3
+ 453 0052 3B68     		ldr	r3, [r7]
+ 454 0054 9A78     		ldrb	r2, [r3, #2]	@ zero_extendqisi2
+ 455              		.loc 1 133 130 discriminator 3
+ 456 0056 7B68     		ldr	r3, [r7, #4]
+ 457 0058 1B79     		ldrb	r3, [r3, #4]	@ zero_extendqisi2
+ 458              		.loc 1 133 100 discriminator 3
+ 459 005a 9A42     		cmp	r2, r3
+ 460 005c 01D1     		bne	.L32
+ 461              		.loc 1 133 100 is_stmt 0 discriminator 5
+ 462 005e 0123     		movs	r3, #1
+ 463 0060 00E0     		b	.L33
+ 464              	.L32:
+ 465              		.loc 1 133 100 discriminator 6
+ 466 0062 0023     		movs	r3, #0
+ 467              	.L33:
+ 468              		.loc 1 133 20 is_stmt 1 discriminator 8
+ 469 0064 FB73     		strb	r3, [r7, #15]
+ 470 0066 FB7B     		ldrb	r3, [r7, #15]
+ 471 0068 03F00103 		and	r3, r3, #1
+ 472 006c FB73     		strb	r3, [r7, #15]
+ 134:Src/random_triangles_animation.c ****    
+ 135:Src/random_triangles_animation.c ****     if (currPixel->red != currData->backupR)
+ 473              		.loc 1 135 18 discriminator 8
+ 474 006e 3B68     		ldr	r3, [r7]
+ 475 0070 5A78     		ldrb	r2, [r3, #1]	@ zero_extendqisi2
+ 476              		.loc 1 135 35 discriminator 8
+ 477 0072 7B68     		ldr	r3, [r7, #4]
+ 478 0074 9B78     		ldrb	r3, [r3, #2]	@ zero_extendqisi2
+ 479              		.loc 1 135 8 discriminator 8
+ 480 0076 9A42     		cmp	r2, r3
+ 481 0078 0ED0     		beq	.L34
+ 136:Src/random_triangles_animation.c ****       currPixel->red += (currPixel->red < currData->backupR) ? 1 : -1;
+ 482              		.loc 1 136 22
+ 483 007a 3B68     		ldr	r3, [r7]
+ 484 007c 5B78     		ldrb	r3, [r3, #1]	@ zero_extendqisi2
+ 485              		.loc 1 136 35
+ 486 007e 3A68     		ldr	r2, [r7]
+ 487 0080 5178     		ldrb	r1, [r2, #1]	@ zero_extendqisi2
+ 488              		.loc 1 136 51
+ 489 0082 7A68     		ldr	r2, [r7, #4]
+ 490 0084 9278     		ldrb	r2, [r2, #2]	@ zero_extendqisi2
+ 491              		.loc 1 136 22
+ 492 0086 9142     		cmp	r1, r2
+ 493 0088 01D2     		bcs	.L35
+ 494              		.loc 1 136 22 is_stmt 0 discriminator 1
+ 495 008a 0122     		movs	r2, #1
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s 			page 12
+
+
+ 496 008c 00E0     		b	.L36
+ 497              	.L35:
+ 498              		.loc 1 136 22 discriminator 2
+ 499 008e FF22     		movs	r2, #255
+ 500              	.L36:
+ 501              		.loc 1 136 22 discriminator 4
+ 502 0090 1344     		add	r3, r3, r2
+ 503 0092 DAB2     		uxtb	r2, r3
+ 504 0094 3B68     		ldr	r3, [r7]
+ 505 0096 5A70     		strb	r2, [r3, #1]
+ 506              	.L34:
+ 137:Src/random_triangles_animation.c ****     
+ 138:Src/random_triangles_animation.c ****     if (currPixel->green != currData->backupG)
+ 507              		.loc 1 138 18 is_stmt 1
+ 508 0098 3B68     		ldr	r3, [r7]
+ 509 009a 1A78     		ldrb	r2, [r3]	@ zero_extendqisi2
+ 510              		.loc 1 138 37
+ 511 009c 7B68     		ldr	r3, [r7, #4]
+ 512 009e DB78     		ldrb	r3, [r3, #3]	@ zero_extendqisi2
+ 513              		.loc 1 138 8
+ 514 00a0 9A42     		cmp	r2, r3
+ 515 00a2 0ED0     		beq	.L37
+ 139:Src/random_triangles_animation.c ****       currPixel->green += (currPixel->green < currData->backupG) ? 1 : -1;
+ 516              		.loc 1 139 24
+ 517 00a4 3B68     		ldr	r3, [r7]
+ 518 00a6 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 519              		.loc 1 139 37
+ 520 00a8 3A68     		ldr	r2, [r7]
+ 521 00aa 1178     		ldrb	r1, [r2]	@ zero_extendqisi2
+ 522              		.loc 1 139 55
+ 523 00ac 7A68     		ldr	r2, [r7, #4]
+ 524 00ae D278     		ldrb	r2, [r2, #3]	@ zero_extendqisi2
+ 525              		.loc 1 139 24
+ 526 00b0 9142     		cmp	r1, r2
+ 527 00b2 01D2     		bcs	.L38
+ 528              		.loc 1 139 24 is_stmt 0 discriminator 1
+ 529 00b4 0122     		movs	r2, #1
+ 530 00b6 00E0     		b	.L39
+ 531              	.L38:
+ 532              		.loc 1 139 24 discriminator 2
+ 533 00b8 FF22     		movs	r2, #255
+ 534              	.L39:
+ 535              		.loc 1 139 24 discriminator 4
+ 536 00ba 1344     		add	r3, r3, r2
+ 537 00bc DAB2     		uxtb	r2, r3
+ 538 00be 3B68     		ldr	r3, [r7]
+ 539 00c0 1A70     		strb	r2, [r3]
+ 540              	.L37:
+ 140:Src/random_triangles_animation.c ****     
+ 141:Src/random_triangles_animation.c ****     if (currPixel->blue != currData->backupB)
+ 541              		.loc 1 141 18 is_stmt 1
+ 542 00c2 3B68     		ldr	r3, [r7]
+ 543 00c4 9A78     		ldrb	r2, [r3, #2]	@ zero_extendqisi2
+ 544              		.loc 1 141 36
+ 545 00c6 7B68     		ldr	r3, [r7, #4]
+ 546 00c8 1B79     		ldrb	r3, [r3, #4]	@ zero_extendqisi2
+ 547              		.loc 1 141 8
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s 			page 13
+
+
+ 548 00ca 9A42     		cmp	r2, r3
+ 549 00cc 0ED0     		beq	.L40
+ 142:Src/random_triangles_animation.c ****       currPixel->blue += (currPixel->blue < currData->backupB) ? 1 : -1;
+ 550              		.loc 1 142 23
+ 551 00ce 3B68     		ldr	r3, [r7]
+ 552 00d0 9B78     		ldrb	r3, [r3, #2]	@ zero_extendqisi2
+ 553              		.loc 1 142 36
+ 554 00d2 3A68     		ldr	r2, [r7]
+ 555 00d4 9178     		ldrb	r1, [r2, #2]	@ zero_extendqisi2
+ 556              		.loc 1 142 53
+ 557 00d6 7A68     		ldr	r2, [r7, #4]
+ 558 00d8 1279     		ldrb	r2, [r2, #4]	@ zero_extendqisi2
+ 559              		.loc 1 142 23
+ 560 00da 9142     		cmp	r1, r2
+ 561 00dc 01D2     		bcs	.L41
+ 562              		.loc 1 142 23 is_stmt 0 discriminator 1
+ 563 00de 0122     		movs	r2, #1
+ 564 00e0 00E0     		b	.L42
+ 565              	.L41:
+ 566              		.loc 1 142 23 discriminator 2
+ 567 00e2 FF22     		movs	r2, #255
+ 568              	.L42:
+ 569              		.loc 1 142 23 discriminator 4
+ 570 00e4 1344     		add	r3, r3, r2
+ 571 00e6 DAB2     		uxtb	r2, r3
+ 572 00e8 3B68     		ldr	r3, [r7]
+ 573 00ea 9A70     		strb	r2, [r3, #2]
+ 574              	.L40:
+ 575              	.LBE5:
+ 128:Src/random_triangles_animation.c ****   {
+ 576              		.loc 1 128 41 is_stmt 1 discriminator 2
+ 577 00ec BB68     		ldr	r3, [r7, #8]
+ 578 00ee 0133     		adds	r3, r3, #1
+ 579 00f0 BB60     		str	r3, [r7, #8]
+ 580              	.L31:
+ 128:Src/random_triangles_animation.c ****   {
+ 581              		.loc 1 128 30 discriminator 1
+ 582 00f2 0A4B     		ldr	r3, .L46+4
+ 583 00f4 5B78     		ldrb	r3, [r3, #1]	@ zero_extendqisi2
+ 584 00f6 1A46     		mov	r2, r3
+ 128:Src/random_triangles_animation.c ****   {
+ 585              		.loc 1 128 3 discriminator 1
+ 586 00f8 BB68     		ldr	r3, [r7, #8]
+ 587 00fa 9342     		cmp	r3, r2
+ 588 00fc 8EDB     		blt	.L43
+ 589              	.LBE4:
+ 143:Src/random_triangles_animation.c ****   }
+ 144:Src/random_triangles_animation.c **** 
+ 145:Src/random_triangles_animation.c ****   if (rampUpFinished)
+ 590              		.loc 1 145 6
+ 591 00fe FB7B     		ldrb	r3, [r7, #15]	@ zero_extendqisi2
+ 592 0100 002B     		cmp	r3, #0
+ 593 0102 02D0     		beq	.L45
+ 146:Src/random_triangles_animation.c ****   {
+ 147:Src/random_triangles_animation.c ****     context.state = RUNNING;
+ 594              		.loc 1 147 19
+ 595 0104 054B     		ldr	r3, .L46+4
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s 			page 14
+
+
+ 596 0106 0122     		movs	r2, #1
+ 597 0108 9A70     		strb	r2, [r3, #2]
+ 598              	.L45:
+ 148:Src/random_triangles_animation.c ****   }
+ 149:Src/random_triangles_animation.c **** }
+ 599              		.loc 1 149 1
+ 600 010a 00BF     		nop
+ 601 010c 1437     		adds	r7, r7, #20
+ 602              	.LCFI20:
+ 603              		.cfi_def_cfa_offset 4
+ 604 010e BD46     		mov	sp, r7
+ 605              	.LCFI21:
+ 606              		.cfi_def_cfa_register 13
+ 607              		@ sp needed
+ 608 0110 5DF8047B 		ldr	r7, [sp], #4
+ 609              	.LCFI22:
+ 610              		.cfi_restore 7
+ 611              		.cfi_def_cfa_offset 0
+ 612 0114 7047     		bx	lr
+ 613              	.L47:
+ 614 0116 00BF     		.align	2
+ 615              	.L46:
+ 616 0118 00000000 		.word	clockdivider.10613
+ 617 011c 00000000 		.word	context
+ 618              		.cfi_endproc
+ 619              	.LFE296:
+ 621              		.section	.text.rampDown,"ax",%progbits
+ 622              		.align	1
+ 623              		.syntax unified
+ 624              		.thumb
+ 625              		.thumb_func
+ 626              		.fpu fpv4-sp-d16
+ 628              	rampDown:
+ 629              	.LFB297:
+ 150:Src/random_triangles_animation.c **** 
+ 151:Src/random_triangles_animation.c **** static void rampDown(void)
+ 152:Src/random_triangles_animation.c **** {
+ 630              		.loc 1 152 1
+ 631              		.cfi_startproc
+ 632              		@ args = 0, pretend = 0, frame = 16
+ 633              		@ frame_needed = 1, uses_anonymous_args = 0
+ 634              		@ link register save eliminated.
+ 635 0000 80B4     		push	{r7}
+ 636              	.LCFI23:
+ 637              		.cfi_def_cfa_offset 4
+ 638              		.cfi_offset 7, -4
+ 639 0002 85B0     		sub	sp, sp, #20
+ 640              	.LCFI24:
+ 641              		.cfi_def_cfa_offset 24
+ 642 0004 00AF     		add	r7, sp, #0
+ 643              	.LCFI25:
+ 644              		.cfi_def_cfa_register 7
+ 153:Src/random_triangles_animation.c ****   static bool clockdivider = true;
+ 154:Src/random_triangles_animation.c ****   if (clockdivider == 0)
+ 645              		.loc 1 154 20
+ 646 0006 414B     		ldr	r3, .L58
+ 647 0008 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s 			page 15
+
+
+ 648 000a 83F00103 		eor	r3, r3, #1
+ 649 000e DBB2     		uxtb	r3, r3
+ 650              		.loc 1 154 6
+ 651 0010 002B     		cmp	r3, #0
+ 652 0012 0FD0     		beq	.L49
+ 155:Src/random_triangles_animation.c ****   {
+ 156:Src/random_triangles_animation.c ****     clockdivider = !clockdivider;
+ 653              		.loc 1 156 5
+ 654 0014 3D4B     		ldr	r3, .L58
+ 655 0016 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 656 0018 002B     		cmp	r3, #0
+ 657 001a 14BF     		ite	ne
+ 658 001c 0123     		movne	r3, #1
+ 659 001e 0023     		moveq	r3, #0
+ 660 0020 DBB2     		uxtb	r3, r3
+ 661 0022 83F00103 		eor	r3, r3, #1
+ 662 0026 DBB2     		uxtb	r3, r3
+ 663              		.loc 1 156 20
+ 664 0028 03F00103 		and	r3, r3, #1
+ 665 002c DAB2     		uxtb	r2, r3
+ 666              		.loc 1 156 18
+ 667 002e 374B     		ldr	r3, .L58
+ 668 0030 1A70     		strb	r2, [r3]
+ 157:Src/random_triangles_animation.c ****     return;
+ 669              		.loc 1 157 5
+ 670 0032 65E0     		b	.L48
+ 671              	.L49:
+ 158:Src/random_triangles_animation.c ****   }
+ 159:Src/random_triangles_animation.c ****   clockdivider = !clockdivider;
+ 672              		.loc 1 159 3
+ 673 0034 354B     		ldr	r3, .L58
+ 674 0036 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 675 0038 002B     		cmp	r3, #0
+ 676 003a 14BF     		ite	ne
+ 677 003c 0123     		movne	r3, #1
+ 678 003e 0023     		moveq	r3, #0
+ 679 0040 DBB2     		uxtb	r3, r3
+ 680 0042 83F00103 		eor	r3, r3, #1
+ 681 0046 DBB2     		uxtb	r3, r3
+ 682              		.loc 1 159 18
+ 683 0048 03F00103 		and	r3, r3, #1
+ 684 004c DAB2     		uxtb	r2, r3
+ 685              		.loc 1 159 16
+ 686 004e 2F4B     		ldr	r3, .L58
+ 687 0050 1A70     		strb	r2, [r3]
+ 160:Src/random_triangles_animation.c **** 
+ 161:Src/random_triangles_animation.c ****   bool rampDownFinished = true;
+ 688              		.loc 1 161 8
+ 689 0052 0123     		movs	r3, #1
+ 690 0054 FB73     		strb	r3, [r7, #15]
+ 691              	.LBB6:
+ 162:Src/random_triangles_animation.c ****   for (int i = 0; i < context.numLeds; i++)
+ 692              		.loc 1 162 12
+ 693 0056 0023     		movs	r3, #0
+ 694 0058 BB60     		str	r3, [r7, #8]
+ 695              		.loc 1 162 3
+ 696 005a 45E0     		b	.L51
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s 			page 16
+
+
+ 697              	.L57:
+ 698              	.LBB7:
+ 163:Src/random_triangles_animation.c ****   {
+ 164:Src/random_triangles_animation.c ****     Pixel_t *currPixel = (Pixel_t *) &context.stripBegin->pixels[i];
+ 699              		.loc 1 164 46
+ 700 005c 2C4B     		ldr	r3, .L58+4
+ 701 005e 1B69     		ldr	r3, [r3, #16]
+ 702              		.loc 1 164 57
+ 703 0060 5A68     		ldr	r2, [r3, #4]
+ 704              		.loc 1 164 65
+ 705 0062 BB68     		ldr	r3, [r7, #8]
+ 706 0064 DB00     		lsls	r3, r3, #3
+ 707              		.loc 1 164 14
+ 708 0066 1344     		add	r3, r3, r2
+ 709 0068 7B60     		str	r3, [r7, #4]
+ 165:Src/random_triangles_animation.c ****     RandomTrianglesPixelData_t *currData = (RandomTrianglesPixelData_t *) &context.pixelDataPtr[i];
+ 710              		.loc 1 165 83
+ 711 006a 294B     		ldr	r3, .L58+4
+ 712 006c 9968     		ldr	r1, [r3, #8]
+ 713              		.loc 1 165 96
+ 714 006e BA68     		ldr	r2, [r7, #8]
+ 715 0070 1346     		mov	r3, r2
+ 716 0072 9B00     		lsls	r3, r3, #2
+ 717 0074 1344     		add	r3, r3, r2
+ 718              		.loc 1 165 33
+ 719 0076 0B44     		add	r3, r3, r1
+ 720 0078 3B60     		str	r3, [r7]
+ 166:Src/random_triangles_animation.c ****     
+ 167:Src/random_triangles_animation.c ****     rampDownFinished &= (!currPixel->red && !currPixel->green && !currPixel->blue);
+ 721              		.loc 1 167 22
+ 722 007a FB7B     		ldrb	r3, [r7, #15]	@ zero_extendqisi2
+ 723              		.loc 1 167 36
+ 724 007c 7A68     		ldr	r2, [r7, #4]
+ 725 007e 5278     		ldrb	r2, [r2, #1]	@ zero_extendqisi2
+ 726              		.loc 1 167 63
+ 727 0080 002A     		cmp	r2, #0
+ 728 0082 09D1     		bne	.L52
+ 729              		.loc 1 167 55 discriminator 1
+ 730 0084 7A68     		ldr	r2, [r7, #4]
+ 731 0086 1278     		ldrb	r2, [r2]	@ zero_extendqisi2
+ 732              		.loc 1 167 42 discriminator 1
+ 733 0088 002A     		cmp	r2, #0
+ 734 008a 05D1     		bne	.L52
+ 735              		.loc 1 167 76 discriminator 3
+ 736 008c 7A68     		ldr	r2, [r7, #4]
+ 737 008e 9278     		ldrb	r2, [r2, #2]	@ zero_extendqisi2
+ 738              		.loc 1 167 63 discriminator 3
+ 739 0090 002A     		cmp	r2, #0
+ 740 0092 01D1     		bne	.L52
+ 741              		.loc 1 167 63 is_stmt 0 discriminator 5
+ 742 0094 0122     		movs	r2, #1
+ 743 0096 00E0     		b	.L53
+ 744              	.L52:
+ 745              		.loc 1 167 63 discriminator 6
+ 746 0098 0022     		movs	r2, #0
+ 747              	.L53:
+ 748              		.loc 1 167 22 is_stmt 1 discriminator 8
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s 			page 17
+
+
+ 749 009a 1340     		ands	r3, r3, r2
+ 750 009c 002B     		cmp	r3, #0
+ 751 009e 14BF     		ite	ne
+ 752 00a0 0123     		movne	r3, #1
+ 753 00a2 0023     		moveq	r3, #0
+ 754 00a4 FB73     		strb	r3, [r7, #15]
+ 168:Src/random_triangles_animation.c ****    
+ 169:Src/random_triangles_animation.c ****     if (currPixel->red)
+ 755              		.loc 1 169 18 discriminator 8
+ 756 00a6 7B68     		ldr	r3, [r7, #4]
+ 757 00a8 5B78     		ldrb	r3, [r3, #1]	@ zero_extendqisi2
+ 758              		.loc 1 169 8 discriminator 8
+ 759 00aa 002B     		cmp	r3, #0
+ 760 00ac 05D0     		beq	.L54
+ 170:Src/random_triangles_animation.c ****       currPixel->red--;
+ 761              		.loc 1 170 16
+ 762 00ae 7B68     		ldr	r3, [r7, #4]
+ 763 00b0 5B78     		ldrb	r3, [r3, #1]	@ zero_extendqisi2
+ 764              		.loc 1 170 21
+ 765 00b2 013B     		subs	r3, r3, #1
+ 766 00b4 DAB2     		uxtb	r2, r3
+ 767 00b6 7B68     		ldr	r3, [r7, #4]
+ 768 00b8 5A70     		strb	r2, [r3, #1]
+ 769              	.L54:
+ 171:Src/random_triangles_animation.c ****     if (currPixel->green)
+ 770              		.loc 1 171 18
+ 771 00ba 7B68     		ldr	r3, [r7, #4]
+ 772 00bc 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 773              		.loc 1 171 8
+ 774 00be 002B     		cmp	r3, #0
+ 775 00c0 05D0     		beq	.L55
+ 172:Src/random_triangles_animation.c ****       currPixel->green--;
+ 776              		.loc 1 172 16
+ 777 00c2 7B68     		ldr	r3, [r7, #4]
+ 778 00c4 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 779              		.loc 1 172 23
+ 780 00c6 013B     		subs	r3, r3, #1
+ 781 00c8 DAB2     		uxtb	r2, r3
+ 782 00ca 7B68     		ldr	r3, [r7, #4]
+ 783 00cc 1A70     		strb	r2, [r3]
+ 784              	.L55:
+ 173:Src/random_triangles_animation.c ****     if (currPixel->blue)
+ 785              		.loc 1 173 18
+ 786 00ce 7B68     		ldr	r3, [r7, #4]
+ 787 00d0 9B78     		ldrb	r3, [r3, #2]	@ zero_extendqisi2
+ 788              		.loc 1 173 8
+ 789 00d2 002B     		cmp	r3, #0
+ 790 00d4 05D0     		beq	.L56
+ 174:Src/random_triangles_animation.c ****       currPixel->blue--;
+ 791              		.loc 1 174 16
+ 792 00d6 7B68     		ldr	r3, [r7, #4]
+ 793 00d8 9B78     		ldrb	r3, [r3, #2]	@ zero_extendqisi2
+ 794              		.loc 1 174 22
+ 795 00da 013B     		subs	r3, r3, #1
+ 796 00dc DAB2     		uxtb	r2, r3
+ 797 00de 7B68     		ldr	r3, [r7, #4]
+ 798 00e0 9A70     		strb	r2, [r3, #2]
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s 			page 18
+
+
+ 799              	.L56:
+ 800              	.LBE7:
+ 162:Src/random_triangles_animation.c ****   {
+ 801              		.loc 1 162 41 discriminator 2
+ 802 00e2 BB68     		ldr	r3, [r7, #8]
+ 803 00e4 0133     		adds	r3, r3, #1
+ 804 00e6 BB60     		str	r3, [r7, #8]
+ 805              	.L51:
+ 162:Src/random_triangles_animation.c ****   {
+ 806              		.loc 1 162 30 discriminator 1
+ 807 00e8 094B     		ldr	r3, .L58+4
+ 808 00ea 5B78     		ldrb	r3, [r3, #1]	@ zero_extendqisi2
+ 809 00ec 1A46     		mov	r2, r3
+ 162:Src/random_triangles_animation.c ****   {
+ 810              		.loc 1 162 3 discriminator 1
+ 811 00ee BB68     		ldr	r3, [r7, #8]
+ 812 00f0 9342     		cmp	r3, r2
+ 813 00f2 B3DB     		blt	.L57
+ 814              	.LBE6:
+ 175:Src/random_triangles_animation.c ****   }
+ 176:Src/random_triangles_animation.c **** 
+ 177:Src/random_triangles_animation.c ****   if (rampDownFinished)
+ 815              		.loc 1 177 6
+ 816 00f4 FB7B     		ldrb	r3, [r7, #15]	@ zero_extendqisi2
+ 817 00f6 002B     		cmp	r3, #0
+ 818 00f8 02D0     		beq	.L48
+ 178:Src/random_triangles_animation.c ****   {
+ 179:Src/random_triangles_animation.c ****     context.state = STOPPED;
+ 819              		.loc 1 179 19
+ 820 00fa 054B     		ldr	r3, .L58+4
+ 821 00fc 0322     		movs	r2, #3
+ 822 00fe 9A70     		strb	r2, [r3, #2]
+ 823              	.L48:
+ 180:Src/random_triangles_animation.c ****   }
+ 181:Src/random_triangles_animation.c **** }
+ 824              		.loc 1 181 1
+ 825 0100 1437     		adds	r7, r7, #20
+ 826              	.LCFI26:
+ 827              		.cfi_def_cfa_offset 4
+ 828 0102 BD46     		mov	sp, r7
+ 829              	.LCFI27:
+ 830              		.cfi_def_cfa_register 13
+ 831              		@ sp needed
+ 832 0104 5DF8047B 		ldr	r7, [sp], #4
+ 833              	.LCFI28:
+ 834              		.cfi_restore 7
+ 835              		.cfi_def_cfa_offset 0
+ 836 0108 7047     		bx	lr
+ 837              	.L59:
+ 838 010a 00BF     		.align	2
+ 839              	.L58:
+ 840 010c 00000000 		.word	clockdivider.10624
+ 841 0110 00000000 		.word	context
+ 842              		.cfi_endproc
+ 843              	.LFE297:
+ 845              		.global	__aeabi_dadd
+ 846              		.global	__aeabi_i2d
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s 			page 19
+
+
+ 847              		.global	__aeabi_dmul
+ 848              		.global	__aeabi_d2uiz
+ 849              		.global	__aeabi_dcmple
+ 850              		.global	__aeabi_dcmplt
+ 851              		.global	__aeabi_dcmpge
+ 852              		.section	.text.randomTriangles1,"ax",%progbits
+ 853              		.align	1
+ 854              		.syntax unified
+ 855              		.thumb
+ 856              		.thumb_func
+ 857              		.fpu fpv4-sp-d16
+ 859              	randomTriangles1:
+ 860              	.LFB298:
+ 182:Src/random_triangles_animation.c **** 
+ 183:Src/random_triangles_animation.c **** static void randomTriangles1(void)
+ 184:Src/random_triangles_animation.c **** {
+ 861              		.loc 1 184 1
+ 862              		.cfi_startproc
+ 863              		@ args = 0, pretend = 0, frame = 32
+ 864              		@ frame_needed = 1, uses_anonymous_args = 0
+ 865 0000 2DE9B04F 		push	{r4, r5, r7, r8, r9, r10, fp, lr}
+ 866              	.LCFI29:
+ 867              		.cfi_def_cfa_offset 32
+ 868              		.cfi_offset 4, -32
+ 869              		.cfi_offset 5, -28
+ 870              		.cfi_offset 7, -24
+ 871              		.cfi_offset 8, -20
+ 872              		.cfi_offset 9, -16
+ 873              		.cfi_offset 10, -12
+ 874              		.cfi_offset 11, -8
+ 875              		.cfi_offset 14, -4
+ 876 0004 88B0     		sub	sp, sp, #32
+ 877              	.LCFI30:
+ 878              		.cfi_def_cfa_offset 64
+ 879 0006 00AF     		add	r7, sp, #0
+ 880              	.LCFI31:
+ 881              		.cfi_def_cfa_register 7
+ 882              	.LBB8:
+ 185:Src/random_triangles_animation.c ****   // TODO make these more generic
+ 186:Src/random_triangles_animation.c **** 
+ 187:Src/random_triangles_animation.c ****   static double r = 0.0;
+ 188:Src/random_triangles_animation.c ****   static double g = 0.0;
+ 189:Src/random_triangles_animation.c ****   static double b = 0.0;
+ 190:Src/random_triangles_animation.c **** 
+ 191:Src/random_triangles_animation.c ****   static uint8_t rscaled, gscaled, bscaled;
+ 192:Src/random_triangles_animation.c **** 
+ 193:Src/random_triangles_animation.c ****   static double rowHueOffset = 0;
+ 194:Src/random_triangles_animation.c ****   static bool rowHueOffsetAdd = true;
+ 195:Src/random_triangles_animation.c ****   static double rowHueOffsetRate = 0.01;
+ 196:Src/random_triangles_animation.c **** 
+ 197:Src/random_triangles_animation.c ****   static double h = 0.0;
+ 198:Src/random_triangles_animation.c ****   static double s = 0.999;
+ 199:Src/random_triangles_animation.c ****   static double v = 0.100;
+ 200:Src/random_triangles_animation.c **** 
+ 201:Src/random_triangles_animation.c ****   static double hrate = 0.5;
+ 202:Src/random_triangles_animation.c ****   static double srate = 0.0;
+ 203:Src/random_triangles_animation.c ****   static double vrate = 0;
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s 			page 20
+
+
+ 204:Src/random_triangles_animation.c **** 
+ 205:Src/random_triangles_animation.c ****   static bool hadd = true;
+ 206:Src/random_triangles_animation.c ****   static bool sadd = true;
+ 207:Src/random_triangles_animation.c ****   static bool vadd = true;
+ 208:Src/random_triangles_animation.c **** 
+ 209:Src/random_triangles_animation.c ****   // Now color all our leds with this color
+ 210:Src/random_triangles_animation.c ****   for (int panel = 0; panel < NUM_SIDES; panel++)
+ 883              		.loc 1 210 12
+ 884 0008 0023     		movs	r3, #0
+ 885 000a FB61     		str	r3, [r7, #28]
+ 886              		.loc 1 210 3
+ 887 000c 68E1     		b	.L61
+ 888              	.L76:
+ 211:Src/random_triangles_animation.c ****   { 
+ 212:Src/random_triangles_animation.c ****     // TODO // Theres heavy inefficient code below. i'm just impatient now and i know future jon wi
+ 213:Src/random_triangles_animation.c ****     if (panel == TOP)
+ 889              		.loc 1 213 8
+ 890 000e FB69     		ldr	r3, [r7, #28]
+ 891 0010 042B     		cmp	r3, #4
+ 892 0012 40F0CE80 		bne	.L62
+ 893              	.LBB9:
+ 214:Src/random_triangles_animation.c ****     {
+ 215:Src/random_triangles_animation.c ****       for (int y = 0; y < NUM_LEDS_PER_PANEL_SIDE; y++)
+ 894              		.loc 1 215 16
+ 895 0016 0023     		movs	r3, #0
+ 896 0018 BB61     		str	r3, [r7, #24]
+ 897              		.loc 1 215 7
+ 898 001a C5E0     		b	.L63
+ 899              	.L70:
+ 900              	.LBB10:
+ 216:Src/random_triangles_animation.c ****       {  
+ 217:Src/random_triangles_animation.c ****         for (int x = 0; x < NUM_LEDS_PER_PANEL_SIDE; x++)
+ 901              		.loc 1 217 18
+ 902 001c 0023     		movs	r3, #0
+ 903 001e 7B61     		str	r3, [r7, #20]
+ 904              		.loc 1 217 9
+ 905 0020 BBE0     		b	.L64
+ 906              	.L69:
+ 907              	.LBB11:
+ 218:Src/random_triangles_animation.c ****         {
+ 219:Src/random_triangles_animation.c ****           // If top panel, outer square, or not
+ 220:Src/random_triangles_animation.c ****           if (y == 0 || y == 3 || (y == 1 && (x == 0 || x == 3)) || (y == 2 && (x == 0 || x == 3)))
+ 908              		.loc 1 220 14
+ 909 0022 BB69     		ldr	r3, [r7, #24]
+ 910 0024 002B     		cmp	r3, #0
+ 911 0026 14D0     		beq	.L65
+ 912              		.loc 1 220 22 discriminator 1
+ 913 0028 BB69     		ldr	r3, [r7, #24]
+ 914 002a 032B     		cmp	r3, #3
+ 915 002c 11D0     		beq	.L65
+ 916              		.loc 1 220 32 discriminator 2
+ 917 002e BB69     		ldr	r3, [r7, #24]
+ 918 0030 012B     		cmp	r3, #1
+ 919 0032 05D1     		bne	.L66
+ 920              		.loc 1 220 43 discriminator 3
+ 921 0034 7B69     		ldr	r3, [r7, #20]
+ 922 0036 002B     		cmp	r3, #0
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s 			page 21
+
+
+ 923 0038 0BD0     		beq	.L65
+ 924              		.loc 1 220 54 discriminator 5
+ 925 003a 7B69     		ldr	r3, [r7, #20]
+ 926 003c 032B     		cmp	r3, #3
+ 927 003e 08D0     		beq	.L65
+ 928              	.L66:
+ 929              		.loc 1 220 66 discriminator 6
+ 930 0040 BB69     		ldr	r3, [r7, #24]
+ 931 0042 022B     		cmp	r3, #2
+ 932 0044 31D1     		bne	.L67
+ 933              		.loc 1 220 77 discriminator 7
+ 934 0046 7B69     		ldr	r3, [r7, #20]
+ 935 0048 002B     		cmp	r3, #0
+ 936 004a 02D0     		beq	.L65
+ 937              		.loc 1 220 88 discriminator 8
+ 938 004c 7B69     		ldr	r3, [r7, #20]
+ 939 004e 032B     		cmp	r3, #3
+ 940 0050 2BD1     		bne	.L67
+ 941              	.L65:
+ 221:Src/random_triangles_animation.c ****           {
+ 222:Src/random_triangles_animation.c ****             HsvToRgb(h + (rowHueOffset * 2), s, v, &r, &g, &b);
+ 942              		.loc 1 222 40
+ 943 0052 A94B     		ldr	r3, .L99
+ 944 0054 D3E90001 		ldrd	r0, [r3]
+ 945 0058 0246     		mov	r2, r0
+ 946 005a 0B46     		mov	r3, r1
+ 947 005c FFF7FEFF 		bl	__aeabi_dadd
+ 948              	.LVL0:
+ 949 0060 0246     		mov	r2, r0
+ 950 0062 0B46     		mov	r3, r1
+ 951 0064 1046     		mov	r0, r2
+ 952 0066 1946     		mov	r1, r3
+ 953              		.loc 1 222 13
+ 954 0068 A44B     		ldr	r3, .L99+4
+ 955 006a D3E90023 		ldrd	r2, [r3]
+ 956 006e FFF7FEFF 		bl	__aeabi_dadd
+ 957              	.LVL1:
+ 958 0072 0246     		mov	r2, r0
+ 959 0074 0B46     		mov	r3, r1
+ 960 0076 43EC152B 		vmov	d5, r2, r3
+ 961 007a A14B     		ldr	r3, .L99+8
+ 962 007c 93ED007B 		vldr.64	d7, [r3]
+ 963 0080 A04B     		ldr	r3, .L99+12
+ 964 0082 93ED006B 		vldr.64	d6, [r3]
+ 965 0086 A04A     		ldr	r2, .L99+16
+ 966 0088 A049     		ldr	r1, .L99+20
+ 967 008a A148     		ldr	r0, .L99+24
+ 968 008c B0EE462A 		vmov.f32	s4, s12
+ 969 0090 F0EE662A 		vmov.f32	s5, s13
+ 970 0094 B0EE471A 		vmov.f32	s2, s14
+ 971 0098 F0EE671A 		vmov.f32	s3, s15
+ 972 009c B0EE450A 		vmov.f32	s0, s10
+ 973 00a0 F0EE650A 		vmov.f32	s1, s11
+ 974 00a4 FFF7FEFF 		bl	HsvToRgb
+ 975 00a8 22E0     		b	.L68
+ 976              	.L67:
+ 223:Src/random_triangles_animation.c ****           }
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s 			page 22
+
+
+ 224:Src/random_triangles_animation.c ****           else
+ 225:Src/random_triangles_animation.c ****           {
+ 226:Src/random_triangles_animation.c ****             HsvToRgb(h + (rowHueOffset * 1), s, v, &r, &g, &b);
+ 977              		.loc 1 226 13
+ 978 00aa 944B     		ldr	r3, .L99+4
+ 979 00ac D3E90001 		ldrd	r0, [r3]
+ 980 00b0 914B     		ldr	r3, .L99
+ 981 00b2 D3E90023 		ldrd	r2, [r3]
+ 982 00b6 FFF7FEFF 		bl	__aeabi_dadd
+ 983              	.LVL2:
+ 984 00ba 0246     		mov	r2, r0
+ 985 00bc 0B46     		mov	r3, r1
+ 986 00be 43EC152B 		vmov	d5, r2, r3
+ 987 00c2 8F4B     		ldr	r3, .L99+8
+ 988 00c4 93ED007B 		vldr.64	d7, [r3]
+ 989 00c8 8E4B     		ldr	r3, .L99+12
+ 990 00ca 93ED006B 		vldr.64	d6, [r3]
+ 991 00ce 8E4A     		ldr	r2, .L99+16
+ 992 00d0 8E49     		ldr	r1, .L99+20
+ 993 00d2 8F48     		ldr	r0, .L99+24
+ 994 00d4 B0EE462A 		vmov.f32	s4, s12
+ 995 00d8 F0EE662A 		vmov.f32	s5, s13
+ 996 00dc B0EE471A 		vmov.f32	s2, s14
+ 997 00e0 F0EE671A 		vmov.f32	s3, s15
+ 998 00e4 B0EE450A 		vmov.f32	s0, s10
+ 999 00e8 F0EE650A 		vmov.f32	s1, s11
+ 1000 00ec FFF7FEFF 		bl	HsvToRgb
+ 1001              	.L68:
+ 227:Src/random_triangles_animation.c ****           }
+ 228:Src/random_triangles_animation.c ****           rscaled = (uint8_t) (r * context.upperBrightness);
+ 1002              		.loc 1 228 43 discriminator 2
+ 1003 00f0 884B     		ldr	r3, .L99+28
+ 1004 00f2 1B7B     		ldrb	r3, [r3, #12]	@ zero_extendqisi2
+ 1005              		.loc 1 228 34 discriminator 2
+ 1006 00f4 1846     		mov	r0, r3
+ 1007 00f6 FFF7FEFF 		bl	__aeabi_i2d
+ 1008              	.LVL3:
+ 1009 00fa 854B     		ldr	r3, .L99+24
+ 1010 00fc D3E90023 		ldrd	r2, [r3]
+ 1011 0100 FFF7FEFF 		bl	__aeabi_dmul
+ 1012              	.LVL4:
+ 1013 0104 0246     		mov	r2, r0
+ 1014 0106 0B46     		mov	r3, r1
+ 1015              		.loc 1 228 21 discriminator 2
+ 1016 0108 1046     		mov	r0, r2
+ 1017 010a 1946     		mov	r1, r3
+ 1018 010c FFF7FEFF 		bl	__aeabi_d2uiz
+ 1019              	.LVL5:
+ 1020 0110 0346     		mov	r3, r0
+ 1021 0112 DAB2     		uxtb	r2, r3
+ 1022              		.loc 1 228 19 discriminator 2
+ 1023 0114 804B     		ldr	r3, .L99+32
+ 1024 0116 1A70     		strb	r2, [r3]
+ 229:Src/random_triangles_animation.c ****           gscaled = (uint8_t) (g * context.upperBrightness);
+ 1025              		.loc 1 229 43 discriminator 2
+ 1026 0118 7E4B     		ldr	r3, .L99+28
+ 1027 011a 1B7B     		ldrb	r3, [r3, #12]	@ zero_extendqisi2
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s 			page 23
+
+
+ 1028              		.loc 1 229 34 discriminator 2
+ 1029 011c 1846     		mov	r0, r3
+ 1030 011e FFF7FEFF 		bl	__aeabi_i2d
+ 1031              	.LVL6:
+ 1032 0122 7A4B     		ldr	r3, .L99+20
+ 1033 0124 D3E90023 		ldrd	r2, [r3]
+ 1034 0128 FFF7FEFF 		bl	__aeabi_dmul
+ 1035              	.LVL7:
+ 1036 012c 0246     		mov	r2, r0
+ 1037 012e 0B46     		mov	r3, r1
+ 1038              		.loc 1 229 21 discriminator 2
+ 1039 0130 1046     		mov	r0, r2
+ 1040 0132 1946     		mov	r1, r3
+ 1041 0134 FFF7FEFF 		bl	__aeabi_d2uiz
+ 1042              	.LVL8:
+ 1043 0138 0346     		mov	r3, r0
+ 1044 013a DAB2     		uxtb	r2, r3
+ 1045              		.loc 1 229 19 discriminator 2
+ 1046 013c 774B     		ldr	r3, .L99+36
+ 1047 013e 1A70     		strb	r2, [r3]
+ 230:Src/random_triangles_animation.c ****           bscaled = (uint8_t) (b * context.upperBrightness);
+ 1048              		.loc 1 230 43 discriminator 2
+ 1049 0140 744B     		ldr	r3, .L99+28
+ 1050 0142 1B7B     		ldrb	r3, [r3, #12]	@ zero_extendqisi2
+ 1051              		.loc 1 230 34 discriminator 2
+ 1052 0144 1846     		mov	r0, r3
+ 1053 0146 FFF7FEFF 		bl	__aeabi_i2d
+ 1054              	.LVL9:
+ 1055 014a 6F4B     		ldr	r3, .L99+16
+ 1056 014c D3E90023 		ldrd	r2, [r3]
+ 1057 0150 FFF7FEFF 		bl	__aeabi_dmul
+ 1058              	.LVL10:
+ 1059 0154 0246     		mov	r2, r0
+ 1060 0156 0B46     		mov	r3, r1
+ 1061              		.loc 1 230 21 discriminator 2
+ 1062 0158 1046     		mov	r0, r2
+ 1063 015a 1946     		mov	r1, r3
+ 1064 015c FFF7FEFF 		bl	__aeabi_d2uiz
+ 1065              	.LVL11:
+ 1066 0160 0346     		mov	r3, r0
+ 1067 0162 DAB2     		uxtb	r2, r3
+ 1068              		.loc 1 230 19 discriminator 2
+ 1069 0164 6E4B     		ldr	r3, .L99+40
+ 1070 0166 1A70     		strb	r2, [r3]
+ 231:Src/random_triangles_animation.c ****           Pixel_t * currPixel = GetPixelByLocalCoordinate(panel, x, y);
+ 1071              		.loc 1 231 33 discriminator 2
+ 1072 0168 FB69     		ldr	r3, [r7, #28]
+ 1073 016a DBB2     		uxtb	r3, r3
+ 1074 016c 7A69     		ldr	r2, [r7, #20]
+ 1075 016e D1B2     		uxtb	r1, r2
+ 1076 0170 BA69     		ldr	r2, [r7, #24]
+ 1077 0172 D2B2     		uxtb	r2, r2
+ 1078 0174 1846     		mov	r0, r3
+ 1079 0176 FFF7FEFF 		bl	GetPixelByLocalCoordinate
+ 1080 017a 7860     		str	r0, [r7, #4]
+ 232:Src/random_triangles_animation.c ****           currPixel->red = rscaled;
+ 1081              		.loc 1 232 26 discriminator 2
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s 			page 24
+
+
+ 1082 017c 664B     		ldr	r3, .L99+32
+ 1083 017e 1A78     		ldrb	r2, [r3]	@ zero_extendqisi2
+ 1084 0180 7B68     		ldr	r3, [r7, #4]
+ 1085 0182 5A70     		strb	r2, [r3, #1]
+ 233:Src/random_triangles_animation.c ****           currPixel->green = gscaled;
+ 1086              		.loc 1 233 28 discriminator 2
+ 1087 0184 654B     		ldr	r3, .L99+36
+ 1088 0186 1A78     		ldrb	r2, [r3]	@ zero_extendqisi2
+ 1089 0188 7B68     		ldr	r3, [r7, #4]
+ 1090 018a 1A70     		strb	r2, [r3]
+ 234:Src/random_triangles_animation.c ****           currPixel->blue = bscaled;
+ 1091              		.loc 1 234 27 discriminator 2
+ 1092 018c 644B     		ldr	r3, .L99+40
+ 1093 018e 1A78     		ldrb	r2, [r3]	@ zero_extendqisi2
+ 1094 0190 7B68     		ldr	r3, [r7, #4]
+ 1095 0192 9A70     		strb	r2, [r3, #2]
+ 1096              	.LBE11:
+ 217:Src/random_triangles_animation.c ****         {
+ 1097              		.loc 1 217 55 discriminator 2
+ 1098 0194 7B69     		ldr	r3, [r7, #20]
+ 1099 0196 0133     		adds	r3, r3, #1
+ 1100 0198 7B61     		str	r3, [r7, #20]
+ 1101              	.L64:
+ 217:Src/random_triangles_animation.c ****         {
+ 1102              		.loc 1 217 9 discriminator 1
+ 1103 019a 7B69     		ldr	r3, [r7, #20]
+ 1104 019c 032B     		cmp	r3, #3
+ 1105 019e 7FF740AF 		ble	.L69
+ 1106              	.LBE10:
+ 215:Src/random_triangles_animation.c ****       {  
+ 1107              		.loc 1 215 53 discriminator 2
+ 1108 01a2 BB69     		ldr	r3, [r7, #24]
+ 1109 01a4 0133     		adds	r3, r3, #1
+ 1110 01a6 BB61     		str	r3, [r7, #24]
+ 1111              	.L63:
+ 215:Src/random_triangles_animation.c ****       {  
+ 1112              		.loc 1 215 7 discriminator 1
+ 1113 01a8 BB69     		ldr	r3, [r7, #24]
+ 1114 01aa 032B     		cmp	r3, #3
+ 1115 01ac 7FF736AF 		ble	.L70
+ 1116 01b0 93E0     		b	.L71
+ 1117              	.L62:
+ 1118              	.LBE9:
+ 1119              	.LBB12:
+ 235:Src/random_triangles_animation.c ****         }
+ 236:Src/random_triangles_animation.c ****       }
+ 237:Src/random_triangles_animation.c ****     }
+ 238:Src/random_triangles_animation.c ****     else
+ 239:Src/random_triangles_animation.c ****     {
+ 240:Src/random_triangles_animation.c ****       for (int y = 0; y < NUM_LEDS_PER_PANEL_SIDE; y++)
+ 1120              		.loc 1 240 16
+ 1121 01b2 0023     		movs	r3, #0
+ 1122 01b4 3B61     		str	r3, [r7, #16]
+ 1123              		.loc 1 240 7
+ 1124 01b6 8CE0     		b	.L72
+ 1125              	.L75:
+ 241:Src/random_triangles_animation.c ****       {  
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s 			page 25
+
+
+ 242:Src/random_triangles_animation.c ****         HsvToRgb(h + (rowHueOffset * (6 - y)), s, v, &r, &g, &b);
+ 1126              		.loc 1 242 41
+ 1127 01b8 3B69     		ldr	r3, [r7, #16]
+ 1128 01ba C3F10603 		rsb	r3, r3, #6
+ 1129              		.loc 1 242 36
+ 1130 01be 1846     		mov	r0, r3
+ 1131 01c0 FFF7FEFF 		bl	__aeabi_i2d
+ 1132              	.LVL12:
+ 1133 01c4 4C4B     		ldr	r3, .L99
+ 1134 01c6 D3E90023 		ldrd	r2, [r3]
+ 1135 01ca FFF7FEFF 		bl	__aeabi_dmul
+ 1136              	.LVL13:
+ 1137 01ce 0246     		mov	r2, r0
+ 1138 01d0 0B46     		mov	r3, r1
+ 1139 01d2 1046     		mov	r0, r2
+ 1140 01d4 1946     		mov	r1, r3
+ 1141              		.loc 1 242 9
+ 1142 01d6 494B     		ldr	r3, .L99+4
+ 1143 01d8 D3E90023 		ldrd	r2, [r3]
+ 1144 01dc FFF7FEFF 		bl	__aeabi_dadd
+ 1145              	.LVL14:
+ 1146 01e0 0246     		mov	r2, r0
+ 1147 01e2 0B46     		mov	r3, r1
+ 1148 01e4 43EC152B 		vmov	d5, r2, r3
+ 1149 01e8 454B     		ldr	r3, .L99+8
+ 1150 01ea 93ED007B 		vldr.64	d7, [r3]
+ 1151 01ee 454B     		ldr	r3, .L99+12
+ 1152 01f0 93ED006B 		vldr.64	d6, [r3]
+ 1153 01f4 444A     		ldr	r2, .L99+16
+ 1154 01f6 4549     		ldr	r1, .L99+20
+ 1155 01f8 4548     		ldr	r0, .L99+24
+ 1156 01fa B0EE462A 		vmov.f32	s4, s12
+ 1157 01fe F0EE662A 		vmov.f32	s5, s13
+ 1158 0202 B0EE471A 		vmov.f32	s2, s14
+ 1159 0206 F0EE671A 		vmov.f32	s3, s15
+ 1160 020a B0EE450A 		vmov.f32	s0, s10
+ 1161 020e F0EE650A 		vmov.f32	s1, s11
+ 1162 0212 FFF7FEFF 		bl	HsvToRgb
+ 243:Src/random_triangles_animation.c ****         rscaled = (uint8_t) (r * context.upperBrightness);
+ 1163              		.loc 1 243 41
+ 1164 0216 3F4B     		ldr	r3, .L99+28
+ 1165 0218 1B7B     		ldrb	r3, [r3, #12]	@ zero_extendqisi2
+ 1166              		.loc 1 243 32
+ 1167 021a 1846     		mov	r0, r3
+ 1168 021c FFF7FEFF 		bl	__aeabi_i2d
+ 1169              	.LVL15:
+ 1170 0220 3B4B     		ldr	r3, .L99+24
+ 1171 0222 D3E90023 		ldrd	r2, [r3]
+ 1172 0226 FFF7FEFF 		bl	__aeabi_dmul
+ 1173              	.LVL16:
+ 1174 022a 0246     		mov	r2, r0
+ 1175 022c 0B46     		mov	r3, r1
+ 1176              		.loc 1 243 19
+ 1177 022e 1046     		mov	r0, r2
+ 1178 0230 1946     		mov	r1, r3
+ 1179 0232 FFF7FEFF 		bl	__aeabi_d2uiz
+ 1180              	.LVL17:
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s 			page 26
+
+
+ 1181 0236 0346     		mov	r3, r0
+ 1182 0238 DAB2     		uxtb	r2, r3
+ 1183              		.loc 1 243 17
+ 1184 023a 374B     		ldr	r3, .L99+32
+ 1185 023c 1A70     		strb	r2, [r3]
+ 244:Src/random_triangles_animation.c ****         gscaled = (uint8_t) (g * context.upperBrightness);
+ 1186              		.loc 1 244 41
+ 1187 023e 354B     		ldr	r3, .L99+28
+ 1188 0240 1B7B     		ldrb	r3, [r3, #12]	@ zero_extendqisi2
+ 1189              		.loc 1 244 32
+ 1190 0242 1846     		mov	r0, r3
+ 1191 0244 FFF7FEFF 		bl	__aeabi_i2d
+ 1192              	.LVL18:
+ 1193 0248 304B     		ldr	r3, .L99+20
+ 1194 024a D3E90023 		ldrd	r2, [r3]
+ 1195 024e FFF7FEFF 		bl	__aeabi_dmul
+ 1196              	.LVL19:
+ 1197 0252 0246     		mov	r2, r0
+ 1198 0254 0B46     		mov	r3, r1
+ 1199              		.loc 1 244 19
+ 1200 0256 1046     		mov	r0, r2
+ 1201 0258 1946     		mov	r1, r3
+ 1202 025a FFF7FEFF 		bl	__aeabi_d2uiz
+ 1203              	.LVL20:
+ 1204 025e 0346     		mov	r3, r0
+ 1205 0260 DAB2     		uxtb	r2, r3
+ 1206              		.loc 1 244 17
+ 1207 0262 2E4B     		ldr	r3, .L99+36
+ 1208 0264 1A70     		strb	r2, [r3]
+ 245:Src/random_triangles_animation.c ****         bscaled = (uint8_t) (b * context.upperBrightness);
+ 1209              		.loc 1 245 41
+ 1210 0266 2B4B     		ldr	r3, .L99+28
+ 1211 0268 1B7B     		ldrb	r3, [r3, #12]	@ zero_extendqisi2
+ 1212              		.loc 1 245 32
+ 1213 026a 1846     		mov	r0, r3
+ 1214 026c FFF7FEFF 		bl	__aeabi_i2d
+ 1215              	.LVL21:
+ 1216 0270 254B     		ldr	r3, .L99+16
+ 1217 0272 D3E90023 		ldrd	r2, [r3]
+ 1218 0276 FFF7FEFF 		bl	__aeabi_dmul
+ 1219              	.LVL22:
+ 1220 027a 0246     		mov	r2, r0
+ 1221 027c 0B46     		mov	r3, r1
+ 1222              		.loc 1 245 19
+ 1223 027e 1046     		mov	r0, r2
+ 1224 0280 1946     		mov	r1, r3
+ 1225 0282 FFF7FEFF 		bl	__aeabi_d2uiz
+ 1226              	.LVL23:
+ 1227 0286 0346     		mov	r3, r0
+ 1228 0288 DAB2     		uxtb	r2, r3
+ 1229              		.loc 1 245 17
+ 1230 028a 254B     		ldr	r3, .L99+40
+ 1231 028c 1A70     		strb	r2, [r3]
+ 1232              	.LBB13:
+ 246:Src/random_triangles_animation.c ****         for (int x = 0; x < NUM_LEDS_PER_PANEL_SIDE; x++)
+ 1233              		.loc 1 246 18
+ 1234 028e 0023     		movs	r3, #0
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s 			page 27
+
+
+ 1235 0290 FB60     		str	r3, [r7, #12]
+ 1236              		.loc 1 246 9
+ 1237 0292 18E0     		b	.L73
+ 1238              	.L74:
+ 1239              	.LBB14:
+ 247:Src/random_triangles_animation.c ****         {
+ 248:Src/random_triangles_animation.c ****           Pixel_t * currPixel = GetPixelByLocalCoordinate(panel, x, y);
+ 1240              		.loc 1 248 33 discriminator 3
+ 1241 0294 FB69     		ldr	r3, [r7, #28]
+ 1242 0296 DBB2     		uxtb	r3, r3
+ 1243 0298 FA68     		ldr	r2, [r7, #12]
+ 1244 029a D1B2     		uxtb	r1, r2
+ 1245 029c 3A69     		ldr	r2, [r7, #16]
+ 1246 029e D2B2     		uxtb	r2, r2
+ 1247 02a0 1846     		mov	r0, r3
+ 1248 02a2 FFF7FEFF 		bl	GetPixelByLocalCoordinate
+ 1249 02a6 B860     		str	r0, [r7, #8]
+ 249:Src/random_triangles_animation.c ****           currPixel->red = rscaled;
+ 1250              		.loc 1 249 26 discriminator 3
+ 1251 02a8 1B4B     		ldr	r3, .L99+32
+ 1252 02aa 1A78     		ldrb	r2, [r3]	@ zero_extendqisi2
+ 1253 02ac BB68     		ldr	r3, [r7, #8]
+ 1254 02ae 5A70     		strb	r2, [r3, #1]
+ 250:Src/random_triangles_animation.c ****           currPixel->green = gscaled;
+ 1255              		.loc 1 250 28 discriminator 3
+ 1256 02b0 1A4B     		ldr	r3, .L99+36
+ 1257 02b2 1A78     		ldrb	r2, [r3]	@ zero_extendqisi2
+ 1258 02b4 BB68     		ldr	r3, [r7, #8]
+ 1259 02b6 1A70     		strb	r2, [r3]
+ 251:Src/random_triangles_animation.c ****           currPixel->blue = bscaled;
+ 1260              		.loc 1 251 27 discriminator 3
+ 1261 02b8 194B     		ldr	r3, .L99+40
+ 1262 02ba 1A78     		ldrb	r2, [r3]	@ zero_extendqisi2
+ 1263 02bc BB68     		ldr	r3, [r7, #8]
+ 1264 02be 9A70     		strb	r2, [r3, #2]
+ 1265              	.LBE14:
+ 246:Src/random_triangles_animation.c ****         {
+ 1266              		.loc 1 246 55 discriminator 3
+ 1267 02c0 FB68     		ldr	r3, [r7, #12]
+ 1268 02c2 0133     		adds	r3, r3, #1
+ 1269 02c4 FB60     		str	r3, [r7, #12]
+ 1270              	.L73:
+ 246:Src/random_triangles_animation.c ****         {
+ 1271              		.loc 1 246 9 discriminator 1
+ 1272 02c6 FB68     		ldr	r3, [r7, #12]
+ 1273 02c8 032B     		cmp	r3, #3
+ 1274 02ca E3DD     		ble	.L74
+ 1275              	.LBE13:
+ 240:Src/random_triangles_animation.c ****       {  
+ 1276              		.loc 1 240 53 discriminator 2
+ 1277 02cc 3B69     		ldr	r3, [r7, #16]
+ 1278 02ce 0133     		adds	r3, r3, #1
+ 1279 02d0 3B61     		str	r3, [r7, #16]
+ 1280              	.L72:
+ 240:Src/random_triangles_animation.c ****       {  
+ 1281              		.loc 1 240 7 discriminator 1
+ 1282 02d2 3B69     		ldr	r3, [r7, #16]
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s 			page 28
+
+
+ 1283 02d4 032B     		cmp	r3, #3
+ 1284 02d6 7FF76FAF 		ble	.L75
+ 1285              	.L71:
+ 1286              	.LBE12:
+ 210:Src/random_triangles_animation.c ****   { 
+ 1287              		.loc 1 210 47 discriminator 2
+ 1288 02da FB69     		ldr	r3, [r7, #28]
+ 1289 02dc 0133     		adds	r3, r3, #1
+ 1290 02de FB61     		str	r3, [r7, #28]
+ 1291              	.L61:
+ 210:Src/random_triangles_animation.c ****   { 
+ 1292              		.loc 1 210 3 discriminator 1
+ 1293 02e0 FB69     		ldr	r3, [r7, #28]
+ 1294 02e2 042B     		cmp	r3, #4
+ 1295 02e4 7FF793AE 		ble	.L76
+ 1296              	.LBE8:
+ 252:Src/random_triangles_animation.c ****         }
+ 253:Src/random_triangles_animation.c ****       }
+ 254:Src/random_triangles_animation.c ****     }
+ 255:Src/random_triangles_animation.c **** 
+ 256:Src/random_triangles_animation.c ****   }
+ 257:Src/random_triangles_animation.c **** 
+ 258:Src/random_triangles_animation.c ****   // Update our hsv values
+ 259:Src/random_triangles_animation.c ****   rowHueOffset += (rowHueOffsetAdd) ? rowHueOffsetRate : -rowHueOffsetRate;
+ 1297              		.loc 1 259 56
+ 1298 02e8 0E4B     		ldr	r3, .L99+44
+ 1299 02ea 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 1300 02ec 002B     		cmp	r3, #0
+ 1301 02ee 1DD0     		beq	.L77
+ 1302              		.loc 1 259 56 is_stmt 0 discriminator 1
+ 1303 02f0 0D4B     		ldr	r3, .L99+48
+ 1304 02f2 D3E900AB 		ldrd	r10, [r3]
+ 1305 02f6 1FE0     		b	.L78
+ 1306              	.L100:
+ 1307              		.align	2
+ 1308              	.L99:
+ 1309 02f8 00000000 		.word	rowHueOffset.10641
+ 1310 02fc 00000000 		.word	h.10644
+ 1311 0300 00000000 		.word	s.10645
+ 1312 0304 00000000 		.word	v.10646
+ 1313 0308 00000000 		.word	b.10637
+ 1314 030c 00000000 		.word	g.10636
+ 1315 0310 00000000 		.word	r.10635
+ 1316 0314 00000000 		.word	context
+ 1317 0318 00000000 		.word	rscaled.10638
+ 1318 031c 00000000 		.word	gscaled.10639
+ 1319 0320 00000000 		.word	bscaled.10640
+ 1320 0324 00000000 		.word	rowHueOffsetAdd.10642
+ 1321 0328 00000000 		.word	rowHueOffsetRate.10643
+ 1322              	.L77:
+ 1323              		.loc 1 259 58 is_stmt 1 discriminator 2
+ 1324 032c 6A4B     		ldr	r3, .L101+8
+ 1325 032e D3E90023 		ldrd	r2, [r3]
+ 1326              		.loc 1 259 56 discriminator 2
+ 1327 0332 9246     		mov	r10, r2
+ 1328 0334 83F0004B 		eor	fp, r3, #-2147483648
+ 1329              	.L78:
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s 			page 29
+
+
+ 1330              		.loc 1 259 16 discriminator 4
+ 1331 0338 684B     		ldr	r3, .L101+12
+ 1332 033a D3E90023 		ldrd	r2, [r3]
+ 1333 033e 5046     		mov	r0, r10
+ 1334 0340 5946     		mov	r1, fp
+ 1335 0342 FFF7FEFF 		bl	__aeabi_dadd
+ 1336              	.LVL24:
+ 1337 0346 0246     		mov	r2, r0
+ 1338 0348 0B46     		mov	r3, r1
+ 1339 034a 6449     		ldr	r1, .L101+12
+ 1340 034c C1E90023 		strd	r2, [r1]
+ 260:Src/random_triangles_animation.c ****   if (rowHueOffset > 100)
+ 261:Src/random_triangles_animation.c ****   {
+ 262:Src/random_triangles_animation.c ****     //rowHueOffsetAdd = false;
+ 263:Src/random_triangles_animation.c ****   }
+ 264:Src/random_triangles_animation.c ****   if (rowHueOffset <= 0)
+ 1341              		.loc 1 264 20 discriminator 4
+ 1342 0350 624B     		ldr	r3, .L101+12
+ 1343 0352 D3E90001 		ldrd	r0, [r3]
+ 1344              		.loc 1 264 6 discriminator 4
+ 1345 0356 4FF00002 		mov	r2, #0
+ 1346 035a 4FF00003 		mov	r3, #0
+ 1347 035e FFF7FEFF 		bl	__aeabi_dcmple
+ 1348              	.LVL25:
+ 1349 0362 0346     		mov	r3, r0
+ 1350 0364 002B     		cmp	r3, #0
+ 1351 0366 02D0     		beq	.L79
+ 265:Src/random_triangles_animation.c ****   {
+ 266:Src/random_triangles_animation.c ****     rowHueOffsetAdd = true;
+ 1352              		.loc 1 266 21
+ 1353 0368 5D4B     		ldr	r3, .L101+16
+ 1354 036a 0122     		movs	r2, #1
+ 1355 036c 1A70     		strb	r2, [r3]
+ 1356              	.L79:
+ 267:Src/random_triangles_animation.c ****   }
+ 268:Src/random_triangles_animation.c **** 
+ 269:Src/random_triangles_animation.c ****   h += hrate;
+ 1357              		.loc 1 269 5
+ 1358 036e 5D4B     		ldr	r3, .L101+20
+ 1359 0370 D3E90001 		ldrd	r0, [r3]
+ 1360 0374 5C4B     		ldr	r3, .L101+24
+ 1361 0376 D3E90023 		ldrd	r2, [r3]
+ 1362 037a FFF7FEFF 		bl	__aeabi_dadd
+ 1363              	.LVL26:
+ 1364 037e 0246     		mov	r2, r0
+ 1365 0380 0B46     		mov	r3, r1
+ 1366 0382 5849     		ldr	r1, .L101+20
+ 1367 0384 C1E90023 		strd	r2, [r1]
+ 270:Src/random_triangles_animation.c **** 
+ 271:Src/random_triangles_animation.c ****   s += (sadd) ? srate : -srate;
+ 1368              		.loc 1 271 23
+ 1369 0388 584B     		ldr	r3, .L101+28
+ 1370 038a 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 1371 038c 002B     		cmp	r3, #0
+ 1372 038e 03D0     		beq	.L81
+ 1373              		.loc 1 271 23 is_stmt 0 discriminator 1
+ 1374 0390 574B     		ldr	r3, .L101+32
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s 			page 30
+
+
+ 1375 0392 D3E90089 		ldrd	r8, [r3]
+ 1376 0396 05E0     		b	.L82
+ 1377              	.L81:
+ 1378              		.loc 1 271 25 is_stmt 1 discriminator 2
+ 1379 0398 554B     		ldr	r3, .L101+32
+ 1380 039a D3E90023 		ldrd	r2, [r3]
+ 1381              		.loc 1 271 23 discriminator 2
+ 1382 039e 9046     		mov	r8, r2
+ 1383 03a0 83F00049 		eor	r9, r3, #-2147483648
+ 1384              	.L82:
+ 1385              		.loc 1 271 5 discriminator 4
+ 1386 03a4 534B     		ldr	r3, .L101+36
+ 1387 03a6 D3E90023 		ldrd	r2, [r3]
+ 1388 03aa 4046     		mov	r0, r8
+ 1389 03ac 4946     		mov	r1, r9
+ 1390 03ae FFF7FEFF 		bl	__aeabi_dadd
+ 1391              	.LVL27:
+ 1392 03b2 0246     		mov	r2, r0
+ 1393 03b4 0B46     		mov	r3, r1
+ 1394 03b6 4F49     		ldr	r1, .L101+36
+ 1395 03b8 C1E90023 		strd	r2, [r1]
+ 272:Src/random_triangles_animation.c ****   if (s < 0.50 && !sadd)
+ 1396              		.loc 1 272 9 discriminator 4
+ 1397 03bc 4D4B     		ldr	r3, .L101+36
+ 1398 03be D3E90001 		ldrd	r0, [r3]
+ 1399              		.loc 1 272 6 discriminator 4
+ 1400 03c2 4FF00002 		mov	r2, #0
+ 1401 03c6 4C4B     		ldr	r3, .L101+40
+ 1402 03c8 FFF7FEFF 		bl	__aeabi_dcmplt
+ 1403              	.LVL28:
+ 1404 03cc 0346     		mov	r3, r0
+ 1405 03ce 002B     		cmp	r3, #0
+ 1406 03d0 0FD0     		beq	.L83
+ 1407              		.loc 1 272 19 discriminator 1
+ 1408 03d2 464B     		ldr	r3, .L101+28
+ 1409 03d4 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 1410 03d6 83F00103 		eor	r3, r3, #1
+ 1411 03da DBB2     		uxtb	r3, r3
+ 1412              		.loc 1 272 16 discriminator 1
+ 1413 03dc 002B     		cmp	r3, #0
+ 1414 03de 08D0     		beq	.L83
+ 273:Src/random_triangles_animation.c ****   {
+ 274:Src/random_triangles_animation.c ****     sadd = true;
+ 1415              		.loc 1 274 10
+ 1416 03e0 424B     		ldr	r3, .L101+28
+ 1417 03e2 0122     		movs	r2, #1
+ 1418 03e4 1A70     		strb	r2, [r3]
+ 275:Src/random_triangles_animation.c ****     s = 0.50;
+ 1419              		.loc 1 275 7
+ 1420 03e6 4349     		ldr	r1, .L101+36
+ 1421 03e8 4FF00002 		mov	r2, #0
+ 1422 03ec 424B     		ldr	r3, .L101+40
+ 1423 03ee C1E90023 		strd	r2, [r1]
+ 1424              	.L83:
+ 276:Src/random_triangles_animation.c ****   }
+ 277:Src/random_triangles_animation.c ****   if (s >= 1 && sadd)
+ 1425              		.loc 1 277 9
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s 			page 31
+
+
+ 1426 03f2 404B     		ldr	r3, .L101+36
+ 1427 03f4 D3E90001 		ldrd	r0, [r3]
+ 1428              		.loc 1 277 6
+ 1429 03f8 4FF00002 		mov	r2, #0
+ 1430 03fc 3F4B     		ldr	r3, .L101+44
+ 1431 03fe FFF7FEFF 		bl	__aeabi_dcmpge
+ 1432              	.LVL29:
+ 1433 0402 0346     		mov	r3, r0
+ 1434 0404 002B     		cmp	r3, #0
+ 1435 0406 0CD0     		beq	.L85
+ 1436              		.loc 1 277 14 discriminator 1
+ 1437 0408 384B     		ldr	r3, .L101+28
+ 1438 040a 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 1439 040c 002B     		cmp	r3, #0
+ 1440 040e 08D0     		beq	.L85
+ 278:Src/random_triangles_animation.c ****   {
+ 279:Src/random_triangles_animation.c ****     sadd = false;
+ 1441              		.loc 1 279 10
+ 1442 0410 364B     		ldr	r3, .L101+28
+ 1443 0412 0022     		movs	r2, #0
+ 1444 0414 1A70     		strb	r2, [r3]
+ 280:Src/random_triangles_animation.c ****     s = 0.99;
+ 1445              		.loc 1 280 7
+ 1446 0416 3749     		ldr	r1, .L101+36
+ 1447 0418 2DA3     		adr	r3, .L101
+ 1448 041a D3E90023 		ldrd	r2, [r3]
+ 1449 041e C1E90023 		strd	r2, [r1]
+ 1450              	.L85:
+ 281:Src/random_triangles_animation.c ****   }
+ 282:Src/random_triangles_animation.c **** 
+ 283:Src/random_triangles_animation.c ****   v += (vadd) ? vrate : -vrate;
+ 1451              		.loc 1 283 23
+ 1452 0422 374B     		ldr	r3, .L101+48
+ 1453 0424 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 1454 0426 002B     		cmp	r3, #0
+ 1455 0428 03D0     		beq	.L87
+ 1456              		.loc 1 283 23 is_stmt 0 discriminator 1
+ 1457 042a 364B     		ldr	r3, .L101+52
+ 1458 042c D3E90045 		ldrd	r4, [r3]
+ 1459 0430 05E0     		b	.L88
+ 1460              	.L87:
+ 1461              		.loc 1 283 25 is_stmt 1 discriminator 2
+ 1462 0432 344B     		ldr	r3, .L101+52
+ 1463 0434 D3E90023 		ldrd	r2, [r3]
+ 1464              		.loc 1 283 23 discriminator 2
+ 1465 0438 1446     		mov	r4, r2
+ 1466 043a 83F00045 		eor	r5, r3, #-2147483648
+ 1467              	.L88:
+ 1468              		.loc 1 283 5 discriminator 4
+ 1469 043e 324B     		ldr	r3, .L101+56
+ 1470 0440 D3E90023 		ldrd	r2, [r3]
+ 1471 0444 2046     		mov	r0, r4
+ 1472 0446 2946     		mov	r1, r5
+ 1473 0448 FFF7FEFF 		bl	__aeabi_dadd
+ 1474              	.LVL30:
+ 1475 044c 0246     		mov	r2, r0
+ 1476 044e 0B46     		mov	r3, r1
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s 			page 32
+
+
+ 1477 0450 2D49     		ldr	r1, .L101+56
+ 1478 0452 C1E90023 		strd	r2, [r1]
+ 284:Src/random_triangles_animation.c ****   if (v < 0 && !vadd)
+ 1479              		.loc 1 284 9 discriminator 4
+ 1480 0456 2C4B     		ldr	r3, .L101+56
+ 1481 0458 D3E90001 		ldrd	r0, [r3]
+ 1482              		.loc 1 284 6 discriminator 4
+ 1483 045c 4FF00002 		mov	r2, #0
+ 1484 0460 4FF00003 		mov	r3, #0
+ 1485 0464 FFF7FEFF 		bl	__aeabi_dcmplt
+ 1486              	.LVL31:
+ 1487 0468 0346     		mov	r3, r0
+ 1488 046a 002B     		cmp	r3, #0
+ 1489 046c 10D0     		beq	.L89
+ 1490              		.loc 1 284 16 discriminator 1
+ 1491 046e 244B     		ldr	r3, .L101+48
+ 1492 0470 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 1493 0472 83F00103 		eor	r3, r3, #1
+ 1494 0476 DBB2     		uxtb	r3, r3
+ 1495              		.loc 1 284 13 discriminator 1
+ 1496 0478 002B     		cmp	r3, #0
+ 1497 047a 09D0     		beq	.L89
+ 285:Src/random_triangles_animation.c ****   {
+ 286:Src/random_triangles_animation.c ****     vadd = true;
+ 1498              		.loc 1 286 10
+ 1499 047c 204B     		ldr	r3, .L101+48
+ 1500 047e 0122     		movs	r2, #1
+ 1501 0480 1A70     		strb	r2, [r3]
+ 287:Src/random_triangles_animation.c ****     v = 0;
+ 1502              		.loc 1 287 7
+ 1503 0482 2149     		ldr	r1, .L101+56
+ 1504 0484 4FF00002 		mov	r2, #0
+ 1505 0488 4FF00003 		mov	r3, #0
+ 1506 048c C1E90023 		strd	r2, [r1]
+ 1507              	.L89:
+ 288:Src/random_triangles_animation.c ****   }
+ 289:Src/random_triangles_animation.c ****   if (v >= 1 && vadd)
+ 1508              		.loc 1 289 9
+ 1509 0490 1D4B     		ldr	r3, .L101+56
+ 1510 0492 D3E90001 		ldrd	r0, [r3]
+ 1511              		.loc 1 289 6
+ 1512 0496 4FF00002 		mov	r2, #0
+ 1513 049a 184B     		ldr	r3, .L101+44
+ 1514 049c FFF7FEFF 		bl	__aeabi_dcmpge
+ 1515              	.LVL32:
+ 1516 04a0 0346     		mov	r3, r0
+ 1517 04a2 002B     		cmp	r3, #0
+ 1518 04a4 00D1     		bne	.L97
+ 290:Src/random_triangles_animation.c ****   {
+ 291:Src/random_triangles_animation.c ****     vadd = false;
+ 292:Src/random_triangles_animation.c ****     v = 0.99;
+ 293:Src/random_triangles_animation.c ****   }
+ 294:Src/random_triangles_animation.c **** }
+ 1519              		.loc 1 294 1
+ 1520 04a6 0CE0     		b	.L98
+ 1521              	.L97:
+ 289:Src/random_triangles_animation.c ****   {
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s 			page 33
+
+
+ 1522              		.loc 1 289 14 discriminator 1
+ 1523 04a8 154B     		ldr	r3, .L101+48
+ 1524 04aa 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 1525 04ac 002B     		cmp	r3, #0
+ 1526 04ae 08D0     		beq	.L98
+ 291:Src/random_triangles_animation.c ****     v = 0.99;
+ 1527              		.loc 1 291 10
+ 1528 04b0 134B     		ldr	r3, .L101+48
+ 1529 04b2 0022     		movs	r2, #0
+ 1530 04b4 1A70     		strb	r2, [r3]
+ 292:Src/random_triangles_animation.c ****   }
+ 1531              		.loc 1 292 7
+ 1532 04b6 1449     		ldr	r1, .L101+56
+ 1533 04b8 05A3     		adr	r3, .L101
+ 1534 04ba D3E90023 		ldrd	r2, [r3]
+ 1535 04be C1E90023 		strd	r2, [r1]
+ 1536              	.L98:
+ 1537              		.loc 1 294 1
+ 1538 04c2 00BF     		nop
+ 1539 04c4 2037     		adds	r7, r7, #32
+ 1540              	.LCFI32:
+ 1541              		.cfi_def_cfa_offset 32
+ 1542 04c6 BD46     		mov	sp, r7
+ 1543              	.LCFI33:
+ 1544              		.cfi_def_cfa_register 13
+ 1545              		@ sp needed
+ 1546 04c8 BDE8B08F 		pop	{r4, r5, r7, r8, r9, r10, fp, pc}
+ 1547              	.L102:
+ 1548 04cc AFF30080 		.align	3
+ 1549              	.L101:
+ 1550 04d0 AE47E17A 		.word	2061584302
+ 1551 04d4 14AEEF3F 		.word	1072672276
+ 1552 04d8 00000000 		.word	rowHueOffsetRate.10643
+ 1553 04dc 00000000 		.word	rowHueOffset.10641
+ 1554 04e0 00000000 		.word	rowHueOffsetAdd.10642
+ 1555 04e4 00000000 		.word	h.10644
+ 1556 04e8 00000000 		.word	hrate.10647
+ 1557 04ec 00000000 		.word	sadd.10651
+ 1558 04f0 00000000 		.word	srate.10648
+ 1559 04f4 00000000 		.word	s.10645
+ 1560 04f8 0000E03F 		.word	1071644672
+ 1561 04fc 0000F03F 		.word	1072693248
+ 1562 0500 00000000 		.word	vadd.10652
+ 1563 0504 00000000 		.word	vrate.10649
+ 1564 0508 00000000 		.word	v.10646
+ 1565              		.cfi_endproc
+ 1566              	.LFE298:
+ 1568              		.section	.text.randomTriangles2,"ax",%progbits
+ 1569              		.align	1
+ 1570              		.syntax unified
+ 1571              		.thumb
+ 1572              		.thumb_func
+ 1573              		.fpu fpv4-sp-d16
+ 1575              	randomTriangles2:
+ 1576              	.LFB299:
+ 295:Src/random_triangles_animation.c **** 
+ 296:Src/random_triangles_animation.c **** static void randomTriangles2(void)
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s 			page 34
+
+
+ 297:Src/random_triangles_animation.c **** {
+ 1577              		.loc 1 297 1
+ 1578              		.cfi_startproc
+ 1579              		@ args = 0, pretend = 0, frame = 40
+ 1580              		@ frame_needed = 1, uses_anonymous_args = 0
+ 1581 0000 B0B5     		push	{r4, r5, r7, lr}
+ 1582              	.LCFI34:
+ 1583              		.cfi_def_cfa_offset 16
+ 1584              		.cfi_offset 4, -16
+ 1585              		.cfi_offset 5, -12
+ 1586              		.cfi_offset 7, -8
+ 1587              		.cfi_offset 14, -4
+ 1588 0002 8AB0     		sub	sp, sp, #40
+ 1589              	.LCFI35:
+ 1590              		.cfi_def_cfa_offset 56
+ 1591 0004 00AF     		add	r7, sp, #0
+ 1592              	.LCFI36:
+ 1593              		.cfi_def_cfa_register 7
+ 1594              	.LBB15:
+ 298:Src/random_triangles_animation.c ****   static uint8_t testx = 0;
+ 299:Src/random_triangles_animation.c ****   static uint8_t testy = 0;
+ 300:Src/random_triangles_animation.c ****   static Pixel_t col1 = {0, 10, 10};
+ 301:Src/random_triangles_animation.c ****   static uint32_t count = 0;
+ 302:Src/random_triangles_animation.c **** 
+ 303:Src/random_triangles_animation.c ****   // DO ALL SIDES BESIDES THE TOP
+ 304:Src/random_triangles_animation.c ****   for (int side = 0; side < TOP; side++)
+ 1595              		.loc 1 304 12
+ 1596 0006 0023     		movs	r3, #0
+ 1597 0008 7B62     		str	r3, [r7, #36]
+ 1598              		.loc 1 304 3
+ 1599 000a 5FE0     		b	.L104
+ 1600              	.L113:
+ 305:Src/random_triangles_animation.c ****   {
+ 306:Src/random_triangles_animation.c ****     if (count % 2 == 0)
+ 1601              		.loc 1 306 15
+ 1602 000c 934B     		ldr	r3, .L126
+ 1603 000e 1B68     		ldr	r3, [r3]
+ 1604 0010 03F00103 		and	r3, r3, #1
+ 1605              		.loc 1 306 8
+ 1606 0014 002B     		cmp	r3, #0
+ 1607 0016 28D1     		bne	.L105
+ 1608              	.LBB16:
+ 307:Src/random_triangles_animation.c ****     {
+ 308:Src/random_triangles_animation.c ****       for (int j = 0; j < 4; j++)
+ 1609              		.loc 1 308 16
+ 1610 0018 0023     		movs	r3, #0
+ 1611 001a 3B62     		str	r3, [r7, #32]
+ 1612              		.loc 1 308 7
+ 1613 001c 21E0     		b	.L106
+ 1614              	.L108:
+ 309:Src/random_triangles_animation.c ****       {
+ 310:Src/random_triangles_animation.c ****         if (testx >= j)
+ 1615              		.loc 1 310 19
+ 1616 001e 904B     		ldr	r3, .L126+4
+ 1617 0020 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 1618 0022 1A46     		mov	r2, r3
+ 1619              		.loc 1 310 12
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s 			page 35
+
+
+ 1620 0024 3B6A     		ldr	r3, [r7, #32]
+ 1621 0026 9342     		cmp	r3, r2
+ 1622 0028 18DC     		bgt	.L107
+ 1623              	.LBB17:
+ 311:Src/random_triangles_animation.c ****         {
+ 312:Src/random_triangles_animation.c ****           Pixel_t *p1 = GetPixelByLocalCoordinate(side, testx-j, testy+j);
+ 1624              		.loc 1 312 25
+ 1625 002a 7B6A     		ldr	r3, [r7, #36]
+ 1626 002c D8B2     		uxtb	r0, r3
+ 1627 002e 8C4B     		ldr	r3, .L126+4
+ 1628 0030 1A78     		ldrb	r2, [r3]	@ zero_extendqisi2
+ 1629 0032 3B6A     		ldr	r3, [r7, #32]
+ 1630 0034 DBB2     		uxtb	r3, r3
+ 1631 0036 D31A     		subs	r3, r2, r3
+ 1632 0038 D9B2     		uxtb	r1, r3
+ 1633 003a 3B6A     		ldr	r3, [r7, #32]
+ 1634 003c DAB2     		uxtb	r2, r3
+ 1635 003e 894B     		ldr	r3, .L126+8
+ 1636 0040 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 1637 0042 1344     		add	r3, r3, r2
+ 1638 0044 DBB2     		uxtb	r3, r3
+ 1639 0046 1A46     		mov	r2, r3
+ 1640 0048 FFF7FEFF 		bl	GetPixelByLocalCoordinate
+ 1641 004c B860     		str	r0, [r7, #8]
+ 313:Src/random_triangles_animation.c ****           *p1 = col1;
+ 1642              		.loc 1 313 15
+ 1643 004e BB68     		ldr	r3, [r7, #8]
+ 1644 0050 8549     		ldr	r1, .L126+12
+ 1645 0052 1A46     		mov	r2, r3
+ 1646 0054 0B46     		mov	r3, r1
+ 1647 0056 03CB     		ldmia	r3!, {r0, r1}
+ 1648 0058 1060     		str	r0, [r2]	@ unaligned
+ 1649 005a 5160     		str	r1, [r2, #4]	@ unaligned
+ 1650              	.L107:
+ 1651              	.LBE17:
+ 308:Src/random_triangles_animation.c ****       {
+ 1652              		.loc 1 308 31 discriminator 2
+ 1653 005c 3B6A     		ldr	r3, [r7, #32]
+ 1654 005e 0133     		adds	r3, r3, #1
+ 1655 0060 3B62     		str	r3, [r7, #32]
+ 1656              	.L106:
+ 308:Src/random_triangles_animation.c ****       {
+ 1657              		.loc 1 308 7 discriminator 1
+ 1658 0062 3B6A     		ldr	r3, [r7, #32]
+ 1659 0064 032B     		cmp	r3, #3
+ 1660 0066 DADD     		ble	.L108
+ 1661 0068 2DE0     		b	.L109
+ 1662              	.L105:
+ 1663              	.LBE16:
+ 1664              	.LBB18:
+ 314:Src/random_triangles_animation.c ****         }
+ 315:Src/random_triangles_animation.c ****       }
+ 316:Src/random_triangles_animation.c ****     }
+ 317:Src/random_triangles_animation.c ****     else
+ 318:Src/random_triangles_animation.c ****     {
+ 319:Src/random_triangles_animation.c ****       for (int j = 0; j < 4; j++)
+ 1665              		.loc 1 319 16
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s 			page 36
+
+
+ 1666 006a 0023     		movs	r3, #0
+ 1667 006c FB61     		str	r3, [r7, #28]
+ 1668              		.loc 1 319 7
+ 1669 006e 27E0     		b	.L110
+ 1670              	.L112:
+ 320:Src/random_triangles_animation.c ****       {
+ 321:Src/random_triangles_animation.c ****         if (3-testx >= j)
+ 1671              		.loc 1 321 14
+ 1672 0070 7B4B     		ldr	r3, .L126+4
+ 1673 0072 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 1674 0074 C3F10303 		rsb	r3, r3, #3
+ 1675              		.loc 1 321 12
+ 1676 0078 FA69     		ldr	r2, [r7, #28]
+ 1677 007a 9A42     		cmp	r2, r3
+ 1678 007c 1DDC     		bgt	.L111
+ 1679              	.LBB19:
+ 322:Src/random_triangles_animation.c ****         {
+ 323:Src/random_triangles_animation.c ****           Pixel_t *p1 = GetPixelByLocalCoordinate(side, 3-(2-testx-j), 3-(testy+j));
+ 1680              		.loc 1 323 25
+ 1681 007e 7B6A     		ldr	r3, [r7, #36]
+ 1682 0080 D8B2     		uxtb	r0, r3
+ 1683              		.loc 1 323 67
+ 1684 0082 FB69     		ldr	r3, [r7, #28]
+ 1685 0084 DAB2     		uxtb	r2, r3
+ 1686 0086 764B     		ldr	r3, .L126+4
+ 1687 0088 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 1688 008a 1344     		add	r3, r3, r2
+ 1689 008c DBB2     		uxtb	r3, r3
+ 1690              		.loc 1 323 25
+ 1691 008e 0133     		adds	r3, r3, #1
+ 1692 0090 D9B2     		uxtb	r1, r3
+ 1693              		.loc 1 323 80
+ 1694 0092 FB69     		ldr	r3, [r7, #28]
+ 1695 0094 DAB2     		uxtb	r2, r3
+ 1696 0096 734B     		ldr	r3, .L126+8
+ 1697 0098 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 1698 009a 1344     		add	r3, r3, r2
+ 1699 009c DBB2     		uxtb	r3, r3
+ 1700              		.loc 1 323 25
+ 1701 009e C3F10303 		rsb	r3, r3, #3
+ 1702 00a2 DBB2     		uxtb	r3, r3
+ 1703 00a4 1A46     		mov	r2, r3
+ 1704 00a6 FFF7FEFF 		bl	GetPixelByLocalCoordinate
+ 1705 00aa F860     		str	r0, [r7, #12]
+ 324:Src/random_triangles_animation.c ****           *p1 = col1;
+ 1706              		.loc 1 324 15
+ 1707 00ac FB68     		ldr	r3, [r7, #12]
+ 1708 00ae 6E49     		ldr	r1, .L126+12
+ 1709 00b0 1A46     		mov	r2, r3
+ 1710 00b2 0B46     		mov	r3, r1
+ 1711 00b4 03CB     		ldmia	r3!, {r0, r1}
+ 1712 00b6 1060     		str	r0, [r2]	@ unaligned
+ 1713 00b8 5160     		str	r1, [r2, #4]	@ unaligned
+ 1714              	.L111:
+ 1715              	.LBE19:
+ 319:Src/random_triangles_animation.c ****       {
+ 1716              		.loc 1 319 31 discriminator 2
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s 			page 37
+
+
+ 1717 00ba FB69     		ldr	r3, [r7, #28]
+ 1718 00bc 0133     		adds	r3, r3, #1
+ 1719 00be FB61     		str	r3, [r7, #28]
+ 1720              	.L110:
+ 319:Src/random_triangles_animation.c ****       {
+ 1721              		.loc 1 319 7 discriminator 1
+ 1722 00c0 FB69     		ldr	r3, [r7, #28]
+ 1723 00c2 032B     		cmp	r3, #3
+ 1724 00c4 D4DD     		ble	.L112
+ 1725              	.L109:
+ 1726              	.LBE18:
+ 304:Src/random_triangles_animation.c ****   {
+ 1727              		.loc 1 304 38 discriminator 2
+ 1728 00c6 7B6A     		ldr	r3, [r7, #36]
+ 1729 00c8 0133     		adds	r3, r3, #1
+ 1730 00ca 7B62     		str	r3, [r7, #36]
+ 1731              	.L104:
+ 304:Src/random_triangles_animation.c ****   {
+ 1732              		.loc 1 304 3 discriminator 1
+ 1733 00cc 7B6A     		ldr	r3, [r7, #36]
+ 1734 00ce 032B     		cmp	r3, #3
+ 1735 00d0 9CDD     		ble	.L113
+ 1736              	.LBE15:
+ 1737              	.LBB20:
+ 325:Src/random_triangles_animation.c ****         }
+ 326:Src/random_triangles_animation.c ****       }
+ 327:Src/random_triangles_animation.c ****     }
+ 328:Src/random_triangles_animation.c ****   }
+ 329:Src/random_triangles_animation.c **** 
+ 330:Src/random_triangles_animation.c ****   // DO TOP DIFFERENTLY
+ 331:Src/random_triangles_animation.c ****   for (int j = 0; j < 4; j++)
+ 1738              		.loc 1 331 12
+ 1739 00d2 0023     		movs	r3, #0
+ 1740 00d4 BB61     		str	r3, [r7, #24]
+ 1741              		.loc 1 331 3
+ 1742 00d6 57E0     		b	.L114
+ 1743              	.L123:
+ 1744              	.LBB21:
+ 332:Src/random_triangles_animation.c ****   {
+ 333:Src/random_triangles_animation.c ****     for (int k = 0; k < 4; k++)
+ 1745              		.loc 1 333 14
+ 1746 00d8 0023     		movs	r3, #0
+ 1747 00da 7B61     		str	r3, [r7, #20]
+ 1748              		.loc 1 333 5
+ 1749 00dc 4EE0     		b	.L115
+ 1750              	.L122:
+ 1751              	.LBB22:
+ 334:Src/random_triangles_animation.c ****     {
+ 335:Src/random_triangles_animation.c ****       Pixel_t *p;
+ 336:Src/random_triangles_animation.c ****       switch(count % 4)
+ 1752              		.loc 1 336 20
+ 1753 00de 5F4B     		ldr	r3, .L126
+ 1754 00e0 1B68     		ldr	r3, [r3]
+ 1755 00e2 03F00303 		and	r3, r3, #3
+ 1756 00e6 032B     		cmp	r3, #3
+ 1757 00e8 3ED8     		bhi	.L116
+ 1758 00ea 01A2     		adr	r2, .L118
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s 			page 38
+
+
+ 1759 00ec 52F823F0 		ldr	pc, [r2, r3, lsl #2]
+ 1760              		.p2align 2
+ 1761              	.L118:
+ 1762 00f0 01010000 		.word	.L121+1
+ 1763 00f4 15010000 		.word	.L120+1
+ 1764 00f8 2F010000 		.word	.L119+1
+ 1765 00fc 49010000 		.word	.L117+1
+ 1766              		.p2align 1
+ 1767              	.L121:
+ 337:Src/random_triangles_animation.c ****       {
+ 338:Src/random_triangles_animation.c ****         case 0:
+ 339:Src/random_triangles_animation.c ****           p = GetPixelByLocalCoordinate(TOP, testx, k);
+ 1768              		.loc 1 339 15
+ 1769 0100 574B     		ldr	r3, .L126+4
+ 1770 0102 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 1771 0104 7A69     		ldr	r2, [r7, #20]
+ 1772 0106 D2B2     		uxtb	r2, r2
+ 1773 0108 1946     		mov	r1, r3
+ 1774 010a 0420     		movs	r0, #4
+ 1775 010c FFF7FEFF 		bl	GetPixelByLocalCoordinate
+ 1776 0110 3861     		str	r0, [r7, #16]
+ 340:Src/random_triangles_animation.c ****           break;
+ 1777              		.loc 1 340 11
+ 1778 0112 29E0     		b	.L116
+ 1779              	.L120:
+ 341:Src/random_triangles_animation.c ****         case 1:
+ 342:Src/random_triangles_animation.c ****           p = GetPixelByLocalCoordinate(TOP, testx, 3-k);
+ 1780              		.loc 1 342 15
+ 1781 0114 524B     		ldr	r3, .L126+4
+ 1782 0116 1978     		ldrb	r1, [r3]	@ zero_extendqisi2
+ 1783 0118 7B69     		ldr	r3, [r7, #20]
+ 1784 011a DBB2     		uxtb	r3, r3
+ 1785 011c C3F10303 		rsb	r3, r3, #3
+ 1786 0120 DBB2     		uxtb	r3, r3
+ 1787 0122 1A46     		mov	r2, r3
+ 1788 0124 0420     		movs	r0, #4
+ 1789 0126 FFF7FEFF 		bl	GetPixelByLocalCoordinate
+ 1790 012a 3861     		str	r0, [r7, #16]
+ 343:Src/random_triangles_animation.c ****           break;
+ 1791              		.loc 1 343 11
+ 1792 012c 1CE0     		b	.L116
+ 1793              	.L119:
+ 344:Src/random_triangles_animation.c ****         case 2:
+ 345:Src/random_triangles_animation.c ****           p = GetPixelByLocalCoordinate(TOP, 3-testx, k);
+ 1794              		.loc 1 345 15
+ 1795 012e 4C4B     		ldr	r3, .L126+4
+ 1796 0130 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 1797 0132 C3F10303 		rsb	r3, r3, #3
+ 1798 0136 DBB2     		uxtb	r3, r3
+ 1799 0138 7A69     		ldr	r2, [r7, #20]
+ 1800 013a D2B2     		uxtb	r2, r2
+ 1801 013c 1946     		mov	r1, r3
+ 1802 013e 0420     		movs	r0, #4
+ 1803 0140 FFF7FEFF 		bl	GetPixelByLocalCoordinate
+ 1804 0144 3861     		str	r0, [r7, #16]
+ 346:Src/random_triangles_animation.c ****           break;
+ 1805              		.loc 1 346 11
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s 			page 39
+
+
+ 1806 0146 0FE0     		b	.L116
+ 1807              	.L117:
+ 347:Src/random_triangles_animation.c ****         case 3:
+ 348:Src/random_triangles_animation.c ****           p = GetPixelByLocalCoordinate(TOP, 3-testx, 3-k);
+ 1808              		.loc 1 348 15
+ 1809 0148 454B     		ldr	r3, .L126+4
+ 1810 014a 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 1811 014c C3F10303 		rsb	r3, r3, #3
+ 1812 0150 D9B2     		uxtb	r1, r3
+ 1813 0152 7B69     		ldr	r3, [r7, #20]
+ 1814 0154 DBB2     		uxtb	r3, r3
+ 1815 0156 C3F10303 		rsb	r3, r3, #3
+ 1816 015a DBB2     		uxtb	r3, r3
+ 1817 015c 1A46     		mov	r2, r3
+ 1818 015e 0420     		movs	r0, #4
+ 1819 0160 FFF7FEFF 		bl	GetPixelByLocalCoordinate
+ 1820 0164 3861     		str	r0, [r7, #16]
+ 349:Src/random_triangles_animation.c ****           break;
+ 1821              		.loc 1 349 11
+ 1822 0166 00BF     		nop
+ 1823              	.L116:
+ 350:Src/random_triangles_animation.c ****       }
+ 351:Src/random_triangles_animation.c ****       *p = col1;
+ 1824              		.loc 1 351 10 discriminator 2
+ 1825 0168 3B69     		ldr	r3, [r7, #16]
+ 1826 016a 3F49     		ldr	r1, .L126+12
+ 1827 016c 1A46     		mov	r2, r3
+ 1828 016e 0B46     		mov	r3, r1
+ 1829 0170 03CB     		ldmia	r3!, {r0, r1}
+ 1830 0172 1060     		str	r0, [r2]	@ unaligned
+ 1831 0174 5160     		str	r1, [r2, #4]	@ unaligned
+ 1832              	.LBE22:
+ 333:Src/random_triangles_animation.c ****     {
+ 1833              		.loc 1 333 29 discriminator 2
+ 1834 0176 7B69     		ldr	r3, [r7, #20]
+ 1835 0178 0133     		adds	r3, r3, #1
+ 1836 017a 7B61     		str	r3, [r7, #20]
+ 1837              	.L115:
+ 333:Src/random_triangles_animation.c ****     {
+ 1838              		.loc 1 333 5 discriminator 1
+ 1839 017c 7B69     		ldr	r3, [r7, #20]
+ 1840 017e 032B     		cmp	r3, #3
+ 1841 0180 ADDD     		ble	.L122
+ 1842              	.LBE21:
+ 331:Src/random_triangles_animation.c ****   {
+ 1843              		.loc 1 331 27 discriminator 2
+ 1844 0182 BB69     		ldr	r3, [r7, #24]
+ 1845 0184 0133     		adds	r3, r3, #1
+ 1846 0186 BB61     		str	r3, [r7, #24]
+ 1847              	.L114:
+ 331:Src/random_triangles_animation.c ****   {
+ 1848              		.loc 1 331 3 discriminator 1
+ 1849 0188 BB69     		ldr	r3, [r7, #24]
+ 1850 018a 032B     		cmp	r3, #3
+ 1851 018c A4DD     		ble	.L123
+ 1852              	.LBE20:
+ 352:Src/random_triangles_animation.c ****     }
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s 			page 40
+
+
+ 353:Src/random_triangles_animation.c ****   }
+ 354:Src/random_triangles_animation.c **** 
+ 355:Src/random_triangles_animation.c ****   testx++;
+ 1853              		.loc 1 355 8
+ 1854 018e 344B     		ldr	r3, .L126+4
+ 1855 0190 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 1856 0192 0133     		adds	r3, r3, #1
+ 1857 0194 DAB2     		uxtb	r2, r3
+ 1858 0196 324B     		ldr	r3, .L126+4
+ 1859 0198 1A70     		strb	r2, [r3]
+ 356:Src/random_triangles_animation.c ****   if (testx > 3)
+ 1860              		.loc 1 356 13
+ 1861 019a 314B     		ldr	r3, .L126+4
+ 1862 019c 1B78     		ldrb	r3, [r3]	@ zero_extendqisi2
+ 1863              		.loc 1 356 6
+ 1864 019e 032B     		cmp	r3, #3
+ 1865 01a0 57D9     		bls	.L125
+ 357:Src/random_triangles_animation.c ****   {
+ 358:Src/random_triangles_animation.c ****     testx = 0;
+ 1866              		.loc 1 358 11
+ 1867 01a2 2F4B     		ldr	r3, .L126+4
+ 1868 01a4 0022     		movs	r2, #0
+ 1869 01a6 1A70     		strb	r2, [r3]
+ 359:Src/random_triangles_animation.c ****     count++;
+ 1870              		.loc 1 359 10
+ 1871 01a8 2C4B     		ldr	r3, .L126
+ 1872 01aa 1B68     		ldr	r3, [r3]
+ 1873 01ac 0133     		adds	r3, r3, #1
+ 1874 01ae 2B4A     		ldr	r2, .L126
+ 1875 01b0 1360     		str	r3, [r2]
+ 360:Src/random_triangles_animation.c ****     if (count % 2 == 0)
+ 1876              		.loc 1 360 15
+ 1877 01b2 2A4B     		ldr	r3, .L126
+ 1878 01b4 1B68     		ldr	r3, [r3]
+ 1879 01b6 03F00103 		and	r3, r3, #1
+ 1880              		.loc 1 360 8
+ 1881 01ba 002B     		cmp	r3, #0
+ 1882 01bc 49D1     		bne	.L125
+ 1883              	.LBB23:
+ 361:Src/random_triangles_animation.c ****     {
+ 362:Src/random_triangles_animation.c ****       col1 = (Pixel_t) {
+ 363:Src/random_triangles_animation.c ****         RAND_IN_RANGE(context.lowerBrightness, context.upperBrightness), \
+ 1884              		.loc 1 363 9
+ 1885 01be FFF7FEFF 		bl	rand
+ 1886 01c2 0246     		mov	r2, r0
+ 1887 01c4 294B     		ldr	r3, .L126+16
+ 1888 01c6 1B7B     		ldrb	r3, [r3, #12]	@ zero_extendqisi2
+ 1889 01c8 1946     		mov	r1, r3
+ 1890 01ca 284B     		ldr	r3, .L126+16
+ 1891 01cc 5B7B     		ldrb	r3, [r3, #13]	@ zero_extendqisi2
+ 1892 01ce CB1A     		subs	r3, r1, r3
+ 1893 01d0 0133     		adds	r3, r3, #1
+ 1894 01d2 92FBF3F1 		sdiv	r1, r2, r3
+ 1895 01d6 03FB01F3 		mul	r3, r3, r1
+ 1896 01da D31A     		subs	r3, r2, r3
+ 1897 01dc DAB2     		uxtb	r2, r3
+ 1898 01de 234B     		ldr	r3, .L126+16
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s 			page 41
+
+
+ 1899 01e0 5B7B     		ldrb	r3, [r3, #13]	@ zero_extendqisi2
+ 1900 01e2 1344     		add	r3, r3, r2
+ 1901 01e4 DDB2     		uxtb	r5, r3
+ 364:Src/random_triangles_animation.c ****           RAND_IN_RANGE(context.lowerBrightness, context.upperBrightness), \
+ 1902              		.loc 1 364 11
+ 1903 01e6 FFF7FEFF 		bl	rand
+ 1904 01ea 0246     		mov	r2, r0
+ 1905 01ec 1F4B     		ldr	r3, .L126+16
+ 1906 01ee 1B7B     		ldrb	r3, [r3, #12]	@ zero_extendqisi2
+ 1907 01f0 1946     		mov	r1, r3
+ 1908 01f2 1E4B     		ldr	r3, .L126+16
+ 1909 01f4 5B7B     		ldrb	r3, [r3, #13]	@ zero_extendqisi2
+ 1910 01f6 CB1A     		subs	r3, r1, r3
+ 1911 01f8 0133     		adds	r3, r3, #1
+ 1912 01fa 92FBF3F1 		sdiv	r1, r2, r3
+ 1913 01fe 03FB01F3 		mul	r3, r3, r1
+ 1914 0202 D31A     		subs	r3, r2, r3
+ 1915 0204 DAB2     		uxtb	r2, r3
+ 1916 0206 194B     		ldr	r3, .L126+16
+ 1917 0208 5B7B     		ldrb	r3, [r3, #13]	@ zero_extendqisi2
+ 1918 020a 1344     		add	r3, r3, r2
+ 1919 020c DCB2     		uxtb	r4, r3
+ 365:Src/random_triangles_animation.c ****           RAND_IN_RANGE(context.lowerBrightness, context.upperBrightness)
+ 1920              		.loc 1 365 11
+ 1921 020e FFF7FEFF 		bl	rand
+ 1922 0212 0246     		mov	r2, r0
+ 1923 0214 154B     		ldr	r3, .L126+16
+ 1924 0216 1B7B     		ldrb	r3, [r3, #12]	@ zero_extendqisi2
+ 1925 0218 1946     		mov	r1, r3
+ 1926 021a 144B     		ldr	r3, .L126+16
+ 1927 021c 5B7B     		ldrb	r3, [r3, #13]	@ zero_extendqisi2
+ 1928 021e CB1A     		subs	r3, r1, r3
+ 1929 0220 0133     		adds	r3, r3, #1
+ 1930 0222 92FBF3F1 		sdiv	r1, r2, r3
+ 1931 0226 03FB01F3 		mul	r3, r3, r1
+ 1932 022a D31A     		subs	r3, r2, r3
+ 1933 022c DAB2     		uxtb	r2, r3
+ 1934 022e 0F4B     		ldr	r3, .L126+16
+ 1935 0230 5B7B     		ldrb	r3, [r3, #13]	@ zero_extendqisi2
+ 1936 0232 1344     		add	r3, r3, r2
+ 1937 0234 D9B2     		uxtb	r1, r3
+ 362:Src/random_triangles_animation.c ****         RAND_IN_RANGE(context.lowerBrightness, context.upperBrightness), \
+ 1938              		.loc 1 362 12
+ 1939 0236 0C4B     		ldr	r3, .L126+12
+ 1940 0238 1A46     		mov	r2, r3
+ 1941 023a 0023     		movs	r3, #0
+ 1942 023c 1360     		str	r3, [r2]
+ 1943 023e 5360     		str	r3, [r2, #4]
+ 1944 0240 094B     		ldr	r3, .L126+12
+ 1945 0242 2A46     		mov	r2, r5
+ 1946 0244 1A70     		strb	r2, [r3]
+ 1947 0246 084B     		ldr	r3, .L126+12
+ 1948 0248 2246     		mov	r2, r4
+ 1949 024a 5A70     		strb	r2, [r3, #1]
+ 1950 024c 064B     		ldr	r3, .L126+12
+ 1951 024e 0A46     		mov	r2, r1
+ 1952 0250 9A70     		strb	r2, [r3, #2]
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s 			page 42
+
+
+ 1953              	.L125:
+ 1954              	.LBE23:
+ 366:Src/random_triangles_animation.c ****       };
+ 367:Src/random_triangles_animation.c ****     }
+ 368:Src/random_triangles_animation.c ****   }
+ 369:Src/random_triangles_animation.c **** }
+ 1955              		.loc 1 369 1
+ 1956 0252 00BF     		nop
+ 1957 0254 2837     		adds	r7, r7, #40
+ 1958              	.LCFI37:
+ 1959              		.cfi_def_cfa_offset 16
+ 1960 0256 BD46     		mov	sp, r7
+ 1961              	.LCFI38:
+ 1962              		.cfi_def_cfa_register 13
+ 1963              		@ sp needed
+ 1964 0258 B0BD     		pop	{r4, r5, r7, pc}
+ 1965              	.L127:
+ 1966 025a 00BF     		.align	2
+ 1967              	.L126:
+ 1968 025c 00000000 		.word	count.10681
+ 1969 0260 00000000 		.word	testx.10678
+ 1970 0264 00000000 		.word	testy.10679
+ 1971 0268 00000000 		.word	col1.10680
+ 1972 026c 00000000 		.word	context
+ 1973              		.cfi_endproc
+ 1974              	.LFE299:
+ 1976              		.section	.bss.clockdivider.10613,"aw",%nobits
+ 1979              	clockdivider.10613:
+ 1980 0000 00       		.space	1
+ 1981              		.section	.data.clockdivider.10624,"aw"
+ 1984              	clockdivider.10624:
+ 1985 0000 01       		.byte	1
+ 1986              		.section	.bss.rowHueOffset.10641,"aw",%nobits
+ 1987              		.align	3
+ 1990              	rowHueOffset.10641:
+ 1991 0000 00000000 		.space	8
+ 1991      00000000 
+ 1992              		.section	.bss.h.10644,"aw",%nobits
+ 1993              		.align	3
+ 1996              	h.10644:
+ 1997 0000 00000000 		.space	8
+ 1997      00000000 
+ 1998              		.section	.data.s.10645,"aw"
+ 1999              		.align	3
+ 2002              	s.10645:
+ 2003 0000 2B8716D9 		.word	3642132267
+ 2004 0004 CEF7EF3F 		.word	1072691150
+ 2005              		.section	.data.v.10646,"aw"
+ 2006              		.align	3
+ 2009              	v.10646:
+ 2010 0000 9A999999 		.word	2576980378
+ 2011 0004 9999B93F 		.word	1069128089
+ 2012              		.section	.bss.r.10635,"aw",%nobits
+ 2013              		.align	3
+ 2016              	r.10635:
+ 2017 0000 00000000 		.space	8
+ 2017      00000000 
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s 			page 43
+
+
+ 2018              		.section	.bss.g.10636,"aw",%nobits
+ 2019              		.align	3
+ 2022              	g.10636:
+ 2023 0000 00000000 		.space	8
+ 2023      00000000 
+ 2024              		.section	.bss.b.10637,"aw",%nobits
+ 2025              		.align	3
+ 2028              	b.10637:
+ 2029 0000 00000000 		.space	8
+ 2029      00000000 
+ 2030              		.section	.bss.rscaled.10638,"aw",%nobits
+ 2033              	rscaled.10638:
+ 2034 0000 00       		.space	1
+ 2035              		.section	.bss.gscaled.10639,"aw",%nobits
+ 2038              	gscaled.10639:
+ 2039 0000 00       		.space	1
+ 2040              		.section	.bss.bscaled.10640,"aw",%nobits
+ 2043              	bscaled.10640:
+ 2044 0000 00       		.space	1
+ 2045              		.section	.data.rowHueOffsetAdd.10642,"aw"
+ 2048              	rowHueOffsetAdd.10642:
+ 2049 0000 01       		.byte	1
+ 2050              		.section	.data.rowHueOffsetRate.10643,"aw"
+ 2051              		.align	3
+ 2054              	rowHueOffsetRate.10643:
+ 2055 0000 7B14AE47 		.word	1202590843
+ 2056 0004 E17A843F 		.word	1065646817
+ 2057              		.section	.data.hrate.10647,"aw"
+ 2058              		.align	3
+ 2061              	hrate.10647:
+ 2062 0000 00000000 		.word	0
+ 2063 0004 0000E03F 		.word	1071644672
+ 2064              		.section	.data.sadd.10651,"aw"
+ 2067              	sadd.10651:
+ 2068 0000 01       		.byte	1
+ 2069              		.section	.bss.srate.10648,"aw",%nobits
+ 2070              		.align	3
+ 2073              	srate.10648:
+ 2074 0000 00000000 		.space	8
+ 2074      00000000 
+ 2075              		.section	.data.vadd.10652,"aw"
+ 2078              	vadd.10652:
+ 2079 0000 01       		.byte	1
+ 2080              		.section	.bss.vrate.10649,"aw",%nobits
+ 2081              		.align	3
+ 2084              	vrate.10649:
+ 2085 0000 00000000 		.space	8
+ 2085      00000000 
+ 2086              		.section	.data.hadd.10650,"aw"
+ 2089              	hadd.10650:
+ 2090 0000 01       		.byte	1
+ 2091              		.section	.bss.count.10681,"aw",%nobits
+ 2092              		.align	2
+ 2095              	count.10681:
+ 2096 0000 00000000 		.space	4
+ 2097              		.section	.bss.testx.10678,"aw",%nobits
+ 2100              	testx.10678:
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s 			page 44
+
+
+ 2101 0000 00       		.space	1
+ 2102              		.section	.bss.testy.10679,"aw",%nobits
+ 2105              	testy.10679:
+ 2106 0000 00       		.space	1
+ 2107              		.section	.data.col1.10680,"aw"
+ 2108              		.align	2
+ 2111              	col1.10680:
+ 2112 0000 00       		.byte	0
+ 2113 0001 0A       		.byte	10
+ 2114 0002 0A       		.byte	10
+ 2115 0003 00000000 		.space	5
+ 2115      00
+ 2116              		.text
+ 2117              	.Letext0:
+ 2118              		.file 2 "/Users/isikcanyilmaz/KODMOD/b607/test/mcu/tools/gcc9.2.1/mac/arm-none-eabi/include/machin
+ 2119              		.file 3 "/Users/isikcanyilmaz/KODMOD/b607/test/mcu/tools/gcc9.2.1/mac/arm-none-eabi/include/sys/_s
+ 2120              		.file 4 "Drivers/CMSIS/Include/core_cm4.h"
+ 2121              		.file 5 "Drivers/CMSIS/Device/ST/STM32L4xx/Include/system_stm32l4xx.h"
+ 2122              		.file 6 "Drivers/CMSIS/Device/ST/STM32L4xx/Include/stm32l452xx.h"
+ 2123              		.file 7 "Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_def.h"
+ 2124              		.file 8 "Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_dma.h"
+ 2125              		.file 9 "Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_flash.h"
+ 2126              		.file 10 "Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal_tim.h"
+ 2127              		.file 11 "Drivers/STM32L4xx_HAL_Driver/Inc/stm32l4xx_hal.h"
+ 2128              		.file 12 "Inc/tim.h"
+ 2129              		.file 13 "Inc/addressable_led_driver.h"
+ 2130              		.file 14 "Inc/addressable_led_manager.h"
+ 2131              		.file 15 "Inc/random_triangles_animation.h"
+ 2132              		.file 16 "/Users/isikcanyilmaz/KODMOD/b607/test/mcu/tools/gcc9.2.1/mac/arm-none-eabi/include/sys/l
+ 2133              		.file 17 "/Users/isikcanyilmaz/KODMOD/b607/test/mcu/tools/gcc9.2.1/mac/arm-none-eabi/include/sys/_
+ 2134              		.file 18 "/Users/isikcanyilmaz/KODMOD/b607/test/mcu/tools/gcc9.2.1/mac/lib/gcc/arm-none-eabi/9.2.1
+ 2135              		.file 19 "/Users/isikcanyilmaz/KODMOD/b607/test/mcu/tools/gcc9.2.1/mac/arm-none-eabi/include/sys/r
+ 2136              		.file 20 "/Users/isikcanyilmaz/KODMOD/b607/test/mcu/tools/gcc9.2.1/mac/arm-none-eabi/include/stdli
+ 2137              		.file 21 "<built-in>"
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s 			page 45
+
+
+DEFINED SYMBOLS
+                            *ABS*:0000000000000000 random_triangles_animation.c
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s:18     .bss.context:0000000000000000 $d
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s:21     .bss.context:0000000000000000 context
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s:24     .text.Animation_RandomTriangles_Init:0000000000000000 $t
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s:32     .text.Animation_RandomTriangles_Init:0000000000000000 Animation_RandomTriangles_Init
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s:118    .text.Animation_RandomTriangles_Init:0000000000000068 $d
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s:123    .text.Animation_RandomTriangles_SendMessage:0000000000000000 $t
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s:130    .text.Animation_RandomTriangles_SendMessage:0000000000000000 Animation_RandomTriangles_SendMessage
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s:258    .text.Animation_RandomTriangles_SendMessage:0000000000000088 $d
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s:263    .text.Animation_RandomTriangles_GetState:0000000000000000 $t
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s:270    .text.Animation_RandomTriangles_GetState:0000000000000000 Animation_RandomTriangles_GetState
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s:301    .text.Animation_RandomTriangles_GetState:0000000000000014 $d
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s:306    .text.Animation_RandomTriangles_Update:0000000000000000 $t
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s:313    .text.Animation_RandomTriangles_Update:0000000000000000 Animation_RandomTriangles_Update
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s:336    .text.Animation_RandomTriangles_Update:0000000000000014 $d
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s:340    .text.Animation_RandomTriangles_Update:0000000000000024 $t
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s:377    .text.rampUp:0000000000000000 rampUp
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s:859    .text.randomTriangles1:0000000000000000 randomTriangles1
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s:628    .text.rampDown:0000000000000000 rampDown
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s:366    .text.Animation_RandomTriangles_Update:000000000000003c $d
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s:371    .text.rampUp:0000000000000000 $t
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s:616    .text.rampUp:0000000000000118 $d
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s:1979   .bss.clockdivider.10613:0000000000000000 clockdivider.10613
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s:622    .text.rampDown:0000000000000000 $t
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s:840    .text.rampDown:000000000000010c $d
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s:1984   .data.clockdivider.10624:0000000000000000 clockdivider.10624
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s:853    .text.randomTriangles1:0000000000000000 $t
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s:1309   .text.randomTriangles1:00000000000002f8 $d
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s:1990   .bss.rowHueOffset.10641:0000000000000000 rowHueOffset.10641
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s:1996   .bss.h.10644:0000000000000000 h.10644
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s:2002   .data.s.10645:0000000000000000 s.10645
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s:2009   .data.v.10646:0000000000000000 v.10646
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s:2028   .bss.b.10637:0000000000000000 b.10637
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s:2022   .bss.g.10636:0000000000000000 g.10636
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s:2016   .bss.r.10635:0000000000000000 r.10635
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s:2033   .bss.rscaled.10638:0000000000000000 rscaled.10638
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s:2038   .bss.gscaled.10639:0000000000000000 gscaled.10639
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s:2043   .bss.bscaled.10640:0000000000000000 bscaled.10640
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s:2048   .data.rowHueOffsetAdd.10642:0000000000000000 rowHueOffsetAdd.10642
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s:2054   .data.rowHueOffsetRate.10643:0000000000000000 rowHueOffsetRate.10643
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s:1324   .text.randomTriangles1:000000000000032c $t
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s:1550   .text.randomTriangles1:00000000000004d0 $d
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s:2061   .data.hrate.10647:0000000000000000 hrate.10647
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s:2067   .data.sadd.10651:0000000000000000 sadd.10651
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s:2073   .bss.srate.10648:0000000000000000 srate.10648
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s:2078   .data.vadd.10652:0000000000000000 vadd.10652
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s:2084   .bss.vrate.10649:0000000000000000 vrate.10649
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s:1569   .text.randomTriangles2:0000000000000000 $t
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s:1575   .text.randomTriangles2:0000000000000000 randomTriangles2
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s:1762   .text.randomTriangles2:00000000000000f0 $d
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s:1766   .text.randomTriangles2:0000000000000100 $t
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s:1968   .text.randomTriangles2:000000000000025c $d
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s:2095   .bss.count.10681:0000000000000000 count.10681
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s:2100   .bss.testx.10678:0000000000000000 testx.10678
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s:2105   .bss.testy.10679:0000000000000000 testy.10679
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s:2111   .data.col1.10680:0000000000000000 col1.10680
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s 			page 46
+
+
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s:1980   .bss.clockdivider.10613:0000000000000000 $d
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s:1987   .bss.rowHueOffset.10641:0000000000000000 $d
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s:1993   .bss.h.10644:0000000000000000 $d
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s:1999   .data.s.10645:0000000000000000 $d
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s:2006   .data.v.10646:0000000000000000 $d
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s:2013   .bss.r.10635:0000000000000000 $d
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s:2019   .bss.g.10636:0000000000000000 $d
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s:2025   .bss.b.10637:0000000000000000 $d
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s:2034   .bss.rscaled.10638:0000000000000000 $d
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s:2039   .bss.gscaled.10639:0000000000000000 $d
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s:2044   .bss.bscaled.10640:0000000000000000 $d
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s:2051   .data.rowHueOffsetRate.10643:0000000000000000 $d
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s:2058   .data.hrate.10647:0000000000000000 $d
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s:2070   .bss.srate.10648:0000000000000000 $d
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s:2081   .bss.vrate.10649:0000000000000000 $d
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s:2089   .data.hadd.10650:0000000000000000 hadd.10650
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s:2092   .bss.count.10681:0000000000000000 $d
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s:2101   .bss.testx.10678:0000000000000000 $d
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s:2106   .bss.testy.10679:0000000000000000 $d
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccHmN2Sx.s:2108   .data.col1.10680:0000000000000000 $d
+
+UNDEFINED SYMBOLS
+memset
+__aeabi_dadd
+__aeabi_i2d
+__aeabi_dmul
+__aeabi_d2uiz
+__aeabi_dcmple
+__aeabi_dcmplt
+__aeabi_dcmpge
+HsvToRgb
+GetPixelByLocalCoordinate
+rand

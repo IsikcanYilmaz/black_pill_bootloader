@@ -1,0 +1,437 @@
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccaajcfv.s 			page 1
+
+
+   1              		.cpu cortex-m4
+   2              		.eabi_attribute 27, 1
+   3              		.eabi_attribute 28, 1
+   4              		.eabi_attribute 20, 1
+   5              		.eabi_attribute 21, 1
+   6              		.eabi_attribute 23, 3
+   7              		.eabi_attribute 24, 1
+   8              		.eabi_attribute 25, 1
+   9              		.eabi_attribute 26, 1
+  10              		.eabi_attribute 30, 6
+  11              		.eabi_attribute 34, 1
+  12              		.eabi_attribute 18, 4
+  13              		.file	"color.c"
+  14              		.text
+  15              	.Ltext0:
+  16              		.cfi_sections	.debug_frame
+  17              		.global	__aeabi_dcmpgt
+  18              		.global	__aeabi_dcmpeq
+  19              		.global	__aeabi_ddiv
+  20              		.global	__aeabi_d2iz
+  21              		.global	__aeabi_i2d
+  22              		.global	__aeabi_dsub
+  23              		.global	__aeabi_dmul
+  24              		.section	.text.HsvToRgb,"ax",%progbits
+  25              		.align	1
+  26              		.global	HsvToRgb
+  27              		.arch armv7e-m
+  28              		.syntax unified
+  29              		.thumb
+  30              		.thumb_func
+  31              		.fpu fpv4-sp-d16
+  33              	HsvToRgb:
+  34              	.LFB0:
+  35              		.file 1 "Src/color.c"
+   1:Src/color.c   **** #include "color.h"
+   2:Src/color.c   **** #include <math.h>
+   3:Src/color.c   **** #include <stdlib.h>
+   4:Src/color.c   **** 
+   5:Src/color.c   **** 
+   6:Src/color.c   **** //https://en.wikipedia.org/wiki/HSL_and_HSV
+   7:Src/color.c   **** /*
+   8:Src/color.c   ****  * COLOR
+   9:Src/color.c   ****  *
+  10:Src/color.c   ****  * This file is to provide functionality to handle HSL (Hue Saturation Lightness)
+  11:Src/color.c   ****  * and HSV (Hue Saturation Value) representations of RGB pixels. 
+  12:Src/color.c   ****  *
+  13:Src/color.c   ****  */
+  14:Src/color.c   **** 
+  15:Src/color.c   **** 
+  16:Src/color.c   **** // Convert HSV values to RGB equivalents. 
+  17:Src/color.c   **** // Parameters: double h, a number between 0 and 360 (degrees)
+  18:Src/color.c   **** //             double s, a number between 0 and 100 (percent)
+  19:Src/color.c   **** //             double v, a number between 0 and 100 (percent)
+  20:Src/color.c   **** //             double *r, *g, *b pointers that get populated with rgb values
+  21:Src/color.c   **** void HsvToRgb(double h, double s, double v, double *r, double *g, double *b)
+  22:Src/color.c   **** {
+  36              		.loc 1 22 1
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccaajcfv.s 			page 2
+
+
+  37              		.cfi_startproc
+  38              		@ args = 0, pretend = 0, frame = 80
+  39              		@ frame_needed = 1, uses_anonymous_args = 0
+  40 0000 80B5     		push	{r7, lr}
+  41              	.LCFI0:
+  42              		.cfi_def_cfa_offset 8
+  43              		.cfi_offset 7, -8
+  44              		.cfi_offset 14, -4
+  45 0002 94B0     		sub	sp, sp, #80
+  46              	.LCFI1:
+  47              		.cfi_def_cfa_offset 88
+  48 0004 00AF     		add	r7, sp, #0
+  49              	.LCFI2:
+  50              		.cfi_def_cfa_register 7
+  51 0006 87ED080B 		vstr.64	d0, [r7, #32]
+  52 000a 87ED061B 		vstr.64	d1, [r7, #24]
+  53 000e 87ED042B 		vstr.64	d2, [r7, #16]
+  54 0012 F860     		str	r0, [r7, #12]
+  55 0014 B960     		str	r1, [r7, #8]
+  56 0016 7A60     		str	r2, [r7, #4]
+  23:Src/color.c   ****   int i;
+  24:Src/color.c   ****   double f, p, q, t;
+  25:Src/color.c   **** 
+  26:Src/color.c   ****   if (h > 360)
+  57              		.loc 1 26 6
+  58 0018 4FF00002 		mov	r2, #0
+  59 001c 824B     		ldr	r3, .L18+8
+  60 001e D7E90801 		ldrd	r0, [r7, #32]
+  61 0022 FFF7FEFF 		bl	__aeabi_dcmpgt
+  62              	.LVL0:
+  63 0026 0346     		mov	r3, r0
+  64 0028 002B     		cmp	r3, #0
+  65 002a 07D0     		beq	.L2
+  27:Src/color.c   ****     h = fmod(h, 360);
+  66              		.loc 1 27 9
+  67 002c 9FED7C1B 		vldr.64	d1, .L18
+  68 0030 97ED080B 		vldr.64	d0, [r7, #32]
+  69 0034 FFF7FEFF 		bl	fmod
+  70 0038 87ED080B 		vstr.64	d0, [r7, #32]
+  71              	.L2:
+  28:Src/color.c   **** 
+  29:Src/color.c   ****   if (h == 360)
+  72              		.loc 1 29 6
+  73 003c 4FF00002 		mov	r2, #0
+  74 0040 794B     		ldr	r3, .L18+8
+  75 0042 D7E90801 		ldrd	r0, [r7, #32]
+  76 0046 FFF7FEFF 		bl	__aeabi_dcmpeq
+  77              	.LVL1:
+  78 004a 0346     		mov	r3, r0
+  79 004c 002B     		cmp	r3, #0
+  80 004e 06D0     		beq	.L17
+  30:Src/color.c   ****     h = 0;
+  81              		.loc 1 30 7
+  82 0050 4FF00002 		mov	r2, #0
+  83 0054 4FF00003 		mov	r3, #0
+  84 0058 C7E90823 		strd	r2, [r7, #32]
+  85 005c 0AE0     		b	.L6
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccaajcfv.s 			page 3
+
+
+  86              	.L17:
+  31:Src/color.c   ****   else
+  32:Src/color.c   ****     h = h / 60.0;
+  87              		.loc 1 32 7
+  88 005e 4FF00002 		mov	r2, #0
+  89 0062 724B     		ldr	r3, .L18+12
+  90 0064 D7E90801 		ldrd	r0, [r7, #32]
+  91 0068 FFF7FEFF 		bl	__aeabi_ddiv
+  92              	.LVL2:
+  93 006c 0246     		mov	r2, r0
+  94 006e 0B46     		mov	r3, r1
+  95 0070 C7E90823 		strd	r2, [r7, #32]
+  96              	.L6:
+  33:Src/color.c   **** 
+  34:Src/color.c   ****   i = (int) trunc(h);
+  97              		.loc 1 34 13
+  98 0074 97ED080B 		vldr.64	d0, [r7, #32]
+  99 0078 FFF7FEFF 		bl	trunc
+ 100 007c 53EC102B 		vmov	r2, r3, d0
+ 101              		.loc 1 34 5
+ 102 0080 1046     		mov	r0, r2
+ 103 0082 1946     		mov	r1, r3
+ 104 0084 FFF7FEFF 		bl	__aeabi_d2iz
+ 105              	.LVL3:
+ 106 0088 0346     		mov	r3, r0
+ 107 008a FB64     		str	r3, [r7, #76]
+  35:Src/color.c   ****   f = h - i;
+ 108              		.loc 1 35 9
+ 109 008c F86C     		ldr	r0, [r7, #76]
+ 110 008e FFF7FEFF 		bl	__aeabi_i2d
+ 111              	.LVL4:
+ 112 0092 0246     		mov	r2, r0
+ 113 0094 0B46     		mov	r3, r1
+ 114              		.loc 1 35 5
+ 115 0096 D7E90801 		ldrd	r0, [r7, #32]
+ 116 009a FFF7FEFF 		bl	__aeabi_dsub
+ 117              	.LVL5:
+ 118 009e 0246     		mov	r2, r0
+ 119 00a0 0B46     		mov	r3, r1
+ 120 00a2 C7E91023 		strd	r2, [r7, #64]
+  36:Src/color.c   ****   p = v * (1.0 - s);
+ 121              		.loc 1 36 16
+ 122 00a6 D7E90623 		ldrd	r2, [r7, #24]
+ 123 00aa 4FF00000 		mov	r0, #0
+ 124 00ae 6049     		ldr	r1, .L18+16
+ 125 00b0 FFF7FEFF 		bl	__aeabi_dsub
+ 126              	.LVL6:
+ 127 00b4 0246     		mov	r2, r0
+ 128 00b6 0B46     		mov	r3, r1
+ 129              		.loc 1 36 5
+ 130 00b8 D7E90401 		ldrd	r0, [r7, #16]
+ 131 00bc FFF7FEFF 		bl	__aeabi_dmul
+ 132              	.LVL7:
+ 133 00c0 0246     		mov	r2, r0
+ 134 00c2 0B46     		mov	r3, r1
+ 135 00c4 C7E90E23 		strd	r2, [r7, #56]
+  37:Src/color.c   ****   q = v * (1.0 - (s * f));
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccaajcfv.s 			page 4
+
+
+ 136              		.loc 1 37 21
+ 137 00c8 D7E91023 		ldrd	r2, [r7, #64]
+ 138 00cc D7E90601 		ldrd	r0, [r7, #24]
+ 139 00d0 FFF7FEFF 		bl	__aeabi_dmul
+ 140              	.LVL8:
+ 141 00d4 0246     		mov	r2, r0
+ 142 00d6 0B46     		mov	r3, r1
+ 143              		.loc 1 37 16
+ 144 00d8 4FF00000 		mov	r0, #0
+ 145 00dc 5449     		ldr	r1, .L18+16
+ 146 00de FFF7FEFF 		bl	__aeabi_dsub
+ 147              	.LVL9:
+ 148 00e2 0246     		mov	r2, r0
+ 149 00e4 0B46     		mov	r3, r1
+ 150              		.loc 1 37 5
+ 151 00e6 D7E90401 		ldrd	r0, [r7, #16]
+ 152 00ea FFF7FEFF 		bl	__aeabi_dmul
+ 153              	.LVL10:
+ 154 00ee 0246     		mov	r2, r0
+ 155 00f0 0B46     		mov	r3, r1
+ 156 00f2 C7E90C23 		strd	r2, [r7, #48]
+  38:Src/color.c   ****   t = v * (1.0 - (s * (1.0 - f)));
+ 157              		.loc 1 38 28
+ 158 00f6 D7E91023 		ldrd	r2, [r7, #64]
+ 159 00fa 4FF00000 		mov	r0, #0
+ 160 00fe 4C49     		ldr	r1, .L18+16
+ 161 0100 FFF7FEFF 		bl	__aeabi_dsub
+ 162              	.LVL11:
+ 163 0104 0246     		mov	r2, r0
+ 164 0106 0B46     		mov	r3, r1
+ 165 0108 1046     		mov	r0, r2
+ 166 010a 1946     		mov	r1, r3
+ 167              		.loc 1 38 21
+ 168 010c D7E90623 		ldrd	r2, [r7, #24]
+ 169 0110 FFF7FEFF 		bl	__aeabi_dmul
+ 170              	.LVL12:
+ 171 0114 0246     		mov	r2, r0
+ 172 0116 0B46     		mov	r3, r1
+ 173              		.loc 1 38 16
+ 174 0118 4FF00000 		mov	r0, #0
+ 175 011c 4449     		ldr	r1, .L18+16
+ 176 011e FFF7FEFF 		bl	__aeabi_dsub
+ 177              	.LVL13:
+ 178 0122 0246     		mov	r2, r0
+ 179 0124 0B46     		mov	r3, r1
+ 180              		.loc 1 38 5
+ 181 0126 D7E90401 		ldrd	r0, [r7, #16]
+ 182 012a FFF7FEFF 		bl	__aeabi_dmul
+ 183              	.LVL14:
+ 184 012e 0246     		mov	r2, r0
+ 185 0130 0B46     		mov	r3, r1
+ 186 0132 C7E90A23 		strd	r2, [r7, #40]
+ 187 0136 FB6C     		ldr	r3, [r7, #76]
+ 188 0138 042B     		cmp	r3, #4
+ 189 013a 5DD8     		bhi	.L7
+ 190 013c 01A2     		adr	r2, .L9
+ 191 013e 52F823F0 		ldr	pc, [r2, r3, lsl #2]
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccaajcfv.s 			page 5
+
+
+ 192 0142 00BF     		.p2align 2
+ 193              	.L9:
+ 194 0144 59010000 		.word	.L13+1
+ 195 0148 79010000 		.word	.L12+1
+ 196 014c 99010000 		.word	.L11+1
+ 197 0150 B9010000 		.word	.L10+1
+ 198 0154 D9010000 		.word	.L8+1
+ 199              		.p2align 1
+ 200              	.L13:
+  39:Src/color.c   **** 
+  40:Src/color.c   ****   switch (i)
+  41:Src/color.c   ****   {
+  42:Src/color.c   **** 		case 0:
+  43:Src/color.c   **** 			*r = v;
+ 201              		.loc 1 43 7
+ 202 0158 F968     		ldr	r1, [r7, #12]
+ 203 015a D7E90423 		ldrd	r2, [r7, #16]
+ 204 015e C1E90023 		strd	r2, [r1]
+  44:Src/color.c   **** 			*g = t;
+ 205              		.loc 1 44 7
+ 206 0162 B968     		ldr	r1, [r7, #8]
+ 207 0164 D7E90A23 		ldrd	r2, [r7, #40]
+ 208 0168 C1E90023 		strd	r2, [r1]
+  45:Src/color.c   **** 			*b = p;
+ 209              		.loc 1 45 7
+ 210 016c 7968     		ldr	r1, [r7, #4]
+ 211 016e D7E90E23 		ldrd	r2, [r7, #56]
+ 212 0172 C1E90023 		strd	r2, [r1]
+  46:Src/color.c   **** 			break;
+ 213              		.loc 1 46 4
+ 214 0176 4FE0     		b	.L14
+ 215              	.L12:
+  47:Src/color.c   **** 
+  48:Src/color.c   **** 		case 1:
+  49:Src/color.c   **** 			*r = q;
+ 216              		.loc 1 49 7
+ 217 0178 F968     		ldr	r1, [r7, #12]
+ 218 017a D7E90C23 		ldrd	r2, [r7, #48]
+ 219 017e C1E90023 		strd	r2, [r1]
+  50:Src/color.c   **** 			*g = v;
+ 220              		.loc 1 50 7
+ 221 0182 B968     		ldr	r1, [r7, #8]
+ 222 0184 D7E90423 		ldrd	r2, [r7, #16]
+ 223 0188 C1E90023 		strd	r2, [r1]
+  51:Src/color.c   **** 			*b = p;
+ 224              		.loc 1 51 7
+ 225 018c 7968     		ldr	r1, [r7, #4]
+ 226 018e D7E90E23 		ldrd	r2, [r7, #56]
+ 227 0192 C1E90023 		strd	r2, [r1]
+  52:Src/color.c   **** 			break;
+ 228              		.loc 1 52 4
+ 229 0196 3FE0     		b	.L14
+ 230              	.L11:
+  53:Src/color.c   **** 
+  54:Src/color.c   **** 		case 2:
+  55:Src/color.c   **** 			*r = p;
+ 231              		.loc 1 55 7
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccaajcfv.s 			page 6
+
+
+ 232 0198 F968     		ldr	r1, [r7, #12]
+ 233 019a D7E90E23 		ldrd	r2, [r7, #56]
+ 234 019e C1E90023 		strd	r2, [r1]
+  56:Src/color.c   **** 			*g = v;
+ 235              		.loc 1 56 7
+ 236 01a2 B968     		ldr	r1, [r7, #8]
+ 237 01a4 D7E90423 		ldrd	r2, [r7, #16]
+ 238 01a8 C1E90023 		strd	r2, [r1]
+  57:Src/color.c   **** 			*b = t;
+ 239              		.loc 1 57 7
+ 240 01ac 7968     		ldr	r1, [r7, #4]
+ 241 01ae D7E90A23 		ldrd	r2, [r7, #40]
+ 242 01b2 C1E90023 		strd	r2, [r1]
+  58:Src/color.c   **** 			break;
+ 243              		.loc 1 58 4
+ 244 01b6 2FE0     		b	.L14
+ 245              	.L10:
+  59:Src/color.c   **** 
+  60:Src/color.c   **** 		case 3:
+  61:Src/color.c   **** 			*r = p;
+ 246              		.loc 1 61 7
+ 247 01b8 F968     		ldr	r1, [r7, #12]
+ 248 01ba D7E90E23 		ldrd	r2, [r7, #56]
+ 249 01be C1E90023 		strd	r2, [r1]
+  62:Src/color.c   **** 			*g = q;
+ 250              		.loc 1 62 7
+ 251 01c2 B968     		ldr	r1, [r7, #8]
+ 252 01c4 D7E90C23 		ldrd	r2, [r7, #48]
+ 253 01c8 C1E90023 		strd	r2, [r1]
+  63:Src/color.c   **** 			*b = v;
+ 254              		.loc 1 63 7
+ 255 01cc 7968     		ldr	r1, [r7, #4]
+ 256 01ce D7E90423 		ldrd	r2, [r7, #16]
+ 257 01d2 C1E90023 		strd	r2, [r1]
+  64:Src/color.c   **** 			break;
+ 258              		.loc 1 64 4
+ 259 01d6 1FE0     		b	.L14
+ 260              	.L8:
+  65:Src/color.c   **** 
+  66:Src/color.c   **** 		case 4:
+  67:Src/color.c   **** 			*r = t;
+ 261              		.loc 1 67 7
+ 262 01d8 F968     		ldr	r1, [r7, #12]
+ 263 01da D7E90A23 		ldrd	r2, [r7, #40]
+ 264 01de C1E90023 		strd	r2, [r1]
+  68:Src/color.c   **** 			*g = p;
+ 265              		.loc 1 68 7
+ 266 01e2 B968     		ldr	r1, [r7, #8]
+ 267 01e4 D7E90E23 		ldrd	r2, [r7, #56]
+ 268 01e8 C1E90023 		strd	r2, [r1]
+  69:Src/color.c   **** 			*b = v;
+ 269              		.loc 1 69 7
+ 270 01ec 7968     		ldr	r1, [r7, #4]
+ 271 01ee D7E90423 		ldrd	r2, [r7, #16]
+ 272 01f2 C1E90023 		strd	r2, [r1]
+  70:Src/color.c   **** 			break;
+ 273              		.loc 1 70 4
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccaajcfv.s 			page 7
+
+
+ 274 01f6 0FE0     		b	.L14
+ 275              	.L7:
+  71:Src/color.c   **** 
+  72:Src/color.c   **** 		default:
+  73:Src/color.c   **** 			*r = v;
+ 276              		.loc 1 73 7
+ 277 01f8 F968     		ldr	r1, [r7, #12]
+ 278 01fa D7E90423 		ldrd	r2, [r7, #16]
+ 279 01fe C1E90023 		strd	r2, [r1]
+  74:Src/color.c   **** 			*g = p;
+ 280              		.loc 1 74 7
+ 281 0202 B968     		ldr	r1, [r7, #8]
+ 282 0204 D7E90E23 		ldrd	r2, [r7, #56]
+ 283 0208 C1E90023 		strd	r2, [r1]
+  75:Src/color.c   **** 			*b = q;
+ 284              		.loc 1 75 7
+ 285 020c 7968     		ldr	r1, [r7, #4]
+ 286 020e D7E90C23 		ldrd	r2, [r7, #48]
+ 287 0212 C1E90023 		strd	r2, [r1]
+  76:Src/color.c   **** 			break;
+ 288              		.loc 1 76 4
+ 289 0216 00BF     		nop
+ 290              	.L14:
+  77:Src/color.c   ****   }
+  78:Src/color.c   **** }
+ 291              		.loc 1 78 1
+ 292 0218 00BF     		nop
+ 293 021a 5037     		adds	r7, r7, #80
+ 294              	.LCFI3:
+ 295              		.cfi_def_cfa_offset 8
+ 296 021c BD46     		mov	sp, r7
+ 297              	.LCFI4:
+ 298              		.cfi_def_cfa_register 13
+ 299              		@ sp needed
+ 300 021e 80BD     		pop	{r7, pc}
+ 301              	.L19:
+ 302              		.align	3
+ 303              	.L18:
+ 304 0220 00000000 		.word	0
+ 305 0224 00807640 		.word	1081507840
+ 306 0228 00807640 		.word	1081507840
+ 307 022c 00004E40 		.word	1078853632
+ 308 0230 0000F03F 		.word	1072693248
+ 309              		.cfi_endproc
+ 310              	.LFE0:
+ 312              		.text
+ 313              	.Letext0:
+ 314              		.file 2 "/Users/isikcanyilmaz/KODMOD/b607/test/mcu/tools/gcc9.2.1/mac/arm-none-eabi/include/sys/lo
+ 315              		.file 3 "/Users/isikcanyilmaz/KODMOD/b607/test/mcu/tools/gcc9.2.1/mac/arm-none-eabi/include/sys/_t
+ 316              		.file 4 "/Users/isikcanyilmaz/KODMOD/b607/test/mcu/tools/gcc9.2.1/mac/lib/gcc/arm-none-eabi/9.2.1/
+ 317              		.file 5 "/Users/isikcanyilmaz/KODMOD/b607/test/mcu/tools/gcc9.2.1/mac/arm-none-eabi/include/sys/re
+ 318              		.file 6 "/Users/isikcanyilmaz/KODMOD/b607/test/mcu/tools/gcc9.2.1/mac/arm-none-eabi/include/math.h
+ 319              		.file 7 "/Users/isikcanyilmaz/KODMOD/b607/test/mcu/tools/gcc9.2.1/mac/arm-none-eabi/include/stdlib
+ARM GAS  /var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccaajcfv.s 			page 8
+
+
+DEFINED SYMBOLS
+                            *ABS*:0000000000000000 color.c
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccaajcfv.s:25     .text.HsvToRgb:0000000000000000 $t
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccaajcfv.s:33     .text.HsvToRgb:0000000000000000 HsvToRgb
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccaajcfv.s:194    .text.HsvToRgb:0000000000000144 $d
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccaajcfv.s:199    .text.HsvToRgb:0000000000000158 $t
+/var/folders/k7/81v8fz9j4v98_s0dd31l1wsr0000gn/T//ccaajcfv.s:304    .text.HsvToRgb:0000000000000220 $d
+
+UNDEFINED SYMBOLS
+__aeabi_dcmpgt
+__aeabi_dcmpeq
+__aeabi_ddiv
+__aeabi_d2iz
+__aeabi_i2d
+__aeabi_dsub
+__aeabi_dmul
+fmod
+trunc
