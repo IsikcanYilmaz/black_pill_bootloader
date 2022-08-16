@@ -50,7 +50,7 @@ void Animation_RandomTriangles_Init(AddrLEDPanel_t *panels, uint8_t numPanels, R
   context.numLeds = panels->numLeds * numPanels;
 
   context.lowerBrightness = 0;
-  context.upperBrightness = 225;
+  context.upperBrightness = 255;
 }
 
 // TODO // Change SendMessage to ProcessMessage
@@ -190,15 +190,15 @@ static void randomTriangles1(void)
 
   static uint8_t rscaled, gscaled, bscaled;
 
-  static double rowHueOffset = 0;
+  static double rowHueOffset = 40;
   static bool rowHueOffsetAdd = true;
-  static double rowHueOffsetRate = 0.01;
+  static double rowHueOffsetRate = 0.00;
 
   static double h = 0.0;
   static double s = 0.999;
   static double v = 0.100;
 
-  static double hrate = 0.5;
+  static double hrate = 1;
   static double srate = 0.0;
   static double vrate = 0;
 

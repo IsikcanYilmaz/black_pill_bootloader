@@ -102,14 +102,14 @@ static uint32_t AddrLEDManager_RefreshCallback(void)
 
 void AddrLEDManager_Init(void)
 {
-  // Initialize the strip(s). This initialize one continuous strip. 
+  // Initialize the strip(s). This initializes one continuous strip. 
   // If multiple panels are daisychained, that counts as one strip.
   ledStrip1 = (AddrLEDStrip_t) {
     .numLeds                 = ledStrip1Size,
-      .pwmTimerHandle        = &LED_PANEL_1_PWM_TIMER_HANDLE,
-      .pwmTimerHandleChannel = LED_PANEL_1_PWM_TIMER_CHANNEL,
-      .pixels                = (Pixel_t *) &ledStrip1Pixels,
-      .pixelPacketBuffer     = (uint8_t *) &ledStrip1PacketBuffer,
+    .pwmTimerHandle          = &LED_PANEL_1_PWM_TIMER_HANDLE,
+    .pwmTimerHandleChannel   = LED_PANEL_1_PWM_TIMER_CHANNEL,
+    .pixels                  = (Pixel_t *) &ledStrip1Pixels,
+    .pixelPacketBuffer       = (uint8_t *) &ledStrip1PacketBuffer,
   };
   memset(&ledStrip1PacketBuffer, 0x0, sizeof(ledStrip1PacketBuffer));
   AddrLED_Init(&ledStrip1);

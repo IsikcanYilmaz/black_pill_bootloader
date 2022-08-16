@@ -84,7 +84,7 @@ void Animation_RandomFade_Init(AddrLEDPanel_t *panels, uint8_t numPanels, Random
   context.lowerWaitTime      = 10;
   context.upperWaitTime      = 50;
   context.cutoff             = 0;
-  context.singleValForAllChannels = false;
+  context.singleValForAllChannels = true;
 
   // Start pixels with a wait time so all of them dont go full brightness at the same time at the beginning
   for (int i = 0; i < context.numLeds; i++)
@@ -102,6 +102,7 @@ AnimationState_e Animation_RandomFade_GetState(void)
 {
   return context.state;
 }
+
 void Animation_RandomFade_SendMessage(AnimationMessage_t *message)
 {
   switch(message->signal)
