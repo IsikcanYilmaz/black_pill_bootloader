@@ -76,3 +76,70 @@ void HsvToRgb(double h, double s, double v, double *r, double *g, double *b)
 			break;
   }
 }
+
+void RgbToHsvStruct(RgbColor_t *rgb, HsvColor_t *hsv)
+{
+
+}
+
+void HsvToRgbStruct(HsvColor_t *hsv, RgbColor_t *rgb)
+{
+  int i;
+  double f, p, q, t;
+  double h = hsv->h;
+  double s = hsv->s;
+  double v = hsv->v;
+
+  if (h > 360)
+    h = fmod(h, 360);
+
+  if (h == 360)
+    h = 0;
+  else
+    h = h / 60.0;
+
+  i = (int) trunc(h);
+  f = h - i;
+  p = v * (1.0 - s);
+  q = v * (1.0 - (s * f));
+  t = v * (1.0 - (s * (1.0 - f)));
+
+  switch (i)
+  {
+		case 0:
+			rgb->r = v;
+			rgb->g = t;
+			rgb->b = p;
+			break;
+
+		case 1:
+			rgb->r = q;
+			rgb->g = v;
+			rgb->b = p;
+			break;
+
+		case 2:
+			rgb->r = p;
+			rgb->g = v;
+			rgb->b = t;
+			break;
+
+		case 3:
+			rgb->r = p;
+			rgb->g = q;
+			rgb->b = v;
+			break;
+
+		case 4:
+			rgb->r = t;
+			rgb->g = p;
+			rgb->b = v;
+			break;
+
+		default:
+			rgb->r = v;
+			rgb->g = p;
+			rgb->b = q;
+			break;
+  }
+}
