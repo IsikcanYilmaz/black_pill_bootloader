@@ -186,7 +186,7 @@ void AddrLEDManager_PlayNextAnimation(void)
 void AddrLEDManager_SanityTest(void)
 {
   while(1){
-    TOGGLE_ONBOARD_LED();
+    /*TOGGLE_ONBOARD_LED();*/
     
     // If we're in process of skipping, wait for current animation to ramp down
     if (animationSkipInProgress)

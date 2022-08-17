@@ -1,6 +1,7 @@
 #include "button_driver.h"
 #include "sw_timers.h"
 #include "addressable_led_manager.h"
+#include "dbg_uart.h"
 
 /*
  * BUTTON DRIVER
@@ -39,20 +40,25 @@ static uint32_t DebounceTimeout(void)
       if (userButton1.pressed == true)
       {
         AddrLEDManager_PlayNextAnimation();
+        logprint("button press. UART->RDR 0x%x\n", getRdr()); 
         if (deltaT < CNFG_BUTTON_SHORT_PRESS_MS)
         {
+          logprint("Short press\n");
           // Short press happened
         }
         else if (deltaT < CNFG_BUTTON_LONG_PRESS_MS)
         {
+          logprint("Long press\n");
           // Long press happened
         }
         else if (deltaT < CNFG_BUTTON_VLONG_PRESS_MS)
         {
+          logprint("Very long press\n");
           // Very long press happened (3second)
         }
         else if (deltaT < CNFG_BUTTON_VVLONG_PRESS_MS)
         {
+          logprint("Very very long press\n");
           // Very very long press happened (10 second)
         }
         else

@@ -32,6 +32,7 @@
 #include "addressable_led_manager.h"
 #include "sw_timers.h"
 #include "geometry.h"
+#include "dbg_uart.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -110,6 +111,7 @@ int main(void)
   Geometry_Init();
 
   // Infinite loop v // TODO // refactor this test stuff
+  logprint("Light Cube Initialized\n");
   AddrLEDManager_SanityTest();
   //AddrLEDManager_RefreshTimerStart();
   /* USER CODE END 2 */
