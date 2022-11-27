@@ -196,7 +196,7 @@ static void randomFade2(void)
 {
   static uint32_t count = 0;
   static Pixel_t currColor = (Pixel_t) {.red = 0, .green = 0, .blue = 0};
-  if (count % 100 == 0)
+  if (count % 1000 == 0)
   {
     currColor = (Pixel_t) getRandomColor(context.lowerBrightness, context.upperBrightness);
   }

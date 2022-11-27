@@ -112,7 +112,7 @@ int main(void)
 
   // Infinite loop v // TODO // refactor this test stuff
   logprint("Light Cube Initialized\n");
-  AddrLEDManager_SanityTest();
+  AddrLEDManager_Workloop();
   //AddrLEDManager_RefreshTimerStart();
   /* USER CODE END 2 */
 

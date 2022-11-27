@@ -184,6 +184,9 @@ void AddrLEDManager_PlayNextAnimation(void)
 }
 
 void AddrLEDManager_SanityTest(void)
+{}
+
+void AddrLEDManager_Workloop(void)
 {
   while(1){
     /*TOGGLE_ONBOARD_LED();*/
