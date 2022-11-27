@@ -33,7 +33,7 @@ static uint32_t DebounceTimeout(void)
     uint32_t deltaT = SwTimer_GetCountMs() - userButton1.lastInputMs;
     if (state == CNFG_BUTTON_PRESSED_STATE) // PRESS 
     {
-      logprint("button press. UART->RDR 0x%x\n", getRdr()); 
+      logprint("Button press\n"); 
       userButton1.pressed = true;
     }
     else // state == GPIO_PIN_RESET // RELEASE
@@ -41,7 +41,7 @@ static uint32_t DebounceTimeout(void)
       if (userButton1.pressed == true)
       {
         AddrLEDManager_PlayNextAnimation();
-        logprint("button release. UART->RDR 0x%x\n", getRdr()); 
+        logprint("Button release\n"); 
         if (deltaT < CNFG_BUTTON_SHORT_PRESS_MS)
         {
           logprint("Short press\n");
@@ -64,6 +64,7 @@ static uint32_t DebounceTimeout(void)
         }
         else
         {
+          logprint("Very very very long press\n");
           // Longer than 10seconds. not defined currently
         }
       }
@@ -103,14 +104,12 @@ void ButtonDriver_Init(void)
 
 void ButtonDriver_ISR(void)
 {
-  logprint("ButtonDriver_ISR\n");
   if (!userButton1.debouncePending)
   {
     CRITICAL_SECTION_BEGIN; // TODO // this may not be crit section worthy
     userButton1.debouncePending = true;
     GPIO_PinState state = HAL_GPIO_ReadPin(userButton1.port, userButton1.pin);
     userButton1.debounceCheck = state;
-    logprint("state %d\n", state);
     SwTimer_Start(&buttonDebounceTimer);
     CRITICAL_SECTION_END;
   }

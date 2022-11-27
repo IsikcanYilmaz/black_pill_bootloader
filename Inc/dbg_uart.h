@@ -15,6 +15,6 @@ extern char dbgUartTxBuffer[];
 
 void DbgUart_Init(void);
 void DbgUart_Isr(void);
-void DbgUart_ProcessCommand(char *str);
+void DbgUart_ProcessCommand(char *str, uint16_t size);
 
 uint16_t getRdr();

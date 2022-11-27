@@ -5,6 +5,7 @@
 #include "random_fade_animation.h"
 #include "random_triangles_animation.h"
 #include "sw_timers.h"
+#include "dbg_uart.h"
 #include <string.h>
 #include <stdlib.h>
 
@@ -47,13 +48,15 @@ AnimationInterface_t animations[NUM_ANIMATIONS] =
                             .init = Animation_RandomFade_Init, 
                             .update = Animation_RandomFade_Update,  
                             .getState = Animation_RandomFade_GetState,
-                            .sendMessage = Animation_RandomFade_SendMessage
+                            .sendMessage = Animation_RandomFade_SendMessage,
+                            .animationStr = "Random Fade"
                            },
   [ANIMATION_RANDOMTRIANGLES] = {
                             .init = Animation_RandomTriangles_Init, 
                             .update = Animation_RandomTriangles_Update,  
                             .getState = Animation_RandomTriangles_GetState,
-                            .sendMessage = Animation_RandomTriangles_SendMessage
+                            .sendMessage = Animation_RandomTriangles_SendMessage,
+                            .animationStr = "Random Triangles"
                            },
 
 };
@@ -137,6 +140,9 @@ void AddrLEDManager_Init(void)
   // Initialize refresh timer
   refreshTimer.fn = AddrLEDManager_RefreshCallback;
   refreshTimer.Ms = 100;
+
+  logprint("Animations initialized\n");
+  logprint("Current Animation %s\n", animations[animationIndex].animationStr);
 }
 
 Pixel_t* GetPixelByLocalCoordinate(Position_e pos, uint8_t x, uint8_t y)
@@ -181,6 +187,8 @@ void AddrLEDManager_PlayNextAnimation(void)
 
   // Set our state machine to "transitioning from animation to animation"
   animationSkipInProgress = true;
+
+  logprint("Skipping animation. Current animation %s\n", animations[animationIndex].animationStr);
 }
 
 void AddrLEDManager_SanityTest(void)

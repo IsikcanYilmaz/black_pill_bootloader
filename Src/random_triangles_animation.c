@@ -9,7 +9,6 @@
 /*
  *  RANDOM TRIANGLES ANIMATION MODULE 
  *
-
  */
 
 typedef struct {

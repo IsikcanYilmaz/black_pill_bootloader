@@ -73,6 +73,7 @@ typedef struct {
   void (*update) (void);
   AnimationState_e (*getState) (void);
   void (*sendMessage) (AnimationMessage_t *message);
+  char *animationStr;
 } AnimationInterface_t;
 
 typedef struct {

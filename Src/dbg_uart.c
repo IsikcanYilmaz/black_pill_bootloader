@@ -76,18 +76,21 @@ void DbgUart_Isr(void)
   if (data == '\r') // If this is a new line/enter, take in command
   {
     dbgUartRxBuffer[input_cursor] = '\0';
-    logprint("UART Rx Buf: %d %s\n", input_cursor, dbgUartRxBuffer);
+    logprint("\r\n");
+    DbgUart_ProcessCommand(&dbgUartRxBuffer, input_cursor);
     input_cursor = 0;
   }
   else if (data == '\b' && input_cursor) // Backspace
   {
     input_cursor--;
     dbgUartRxBuffer[input_cursor] = '\0';
+    logprint("\b \b");
   }
   else // All other characters
   {
     dbgUartRxBuffer[input_cursor] = data;
     input_cursor++;
+    logprint("%c", data);
   }
 
   // BUFFER OVERFLOW
@@ -139,7 +142,8 @@ uint16_t getRdr()
   return huart2.Instance->RDR;
 }
 
-void DbgUart_ProcessCommand(char *str)
+void DbgUart_ProcessCommand(char *str, uint16_t size)
 {
-  
+  logprint("CMD[%s]\n", str);
+  //TODO
 }
