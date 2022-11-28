@@ -73,6 +73,7 @@ Src/addressable_led_manager.c \
 Src/led.c \
 Src/random_fade_animation.c \
 Src/random_triangles_animation.c \
+Src/lines_animation.c \
 Src/sw_timers.c \
 Src/utils.c \
 Src/color.c \

@@ -4,6 +4,7 @@
 #include "utils.h"
 #include "random_fade_animation.h"
 #include "random_triangles_animation.h"
+#include "lines_animation.h"
 #include "sw_timers.h"
 #include "dbg_uart.h"
 #include <string.h>
@@ -41,6 +42,7 @@ AddrLEDPanel_t panels[5];
 // modules during their inits.
 RandomFadePixelData_t randomFadePixelData[NUM_LEDS_TOTAL];
 RandomTrianglesPixelData_t randomTrianglesPixelData[NUM_LEDS_TOTAL];
+LinesPixelData_t linesPixelData[NUM_LEDS_TOTAL];
 
 AnimationInterface_t animations[NUM_ANIMATIONS] = 
 {
@@ -57,6 +59,13 @@ AnimationInterface_t animations[NUM_ANIMATIONS] =
                             .getState = Animation_RandomTriangles_GetState,
                             .sendMessage = Animation_RandomTriangles_SendMessage,
                             .animationStr = "Random Triangles"
+                           },
+  [ANIMATION_LINES] = {
+                            .init = Animation_Lines_Init, 
+                            .update = Animation_Lines_Update,  
+                            .getState = Animation_Lines_GetState,
+                            .sendMessage = Animation_Lines_SendMessage,
+                            .animationStr = "Lines"
                            },
 
 };
@@ -93,6 +102,11 @@ static uint32_t AddrLEDManager_RefreshCallback(void)
     case 1:
       {
         Animation_RandomFade_Update();
+        break;
+      }
+    case 2:
+      {
+        Animation_Lines_Update();
         break;
       }
   }
@@ -136,6 +150,7 @@ void AddrLEDManager_Init(void)
   // Initialize our animations
   Animation_RandomFade_Init((AddrLEDPanel_t *) &panels, NUM_PANELS, (RandomFadePixelData_t *) &randomFadePixelData);
   Animation_RandomTriangles_Init((AddrLEDPanel_t *) &panels, NUM_PANELS, (RandomTrianglesPixelData_t *) &randomTrianglesPixelData);
+  Animation_Lines_Init((AddrLEDPanel_t *) &panels, NUM_PANELS, (LinesPixelData_t *) &linesPixelData);
 
   // Initialize refresh timer
   refreshTimer.fn = AddrLEDManager_RefreshCallback;
@@ -187,8 +202,6 @@ void AddrLEDManager_PlayNextAnimation(void)
 
   // Set our state machine to "transitioning from animation to animation"
   animationSkipInProgress = true;
-
-  logprint("Skipping animation. Current animation %s\n", animations[animationIndex].animationStr);
 }
 
 void AddrLEDManager_SanityTest(void)
@@ -209,6 +222,7 @@ void AddrLEDManager_Workloop(void)
         AnimationMessage_t start = {BEGIN, NULL};
         animations[animationIndex % NUM_ANIMATIONS].sendMessage(&start);
         animationSkipInProgress = false;
+        logprint("Skipped animation. Current animation %s\n", animations[animationIndex].animationStr);
       }
     }
     animations[animationIndex % NUM_ANIMATIONS].update();
