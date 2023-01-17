@@ -3,7 +3,10 @@
 #include "stm32l4xx_hal_usart.h"
 #include "usart.h"
 #include <string.h>
+#include <stdlib.h>
+#include <ctype.h>
 #include "utils.h"
+#include "addressable_led_manager.h"
 
 /*
  * DBG UART
@@ -81,6 +84,49 @@ uint16_t getRdr()
   return huart2.Instance->RDR;
 }
 
+void test(char **argv)
+{
+  Position_e pos = NUM_SIDES;
+
+  if (stringsSame(argv[1], "n"))
+  {
+    pos = NORTH;
+  }
+  else if (stringsSame(argv[1], "e"))
+  {
+    pos = EAST;
+  }
+  else if (stringsSame(argv[1], "s"))
+  {
+    pos = SOUTH;
+  }
+  else if (stringsSame(argv[1], "w"))
+  {
+    pos = WEST;
+  }
+  else if (stringsSame(argv[1], "t"))
+  {
+    pos = TOP;
+  }
+  else
+  {
+    logprint("BAD SIDE DESCRIPTOR! %s\n", argv[0]);
+    return;
+  }
+
+  SET_PIXEL_ARGS args = {
+    .pos = pos,
+    .x = atoi(argv[2]),
+    .y = atoi(argv[3]),
+    .r = atoi(argv[4]),
+    .g = atoi(argv[5]),
+    .b = atoi(argv[6]),
+  };
+  logprint("test pos %d, x %d y %d, r%d g%d b%d\n", args.pos, args.x, args.y, args.r, args.g, args.b);
+  AnimationMessage_t setPix = {SET_PIXEL, (uint64_t *) &args};
+  AddrLEDManager_SendMessageToCurrentAnimation(&setPix); 
+} 
+
 void DbgUart_ProcessCommand(char *str, uint16_t size)
 {
   logprint("CMD[%s]\n", str);
@@ -119,8 +165,14 @@ void DbgUart_ProcessCommand(char *str, uint16_t size)
     return;
   }
 
-  for (i = 0; i < argc; i++)
+  // // //
+  if (stringsSame(argv[0], "set_pixel"))
   {
-    logprint("%d: %s\n", i, argv[i]);
+    test(argv);
   }
+
+  /*for (i = 0; i < argc; i++)*/
+  /*{*/
+    /*logprint("%d: %s\n", i, argv[i]);*/
+  /*}*/
 }

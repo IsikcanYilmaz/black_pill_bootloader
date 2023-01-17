@@ -29,7 +29,7 @@ extern "C" {
 #include "main.h"
 
 /* USER CODE BEGIN Includes */
-
+#define DBG_UART_BAUDRATE 9600; // 115200
 /* USER CODE END Includes */
 
 extern UART_HandleTypeDef huart4;

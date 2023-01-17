@@ -32,6 +32,11 @@ typedef struct {
   uint8_t globalX;
   uint8_t globalY;
   uint8_t globalZ;
+
+  //Pixel_t *pixN; // The pixel to the North, East, South, West of this pixel
+  //Pixel_t *pixE;
+  //Pixel_t *pixS;
+  //Pixel_t *PixW; // TODO
 } Pixel_t;
 
 // Below denotes the raw datastructure that will be sent to the the WS2812B via DMA.

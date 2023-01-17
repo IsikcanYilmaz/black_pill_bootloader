@@ -9,8 +9,7 @@
 #define MIN(x, y)               ((x < y) ? x : y)
 
 Pixel_t getRandomColor(uint8_t lower, uint8_t upper);
-
-
+bool stringsSame(char *str1, char *str2);
 
 
 #endif

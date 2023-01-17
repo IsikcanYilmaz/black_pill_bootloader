@@ -55,11 +55,24 @@ typedef enum {
   BEGIN,
   PAUSE,
   STOP,
+  SET_PIXEL,
 } AnimationSignal_e;
+
+// SIGNAL ARGS
+typedef struct __attribute__((__packed__))
+{
+  uint8_t pos;
+  uint8_t x;
+  uint8_t y;
+  uint8_t r;
+  uint8_t g;
+  uint8_t b;
+  uint16_t reserved;
+} SET_PIXEL_ARGS;
 
 typedef struct {
   AnimationSignal_e signal;
-  uint64_t payload; // TODO think about this. you may wanna pass more data to animations
+  uint64_t *payload; // TODO think about this. you may wanna pass more data to animations
 } AnimationMessage_t;
 
 typedef enum {
@@ -88,12 +101,12 @@ typedef struct {
 
 void AddrLEDManager_Init(void);
 Pixel_t* GetPixelByLocalCoordinate(Position_e pos, uint8_t x, uint8_t y);
-Pixel_t* GetPixelByGlobalCoordinate(uint8_t x, uint8_t y, uint8_t z);
-inline AddrLEDPanel_t* GetPanelByLocation(Position_e pos);
+AddrLEDPanel_t* GetPanelByLocation(Position_e pos);
 void AddrLEDManager_Workloop(void);
 void AddrLEDManager_SanityTest(void);
 void AddrLEDManager_PlayNextAnimation(void);
-
+void AddrLEDManager_SetPixelRgb(Position_e pos, uint8_t x, uint8_t y, uint8_t r, uint8_t g, uint8_t b);
+void AddrLEDManager_SendMessageToCurrentAnimation(AnimationMessage_t *msg);
 extern volatile uint8_t animationIndex;
 
 #endif

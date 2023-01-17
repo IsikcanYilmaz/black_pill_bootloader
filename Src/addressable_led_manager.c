@@ -92,22 +92,26 @@ static void InitPanel(AddrLEDPanel_t *p)
 static uint32_t AddrLEDManager_RefreshCallback(void)
 {
   TOGGLE_ONBOARD_LED();
-  switch (animationIndex % 2)
+  switch (animationIndex)
   {
-    case 0:
+    case ANIMATION_RANDOMTRIANGLES:
       {
         Animation_RandomTriangles_Update();
         break;
       }
-    case 1:
+    case ANIMATION_RANDOMFADE:
       {
         Animation_RandomFade_Update();
         break;
       }
-    case 2:
+    case ANIMATION_LINES:
       {
         Animation_Lines_Update();
         break;
+      }
+    default:
+      {
+        return 0;
       }
   }
   HAL_Delay(1);
@@ -147,6 +151,25 @@ void AddrLEDManager_Init(void)
     panels[pos] = p;
   }
 
+  // Set each pixels neighbors
+  // 
+  //    []
+  // [] [] []
+  //    []
+  for (int panelIdx = 0; panelIdx < NUM_PANELS; panelIdx++)
+  {
+    Position_e pos = (Position_e) panelIdx;
+    for (int x = 0; x < NUM_LEDS_PER_PANEL_SIDE; x++)
+    {
+      for (int y = 0; y < NUM_LEDS_PER_PANEL_SIDE; y++)
+      {
+        Pixel_t *p = GetPixelByLocalCoordinate(pos, x, y);
+        // TODO
+      }
+    }
+  }
+
+
   // Initialize our animations
   Animation_RandomFade_Init((AddrLEDPanel_t *) &panels, NUM_PANELS, (RandomFadePixelData_t *) &randomFadePixelData);
   Animation_RandomTriangles_Init((AddrLEDPanel_t *) &panels, NUM_PANELS, (RandomTrianglesPixelData_t *) &randomTrianglesPixelData);
@@ -160,35 +183,6 @@ void AddrLEDManager_Init(void)
   logprint("Current Animation %s\n", animations[animationIndex].animationStr);
 }
 
-Pixel_t* GetPixelByLocalCoordinate(Position_e pos, uint8_t x, uint8_t y)
-{
-  AddrLEDPanel_t *panel = &panels[pos];
-  AddrLEDStrip_t *strip = panel->strip;
-  uint8_t ledIdx;
-#if LEDS_BEGIN_AT_BOTTOM
-  y = NUM_LEDS_PER_PANEL_SIDE - y - 1;
-#endif
-  if (y % 2 == 0)
-  {
-    ledIdx = x + (NUM_LEDS_PER_PANEL_SIDE * y);
-  }
-  else
-  {
-    ledIdx = (NUM_LEDS_PER_PANEL_SIDE - 1 - x) + (NUM_LEDS_PER_PANEL_SIDE * y);
-  }
-  return &(panel->stripFirstPixel[ledIdx]);
-}
-
-Pixel_t* GetPixelByGlobalCoordinate(uint8_t x, uint8_t y, uint8_t z)
-{
-  return NULL;
-} 
-
-inline AddrLEDPanel_t* GetPanelByLocation(Position_e pos)
-{
-  return NULL;
-}
-
 void AddrLEDManager_RefreshTimerStart(void)
 {
   SwTimer_Start(&refreshTimer);
@@ -198,10 +192,15 @@ void AddrLEDManager_PlayNextAnimation(void)
 {
   // Tell current animation to start ramping down
   AnimationMessage_t pauseMsg = {PAUSE, NULL};
-  animations[animationIndex % NUM_ANIMATIONS].sendMessage(&pauseMsg);
+  AddrLEDManager_SendMessageToCurrentAnimation(&pauseMsg);
 
   // Set our state machine to "transitioning from animation to animation"
   animationSkipInProgress = true;
+}
+
+void AddrLEDManager_SendMessageToCurrentAnimation(AnimationMessage_t *msg)
+{
+  animations[animationIndex].sendMessage(msg);
 }
 
 void AddrLEDManager_SanityTest(void)
@@ -218,9 +217,9 @@ void AddrLEDManager_Workloop(void)
       AnimationState_e animState = animations[animationIndex % NUM_ANIMATIONS].getState();
       if (animState == STOPPED)
       {
-        animationIndex++;
+        animationIndex = (animationIndex + 1) % NUM_ANIMATIONS;
         AnimationMessage_t start = {BEGIN, NULL};
-        animations[animationIndex % NUM_ANIMATIONS].sendMessage(&start);
+        AddrLEDManager_SendMessageToCurrentAnimation(&start);
         animationSkipInProgress = false;
         logprint("Skipped animation. Current animation %s\n", animations[animationIndex].animationStr);
       }
@@ -230,3 +229,45 @@ void AddrLEDManager_Workloop(void)
     HAL_Delay(10);
   }
 }
+
+void AddrLEDManager_SetPixelRgb(Position_e pos, uint8_t x, uint8_t y, uint8_t r, uint8_t g, uint8_t b)
+{
+  // sanity checks
+  if (pos >= NUM_SIDES || x > NUM_LEDS_PER_PANEL_SIDE || y > NUM_LEDS_PER_PANEL_SIDE)
+  {
+    logprint("Incorrect args to SetPixelRgb %d %d %d\n", pos, x, y);
+    return;  // TODO have an error type
+  }
+  AddrLEDPanel_t *panel = GetPanelByLocation(pos);
+  Pixel_t *pixel = GetPixelByLocalCoordinate(pos, x, y);
+  pixel->red = r;
+  pixel->green = g;
+  pixel->blue = b;
+}
+
+// Geometry related
+Pixel_t* GetPixelByLocalCoordinate(Position_e pos, uint8_t x, uint8_t y)
+{
+  AddrLEDPanel_t *panel = GetPanelByLocation(pos);
+  AddrLEDStrip_t *strip = panel->strip;
+  uint8_t ledIdx;
+#if LEDS_BEGIN_AT_BOTTOM
+  y = NUM_LEDS_PER_PANEL_SIDE - y - 1;
+#endif
+  if (y % 2 == 0)
+  {
+    ledIdx = x + (NUM_LEDS_PER_PANEL_SIDE * y);
+  }
+  else
+  {
+    ledIdx = (NUM_LEDS_PER_PANEL_SIDE - 1 - x) + (NUM_LEDS_PER_PANEL_SIDE * y);
+  }
+  return &(panel->stripFirstPixel[ledIdx]);
+}
+
+AddrLEDPanel_t* GetPanelByLocation(Position_e pos)
+{
+  return &panels[pos];
+}
+
+
